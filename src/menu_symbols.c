@@ -329,7 +329,7 @@ extern void SelectTraining(void);
 extern void SetExitMenuFlag(void);
 extern void SetName(void);
 extern void SetSurname(void);
-extern void ShootingPracticeToggleSelected(void);
+extern void ShootingPracticeMenu(void);
 extern void ShowControlsMenu(void);
 extern void ShowPlayerMarket(void);
 extern void ShowPlayerMarketInit(void);
@@ -554,6 +554,7 @@ extern char _aSaveHighlights[];
 extern char _aSeason_1[];
 extern char _aSecondKit[];
 extern char _aSeeded[];
+extern char _aShootingPractice[];
 extern char _aSkills[];
 extern char _aSquad[];
 extern char _aStar[];
@@ -697,7 +698,6 @@ extern char _teamTacticsUSERD[];
 extern char _teamTacticsUSERE[];
 extern char _teamTacticsUSERF[];
 extern char* _worldStrTable[];
-extern char g_shootingPracticeLabel[];
 
 const MenuSymbol _menuSymbols[] = {
     { "AbortChooseTeamsFriendly", (void*)AbortChooseTeamsFriendly, SYM_FUNC },
@@ -1022,7 +1022,7 @@ const MenuSymbol _menuSymbols[] = {
     { "SetExitMenuFlag", (void*)SetExitMenuFlag, SYM_FUNC },
     { "SetName", (void*)SetName, SYM_FUNC },
     { "SetSurname", (void*)SetSurname, SYM_FUNC },
-    { "ShootingPracticeToggleSelected", (void*)ShootingPracticeToggleSelected, SYM_FUNC },
+    { "ShootingPracticeMenu", (void*)ShootingPracticeMenu, SYM_FUNC },
     { "ShowControlsMenu", (void*)ShowControlsMenu, SYM_FUNC },
     { "ShowPlayerMarket", (void*)ShowPlayerMarket, SYM_FUNC },
     { "ShowPlayerMarketInit", (void*)ShowPlayerMarketInit, SYM_FUNC },
@@ -1244,6 +1244,7 @@ const MenuSymbol _menuSymbols[] = {
     { "_aSeason_1", (void*)_aSeason_1, SYM_STRING },
     { "_aSecondKit", (void*)_aSecondKit, SYM_STRING },
     { "_aSeeded", (void*)_aSeeded, SYM_STRING },
+    { "_aShootingPractice", (void*)_aShootingPractice, SYM_STRING },
     { "_aSkills", (void*)_aSkills, SYM_STRING },
     { "_aSquad", (void*)_aSquad, SYM_STRING },
     { "_aStar", (void*)_aStar, SYM_STRING },
@@ -1387,7 +1388,6 @@ const MenuSymbol _menuSymbols[] = {
     { "_teamTacticsUSERE", (void*)_teamTacticsUSERE, SYM_BUFFER },
     { "_teamTacticsUSERF", (void*)_teamTacticsUSERF, SYM_BUFFER },
     { "_worldStrTable", (void*)_worldStrTable, SYM_TABLE },
-    { "g_shootingPracticeLabel", (void*)g_shootingPracticeLabel, SYM_STRING },
     { "locret_139AE2", (void*)locret_139AE2, SYM_FUNC },
 };
 const int _menuSymbolsCount =

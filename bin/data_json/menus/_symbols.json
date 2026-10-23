@@ -322,7 +322,7 @@
     "SetExitMenuFlag",
     "SetName",
     "SetSurname",
-    "ShootingPracticeToggleSelected",
+    "ShootingPracticeMenu",
     "ShowControlsMenu",
     "ShowPlayerMarket",
     "ShowPlayerMarketInit",
@@ -547,6 +547,7 @@
     "_aSeason_1",
     "_aSecondKit",
     "_aSeeded",
+    "_aShootingPractice",
     "_aSkills",
     "_aSquad",
     "_aStar",
@@ -593,8 +594,7 @@
     "_aYourCareerIsOv",
     "_aYourChairman",
     "_asc_131FF2",
-    "_asc_135D96",
-    "g_shootingPracticeLabel"
+    "_asc_135D96"
   ],
   "tables": [
     "_allPlTeamsEqualStrTable",

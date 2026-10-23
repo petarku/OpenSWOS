@@ -42,6 +42,15 @@ char _aClassicsHint[]      = "CLICK A TEAM TO CHANGE WHO CONTROLS IT";
 char _aClassicsPlay[]      = "PLAY";
 /* OpenSWOS: the PLAY MATCH screen's UNIFORM button (UniformSelected). */
 char _aUniform[]      = "UNIFORM";
+/* OpenSWOS: the main menu's SHOOTING PRACTICE button (ShootingPracticeMenu),
+ * and the words the drill's own flow puts in place of the friendly's --
+ * src/shooting_practice.c, docs/SHOOTING_PRACTICE.md. */
+char _aShootingPractice[] = "SHOOTING PRACTICE";
+char _aPlayPractice[]  = "PLAY PRACTICE";
+char _aStartPractice[] = "START PRACTICE";
+/* Shown where "SELECT N MORE TEAMS" would be: the two teams are picked, but the
+ * drill needs one of them to be the computer and the other not. */
+char _aSelect1CpuTeam[] = "SELECT 1 COMPUTER TEAM";
 char _aDataEurocupTmd[] = "data/eurocup.tmd";
 char _aDataEurocwcTmd[] = "data/eurocwc.tmd";
 char _aDataTeamNnn[] = "data/team.nnn";

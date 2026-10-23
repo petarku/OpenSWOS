@@ -24,6 +24,7 @@
 #include "team_pool.h"
 #include "swos_io.h"
 #include "classic_comps.h"      /* HISTORIC TOURNAMENTS, above WORLD CUP in the preset world list */
+#include "shooting_practice.h"  /* SHOOTING PRACTICE gates the team selection below */
 #ifdef SWOS_SDL_BUILD
 #include <stdlib.h>            /* getenv — SWOS_DATA_JSON team-load wire-in */
 #endif
@@ -1934,6 +1935,7 @@ extern uint8_t _aSelect0MoreTea[];
 extern uint8_t _aSelect1LessTea[];
 extern uint8_t _aSelect0LessTea[];
 extern uint8_t _aError[];
+extern uint8_t _aSelect1CpuTeam[];   /* "SELECT 1 COMPUTER TEAM" */
 extern int16_t _chooseTeamsFriendly_changeTeamsPromptDrawList[];
 
 
@@ -2127,7 +2129,14 @@ void SetChooseChangeTeamsEntries(void)
     MenuEntry *playEntry = &_menuEntries[76];
     MenuEntry *selectEntry = &_menuEntries[77];
 
-    if (_numSelectedTeamsCopy == _numNeededTeams) {
+    /* SHOOTING PRACTICE: this is the screen where fire cycles a selected team
+     * between COMPUTER, PLAYER-COACH and COACH, so it is the one most likely to
+     * leave the drill with two human sides or two computer ones. Both teams
+     * picked is not enough -- exactly one of them must be the computer
+     * (shooting_practice.h). */
+    int16_t practiceBlocked = g_shootingPracticeMode && !ShootingPractice_SelectionOk();
+
+    if (_numSelectedTeamsCopy == _numNeededTeams && !practiceBlocked) {
         playEntry->isInvisible = 0;
         selectEntry->isInvisible = 1;
         playEntry->content = ENTRY_STRING;
@@ -2140,7 +2149,9 @@ void SetChooseChangeTeamsEntries(void)
     uint8_t *dst = (uint8_t *)selectEntry->fg;
     int16_t diff = (int16_t)_numSelectedTeamsCopy - (int16_t)_numNeededTeams;
     if (diff == 0) {
-        StringCopy(_aError, dst);
+        /* "ERROR" is the original's unreachable case; for the drill this is the
+         * message actually on screen. */
+        StringCopy(practiceBlocked ? _aSelect1CpuTeam : _aError, dst);
         return;
     }
     if (diff < 0) {
