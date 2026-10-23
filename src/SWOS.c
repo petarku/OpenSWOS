@@ -382,6 +382,21 @@ skip_title_screens: ;
                 DiyConvert_Run();     /* writes the JSON .DIY, then exits */
         }
         {
+            /* --challenge=<file>: play on from a saved position instead of the front end
+             * (src/challenge.c). Here for the same reason as the rigs above -- the match
+             * needs its data loaded, and this wants no menus. */
+            extern const char *Challenge_Requested(void);
+            extern int32_t     Challenge_Arm(const uint8_t *name);
+            extern void        Challenge_Play(void);
+            const char *want = Challenge_Requested();
+            if (want) {
+                if (Challenge_Arm((const uint8_t *)want) != 0)
+                    return;
+                Challenge_Play();
+                return;
+            }
+        }
+        {
             extern int32_t ReplayV2_ViewTestArmed(void);
             extern void    ReplayV2_ViewTestRun(void);
             if (ReplayV2_ViewTestArmed())
