@@ -1,0 +1,98 @@
+From 8df9712a9779f63af5cae5a116363751220e6e57 Mon Sep 17 00:00:00 2001
+From: the5ar <the5ar@gmail.com>
+Date: Fri, 23 Oct 2026 21:26:08 +0100
+Subject: [PATCH] gdb_proxy: env overrides for native-Windows sessions +
+ reader-thread race fix
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Three changes from running the daemon under Cygwin against a native-Windows
+FS-UAE + m68k gdb (OpenSWOS docs/AMIGA_DEBUGGING.md setup):
+
+- AMIGASCOPE_GDB overrides the hard-coded m68k gdb path (the win32 build
+  when the daemon runs under Cygwin).
+- AMIGASCOPE_ELF_NOARG=1 starts gdb with NO file argument: AmigaDOS
+  relocates hunks, so on setups where ELF link addresses are wrong the
+  caller attaches first and add-symbol-files at the qOffsets-reported
+  bases. The ELF existence check stays.
+- GdbDaemon: initialize `running` (and the attach fields) BEFORE starting
+  the reader thread. With no ELF argv gdb prints its prompt immediately,
+  and a reader that won the race died on the missing attribute — the
+  attach then reported DEGRADED with the wire actually healthy, burning
+  the one-shot FS-UAE port.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+---
+ gdb_proxy.py | 25 +++++++++++++++++++++----
+ 1 file changed, 21 insertions(+), 4 deletions(-)
+
+diff --git a/gdb_proxy.py b/gdb_proxy.py
+index 7199be1..3d4b652 100644
+--- a/gdb_proxy.py
++++ b/gdb_proxy.py
+@@ -52,7 +52,10 @@ import sys
+ import threading
+ import time
+ 
+-GDB_BIN_AMIGA = "/mnt/c/Users/headk/.vscode/extensions/bartmanabyss.amiga-debug-1.8.2/bin/linux/opt/bin/m68k-amiga-elf-gdb"
++# AMIGASCOPE_GDB overrides the m68k gdb binary (e.g. the win32 build when the
++# daemon runs under Cygwin on a native-Windows FS-UAE setup).
++GDB_BIN_AMIGA = (os.environ.get("AMIGASCOPE_GDB") or
++    "/mnt/c/Users/headk/.vscode/extensions/bartmanabyss.amiga-debug-1.8.2/bin/linux/opt/bin/m68k-amiga-elf-gdb")
+ GDB_BIN_SDL   = "/usr/bin/gdb"
+ # Target paths belong to the TARGET, not to AmigaScope — take them from the
+ # environment (the per-project amigascope.env exports these) and keep the
+@@ -98,8 +101,12 @@ def detect_windows_host():
+ class GdbDaemon:
+     def __init__(self, mode, gdb_bin, target_path, host, port, cwd=None):
+         env = dict(os.environ)
++        # target_path=None starts gdb with NO file: AmigaDOS relocates hunks,
++        # so on setups where link addresses are wrong the caller attaches first
++        # and loads symbols at the stub-reported bases (qOffsets +
++        # add-symbol-file; see OpenSWOS docs/AMIGA_DEBUGGING.md).
+         self.gdb = subprocess.Popen(
+-            [gdb_bin, "-q", "--nx", target_path],
++            [gdb_bin, "-q", "--nx"] + ([target_path] if target_path else []),
+             stdin=subprocess.PIPE,
+             stdout=subprocess.PIPE,
+             stderr=subprocess.STDOUT,
+@@ -109,8 +116,6 @@ class GdbDaemon:
+         )
+         self.buf_lock = threading.Lock()
+         self.buf = bytearray()
+-        self.reader = threading.Thread(target=self._reader_loop, daemon=True)
+-        self.reader.start()
+         self.mode = mode
+         self.attach_ok = True
+         self.attach_detail = "sdl" if mode == "sdl" else "pending"
+@@ -119,7 +124,13 @@ class GdbDaemon:
+         # instant a stop surfaces (see _reader_loop / cmd / wait_stop). The
+         # busy-guard reads it to refuse read-probes that would otherwise wedge
+         # the single gdb socket while the target runs.
++        # MUST be set BEFORE the reader thread starts: when gdb is spawned
++        # with no ELF argument it prints its prompt immediately, and a reader
++        # that wins the race dies on the missing attribute (the attach then
++        # reports DEGRADED with the wire actually healthy).
+         self.running = False
++        self.reader = threading.Thread(target=self._reader_loop, daemon=True)
++        self.reader.start()
+         # Wait for initial gdb prompt.
+         self._wait_for_prompt(timeout=5.0)
+         # Drop the banner; subsequent `cmd` calls return clean responses.
+@@ -352,6 +363,12 @@ def daemon_main(args):
+             sys.exit(2)
+         host = args.host or detect_windows_host()
+         cwd = None
++        # AMIGASCOPE_ELF_NOARG=1: verify the ELF exists but do NOT hand it to
++        # gdb — the caller will add-symbol-file at the RELOCATED bases.
++        if os.environ.get("AMIGASCOPE_ELF_NOARG") == "1":
++            print("[daemon] ELF held back (AMIGASCOPE_ELF_NOARG): attach first, "
++                  "then add-symbol-file at qOffsets bases", file=sys.stderr)
++            target_path = None
+         print(f"[daemon] mode=amiga gdb={gdb_bin}", file=sys.stderr)
+         print(f"[daemon] elf={target_path}", file=sys.stderr)
+         print(f"[daemon] remote={host}:{args.port}", file=sys.stderr)
+-- 
+2.55.0.windows.5
+

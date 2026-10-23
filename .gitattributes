@@ -24,3 +24,6 @@ packaging/amiga/**       -text
 # not this one. Git-bash tolerates CR, which is why it went unnoticed.
 *.sh                     text eol=lf
 android/gradlew          text eol=lf
+
+# Patches apply byte for byte: never translate their line endings.
+*.patch -text
