@@ -36,6 +36,8 @@
     "ChangeNationality",
     "ChangePitchStyle",
     "ChangePitchType",
+    "ChangePracticeDefenders",
+    "ChangePracticeMidfield",
     "ChangeSex",
     "ChangeTeams",
     "ChangeWorld",
@@ -326,7 +328,9 @@
     "SetExitMenuFlag",
     "SetName",
     "SetSurname",
+    "ShootingPracticeContinue",
     "ShootingPracticeMenu",
+    "ShootingPracticeSetupInit",
     "ShowControlsMenu",
     "ShowPlayerMarket",
     "ShowPlayerMarketInit",
@@ -680,7 +684,9 @@
     "_pitchTypeStrTable",
     "_positionFilterStringTable",
     "_skillFilterStringTable",
-    "_worldStrTable"
+    "_worldStrTable",
+    "_practiceDefendersStrTable",
+    "_practiceMidfieldStrTable"
   ],
   "sprite_copies": [
     "_editTeamsPrimaryShirts",
