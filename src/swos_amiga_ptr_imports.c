@@ -894,6 +894,15 @@ struct __attribute__((packed)) {
     { (void *)_aMidfieldOff, (void *)_aMidfieldOn }
 };
 
+extern char _aPracticeAttackUp[], _aPracticeAttackDown[];
+extern uint16_t g_shootingPracticeAttackDown;
+struct __attribute__((packed)) {
+    void *indexPtr; uint16_t base; void *entries[2];
+} _practiceDirectionStrTable = {
+    (&g_shootingPracticeAttackDown), 0,
+    { (void *)_aPracticeAttackUp, (void *)_aPracticeAttackDown }
+};
+
 /* OPTIONS -> GAMEPLAY: AMIGA / DOS / XBOX, indexed by _gameplayStyleOption
  * (dos_gameplay.c, GAMEPLAY_*; the Amiga build never reaches XBOX). Same shape as
  * the ON/OFF tables above; spelled out because the entries are not _aOff/_aOn. */

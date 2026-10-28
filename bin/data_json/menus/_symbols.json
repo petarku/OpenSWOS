@@ -37,6 +37,7 @@
     "ChangePitchStyle",
     "ChangePitchType",
     "ChangePracticeDefenders",
+    "ChangePracticeDirection",
     "ChangePracticeMidfield",
     "ChangeSex",
     "ChangeTeams",
@@ -692,7 +693,8 @@
     "_skillFilterStringTable",
     "_worldStrTable",
     "_practiceDefendersStrTable",
-    "_practiceMidfieldStrTable"
+    "_practiceMidfieldStrTable",
+    "_practiceDirectionStrTable"
   ],
   "sprite_copies": [
     "_editTeamsPrimaryShirts",
