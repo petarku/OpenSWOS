@@ -44,6 +44,7 @@ extern void ChangeNationality(void);
 extern void ChangePitchStyle(void);
 extern void ChangePitchType(void);
 extern void ChangePracticeDefenders(void);
+extern void ChangePracticeDirection(void);
 extern void ChangePracticeMidfield(void);
 extern void ChangeSex(void);
 extern void ChangeTeams(void);
@@ -685,6 +686,7 @@ extern char* _pitchTypeOrSeasonTable[];
 extern char* _pitchTypeStrTable[];
 extern char* _positionFilterStringTable[];
 extern char* _practiceDefendersStrTable[];
+extern char* _practiceDirectionStrTable[];
 extern char* _practiceMidfieldStrTable[];
 extern char _saveFileTitle[];
 extern char* _skillFilterStringTable[];
@@ -734,6 +736,7 @@ const MenuSymbol _menuSymbols[] = {
     { "ChangePitchStyle", (void*)ChangePitchStyle, SYM_FUNC },
     { "ChangePitchType", (void*)ChangePitchType, SYM_FUNC },
     { "ChangePracticeDefenders", (void*)ChangePracticeDefenders, SYM_FUNC },
+    { "ChangePracticeDirection", (void*)ChangePracticeDirection, SYM_FUNC },
     { "ChangePracticeMidfield", (void*)ChangePracticeMidfield, SYM_FUNC },
     { "ChangeSex", (void*)ChangeSex, SYM_FUNC },
     { "ChangeTeams", (void*)ChangeTeams, SYM_FUNC },
@@ -1372,6 +1375,7 @@ const MenuSymbol _menuSymbols[] = {
     { "_pitchTypeStrTable", (void*)_pitchTypeStrTable, SYM_TABLE },
     { "_positionFilterStringTable", (void*)_positionFilterStringTable, SYM_TABLE },
     { "_practiceDefendersStrTable", (void*)_practiceDefendersStrTable, SYM_TABLE },
+    { "_practiceDirectionStrTable", (void*)_practiceDirectionStrTable, SYM_TABLE },
     { "_practiceMidfieldStrTable", (void*)_practiceMidfieldStrTable, SYM_TABLE },
     { "_saveFileTitle", (void*)_saveFileTitle, SYM_BUFFER },
     { "_skillFilterStringTable", (void*)_skillFilterStringTable, SYM_TABLE },
