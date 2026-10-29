@@ -80,6 +80,14 @@ and drop it next to the binary — it'll be picked up at startup.
 `SWOS.log` lists every detected joystick and whether SDL has a mapping for
 it.
 
+## Challenge cups
+
+PRESET COMPETITION -> **SPECIALS** (under CLASSICS) has two cups: **CHALLENGE CUP**, ONCE
+LOBOS against six ever stronger clubs, and **NATIONAL CHALLENGE CUP**, BERMUDA against six
+ever stronger national teams. The opponents are drawn afresh each time; each round is one
+match, a draw goes to extra time and penalties, and one defeat ends the run. See
+[CHALLENGE_CUP.md](CHALLENGE_CUP.md).
+
 ## Saved challenges
 
 Press **C** during a match against the computer to save the position. Choose

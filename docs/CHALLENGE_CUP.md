@@ -1,7 +1,7 @@
 # CHALLENGE_CUP.md — SPECIALS, the two CHALLENGE CUPs, and team star ratings
 
-> Status (2026-10-29): **current**, both targets. Played through its screens on SDL; the
-> Amiga build compiles and links, not yet played under FS-UAE.
+> Status (2026-10-29): **current**, both targets. Both cups played through their screens on
+> SDL and under FS-UAE (Amiga); a drawn tie (extra time, penalties) not yet seen in either.
 
 ## 1. What it is
 
@@ -117,6 +117,6 @@ nations, whose file has one division).
 
 - A run lives in memory only: leaving SPECIALS gives it up, and nothing is saved.
 - Once Lobos is fresh each round (no injuries, cards or form carried over).
-- Played on SDL only so far; the Amiga build compiles.
+- A drawn round (extra time, then penalties) has not been played yet on either target.
 - The final's name on the scoreboard is the cup's title; NATIONAL CHALLENGE CUP is long and
   has not been checked on every screen that shows it.
