@@ -46,6 +46,9 @@ copy, once, and downloads nothing. [INSTALL.md](INSTALL.md) shows you how.
 - **[Challenge collection](docs/CHALLENGE_COLLECTION.md):** six predefined challenges
   on SDL and Amiga, rated 1-5 stars, with automatic completion and saved
   progress.
+- **[Challenge cups](docs/CHALLENGE_CUP.md):** PRESET COMPETITION -> SPECIALS. Take ONCE
+  LOBOS (the weakest club) or BERMUDA (the weakest nation) through six cup ties against ever
+  stronger opponents, drawn afresh each time; one defeat and you are out.
 - **Widescreen** at any resolution, fullscreen, CRT effects, gamepads, two players on one
   computer.
 - **The PC and Amiga versions' looks and sounds**, and optionally the Atari Jaguar's
