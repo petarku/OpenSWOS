@@ -37,6 +37,39 @@ ties, one match a round, against stronger and stronger clubs:
 
 Clubs top out at about 4 stars, so "4.5 stars" in the first idea became "4 and up".
 
+**Formations.** Each opponent plays a formation that suits its players **best**, and **every
+round's opponent a different one**. Its fit is the game's own measure -- the tactics ticks'
+per-player verdict (`GetPlayerPrice`), summed over the eleven (`FormationFit_Sum`,
+`src/formation_fit.c`). Its best are its top three of the ten normal formations, none more than
+5% worse than the very best (a team that suits one shape only has that one). A formation an
+earlier opponent of the run already plays is left out; if that leaves none of its best, it
+takes its best-suited formation not yet used. Among its best, one of the round's character
+(table below) is likelier. The ladder says how the next opponent lines up ("NEXT: ROMA,
+PLAYING 3-4-3"), and the SDL log lists each opponent's best (`[challenge-cup] ... (7, 3-5-2 of
+5-3-2 3-5-2 4-4-2)`). Only the cups do this: elsewhere a computer side plays the formation in
+its team file.
+
+| rounds | the round's character (each listing adds a share: a doubled one counts twice) |
+|---|---|
+| FIRST, SECOND | 5-4-1 (x2), 5-3-2, 4-5-1, SWEEP, 5-2-3 |
+| LAST 16, QUARTER-FINAL | 4-4-2, 3-5-2, 4-5-1, 4-3-3, SWEEP, 5-3-2 |
+| SEMI-FINAL, FINAL | 4-3-3 (x2), 4-2-4 (x2), 3-4-3, 3-5-2 |
+
+ATTACK, DEFEND and the player's USER slots are never used.
+
+Why suited ones: a computer side's skill NUMBERS do not depend on its formation --
+`AdjustPlayerSkills` holds a COMPUTER team at 100%, where a human side's are scaled 75..125% by
+how well the formation suits each player -- but its players' skills still work where the
+formation puts them. A 4-4-2 side put in 5-4-1 has a striker defending with a striker's
+tackling. Nothing in the game re-arranges a computer team's line-up for its formation, and a
+computer team keeps its formation for the whole match.
+
+**The opponent's formation on VIEW OPPO** (any friendly, PRACTICE, the cups -- not a
+competition or the career, whose team records would keep it): the computer side's ten normal
+formation buttons can be pressed, and its players show their own ticks and crosses, and the
+team its big one, against the formation it had when VIEW OPPO was opened. `src/play_match_menu.c`
+(`OpponentFormationEditable`, `ScoreOpponent`); the player's own marks are left as they were.
+
 ## 1a. The bonus match: BEST XI (CHALLENGE CUP only)
 
 Win CHALLENGE CUP's final and a seventh row opens: **BONUS MATCH** against the **BEST XI**, a
@@ -120,6 +153,7 @@ paper -- Once Lobos is the one the cup is built round because it is the one play
 | `src/challenge_cup_pool.c` | **Generated** (`scripts/team_stars.py --challenge-cup src/challenge_cup_pool.c`): each band's teams by team file, number and name, `g_challengeCupPools` (clubs) and `g_nationalCupPools`. The bands are `CHALLENGE_CUP_BANDS` / `NATIONAL_CUP_BANDS` in the script. |
 | `src/team_stars.c` | The rating (section 2). |
 | `src/ghost_teams.c`, `src/ghost_teams_data.c` | Building a ghost team from the database (`GhostTeams_Build`, `GhostTeams_IsGhost`); the BEST XI by reference, **generated** by `scripts/ghost_teams.py`. |
+| `src/formation_fit.c` | How well a formation suits a team, by the game's measure, on a copy, with the globals that measure writes put back: `FormationFit_Value` (the team value the big tick compares, plus each player's), `FormationFit_Sum` (finer, for choosing). Used by the cups and VIEW OPPO. |
 | `src/teams.c` | `SelectTeamsFinalMenu`: the SPECIALS row (a marker in `leaguesPtrTable`, as CLASSICS'); picking it calls `Specials_Request` and closes the chooser. |
 | `src/menus.c` | `PresetCompetitionMenu`: after the chooser, `Specials_Show` while a request is pending, then the chooser again. |
 | `src/game_init.c` | `InitAndPlayGame`: `ChallengeCup_TakeMatchRules` after the tie rules are cleared (names the match CHALLENGE CUP / the round, extra time + penalties). `InitializeInGameTeamsAndStartGame`: `ChallengeCup_BeginMatch` beside the training modes' latches. |

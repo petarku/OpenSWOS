@@ -40,6 +40,7 @@
 #include "string_utils.h"
 #include "swos_io.h"
 #include "team_stars.h"
+#include "formation_fit.h"
 #include "ghost_teams.h"
 
 extern uint8_t  _specialsMenu[];
@@ -89,6 +90,36 @@ static const CupDef k_cups[kCups] = {
     { "NATIONAL CHALLENGE CUP", "BERMUDA", 83 /* NORTH AMERICA */, 2, g_nationalCupPools,
       "BERMUDA AGAINST EVER STRONGER NATIONS", "specials/nationalCup", 0 },
 };
+/* The game's twelve formations (TACTIC_DEFAULT .. TACTIC_DEFEND), by number; the six USER
+ * slots are the player's own and are never given to an opponent. */
+enum { kFormations = TACTIC_DEFEND + 1 };
+static const char *const k_formationNames[kFormations] = {
+    "4-4-2", "5-4-1", "4-5-1", "5-3-2", "3-5-2", "4-3-3",
+    "4-2-4", "3-4-3", "SWEEP", "5-2-3", "ATTACK", "DEFEND",
+};
+
+/* How an opponent lines up: in one of the formations that suit its players BEST, by the
+ * game's own measure (FormationFit_Sum: the tactics ticks' per-player verdict, summed) --
+ * its best three of the ten normal ones, none more than kFitTolerancePct worse than the
+ * very best, so a team that suits one shape only plays that one. A computer side's skill
+ * numbers do not depend on its formation (AdjustPlayerSkills holds it at 100%), but its
+ * players' skills still work where the formation puts them: a striker sent into midfield
+ * passes and tackles like a striker.
+ *
+ * Every round's opponent plays a DIFFERENT formation: one an earlier opponent of the same
+ * run already plays is left out, and if that leaves none of its best, it takes its
+ * best-suited formation not yet used (ten formations, six rounds). Among its best, one of
+ * the round's character -- defensive early, balanced in the middle, attacking at the end --
+ * is likelier (each listing below adds a share: 5-4-1 early, 4-3-3 and 4-2-4 late are listed
+ * twice). ATTACK, DEFEND and the USER slots are never used. Only the challenge cups do this;
+ * everywhere else a computer side plays the formation in its team file. */
+enum { kRoundFormations = 6, kBestFormations = 3, kFitTolerancePct = 5 };
+static const uint8_t k_roundFormations[3][kRoundFormations] = {
+    { TACTIC_5_4_1, TACTIC_5_3_2, TACTIC_4_5_1, TACTIC_SWEEP, TACTIC_5_2_3, TACTIC_5_4_1 },
+    { TACTIC_DEFAULT, TACTIC_3_5_2, TACTIC_4_5_1, TACTIC_4_3_3, TACTIC_SWEEP, TACTIC_5_3_2 },
+    { TACTIC_4_3_3, TACTIC_4_2_4, TACTIC_3_4_3, TACTIC_3_5_2, TACTIC_4_3_3, TACTIC_4_2_4 },
+};
+
 /* The six rounds, then the BONUS MATCH after the final: a cup with a bonus team (CHALLENGE
  * CUP's BEST XI, ghost_teams.c) offers it to the side that has won the cup. It is a surprise:
  * the ladder shows "???" until the final is won, and only then is the team built -- a dozen
@@ -116,6 +147,9 @@ static struct {
     int8_t     skipped[kSlots];     /* won by SKIP ROUND (tester builds) */
     uint16_t   goals[kSlots][2];    /* the underdog first */
 } s_run;
+
+/* The formations that suit each opponent best (choose_formations), for the log. */
+static uint16_t s_best[CHALLENGE_CUP_ROUNDS];
 
 /* The match: armed by play_round around its InitAndPlayGame, latched at kick-off. */
 static int32_t  s_armed;            /* the next match is a challenge cup round */
@@ -247,6 +281,69 @@ static int32_t draw_round(const CupDef *cup, int32_t round)
     return 0;
 }
 
+/* The formations that suit a team best (above), as a mask of 1 << formation; `value` gets
+ * each formation's score. */
+static uint16_t best_formations(const TeamFileEx *team, int32_t value[FORMATION_FIT_NORMAL])
+{
+    int32_t f, i, best = 0;
+    uint16_t mask = 0;
+
+    for (f = 0; f < FORMATION_FIT_NORMAL; f++) {
+        value[f] = FormationFit_Sum(team, f);
+        if (value[f] > value[best])
+            best = f;
+    }
+    for (i = 0; i < kBestFormations; i++) {
+        int32_t top = -1;
+        for (f = 0; f < FORMATION_FIT_NORMAL; f++)
+            if (!(mask & (1u << f)) && (top < 0 || value[f] > value[top]))
+                top = f;
+        if (value[top] * 100 < value[best] * (100 - kFitTolerancePct))
+            break;
+        mask |= (uint16_t)(1u << top);
+    }
+    return mask;
+}
+
+static void choose_formations(void)
+{
+    uint16_t used = 0;
+    int32_t round;
+
+    for (round = 0; round < CHALLENGE_CUP_ROUNDS; round++) {
+        TeamFileEx *team = &s_run.opponent[round];
+        int32_t value[FORMATION_FIT_NORMAL], weight[FORMATION_FIT_NORMAL], total = 0, f, i, pick;
+        uint16_t best;
+
+        team->team.teamControls = TEAM_COMPUTER;     /* scored as it will play */
+        best = best_formations(team, value);
+        s_best[round] = best;
+        best &= (uint16_t)~used;
+        if (!best) {                                 /* its best are taken: its best of the rest */
+            int32_t top = -1;
+            for (f = 0; f < FORMATION_FIT_NORMAL; f++)
+                if (!(used & (1u << f)) && (top < 0 || value[f] > value[top]))
+                    top = f;
+            best = (uint16_t)(1u << top);
+        }
+        for (f = 0; f < FORMATION_FIT_NORMAL; f++) {
+            weight[f] = 0;
+            if (!(best & (1u << f)))
+                continue;
+            weight[f] = 1;
+            for (i = 0; i < kRoundFormations; i++)
+                if (k_roundFormations[round / 2][i] == f)
+                    weight[f]++;
+            total += weight[f];
+        }
+        pick = rand_below(total);
+        for (f = 0; f < FORMATION_FIT_NORMAL && pick >= weight[f]; f++)
+            pick -= weight[f];
+        team->team.tactics = (uint8_t)f;
+        used |= (uint16_t)(1u << f);
+    }
+}
+
 /* A new run of a cup: the underdog and six opponents. 0 = the teams could not be found
  * (shown). */
 static int32_t new_run(int32_t which)
@@ -266,13 +363,20 @@ static int32_t new_run(int32_t which)
         ShowErrorMenu((uint8_t *)"THE CUP'S TEAMS WERE NOT FOUND");
         return 0;
     }
+    choose_formations();
     s_run.bonus = cup->bonus != 0;  /* built when the final is won (reveal_bonus) */
 #ifdef SWOS_SDL_BUILD
     fprintf(stderr, "[challenge-cup] %s, new draw:", cup->title);
     for (round = 0; round < CHALLENGE_CUP_ROUNDS; round++) {
         char name[kNameBytes + 1];
-        fprintf(stderr, " %s (%d)", team_name(&s_run.opponent[round], name),
-                (int)TeamStars_HalfStars(&s_run.opponent[round]));
+        int32_t f;
+        fprintf(stderr, " %s (%d, %s of", team_name(&s_run.opponent[round], name),
+                (int)TeamStars_HalfStars(&s_run.opponent[round]),
+                k_formationNames[s_run.opponent[round].team.tactics]);
+        for (f = 0; f < FORMATION_FIT_NORMAL; f++)
+            if (s_best[round] & (1u << f))
+                fprintf(stderr, " %s", k_formationNames[f]);
+        fprintf(stderr, ")");
     }
     fprintf(stderr, "\n");
 #endif
@@ -410,7 +514,7 @@ enum { SCREEN_SPECIALS, SCREEN_CUP };
 enum { ACT_NONE, ACT_EXIT, ACT_PLAY, ACT_NEW, ACT_SKIP, ACT_CUP /* + k_cups index */ };
 enum {
     ROW_HEADER = 0, ROW_TEAM = 1, ROW_FIRST_ROUND = 2,          /* 2..7: the rounds */
-    ROW_STATUS = 8, ROW_PLAY = 9, ROW_EXIT = 11, ROW_BONUS = 12, ROW_SKIP = 13,
+    ROW_STATUS = 8, ROW_PLAY = 9, ROW_NEXT = 10, ROW_EXIT = 11, ROW_BONUS = 12, ROW_SKIP = 13,
     ROW_SPECIAL_FIRST = 2,          /* SPECIALS: each cup's button, its line under it */
     ROW_SPECIAL_RULES = 8,
 };
@@ -521,14 +625,19 @@ static void cup_screen(void)
         champions ? COL_GREEN : s_run.out ? COL_RED : COL_NONE);
     CalcMenuEntryAddress(ROW_STATUS)->dwHeight = 9;
 
-    if (!finished) {
+    if (!finished) {                /* how the next opponent lines up */
+        const TeamFileEx *next = &s_run.opponent[s_run.round];
+        swos_io_snprintf(buf, sizeof buf, "NEXT: %s, PLAYING %s", team_name(next, name),
+                         k_formationNames[next->team.tactics]);
+        row(ROW_NEXT, 161, buf, ACT_NONE, COL_NONE);
+        CalcMenuEntryAddress(ROW_NEXT)->dwHeight = 9;
         swos_io_snprintf(buf, sizeof buf, "PLAY %s", k_roundNames[s_run.round]);
-        row(ROW_PLAY, 170, buf, ACT_PLAY, COL_GREEN);
+        row(ROW_PLAY, 172, buf, ACT_PLAY, COL_GREEN);
 #ifdef SWOS_TEST_RULES
         row(ROW_SKIP, 207, "SKIP ROUND (TESTER BUILD)", ACT_SKIP, COL_BLUE);
 #endif
     } else {
-        row(ROW_PLAY, 170, "NEW DRAW", ACT_NEW, COL_GREEN);
+        row(ROW_PLAY, 172, "NEW DRAW", ACT_NEW, COL_GREEN);
     }
     row(ROW_EXIT, 189, "EXIT", ACT_EXIT, COL_EXIT);
 }
