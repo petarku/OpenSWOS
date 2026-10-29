@@ -561,6 +561,12 @@ void EndOfGame(void)
     extern TeamGame *_winningTeamPtr;   /* set by every caller, after penalties too */
     ChallengeProgress_FinalWhistle(_team1TotalGoals, _team2TotalGoals,
         _winningTeamPtr == &_topTeamInGame ? 1 : _winningTeamPtr == &_bottomTeamInGame ? 2 : 0);
+    {
+        /* And a CHALLENGE CUP round's (src/challenge_cup.c): who goes through. */
+        extern void ChallengeCup_FinalWhistle(uint16_t goals1, uint16_t goals2, int32_t winner);
+        ChallengeCup_FinalWhistle(_team1TotalGoals, _team2TotalGoals,
+            _winningTeamPtr == &_topTeamInGame ? 1 : _winningTeamPtr == &_bottomTeamInGame ? 2 : 0);
+    }
     setBreakState(ST_GAME_ENDED, ST_STOPPED, 150);
     ResetBothTeamsPlayerPassingKicking();
     clearCameraVelocity();

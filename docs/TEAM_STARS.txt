@@ -1,0 +1,1718 @@
+# Every team rated in value stars, strongest first (scripts/team_stars.py).
+# stars = the starting eleven's average value stars, to the nearest half;
+# average = the same in half stars, unrounded; price = the eleven's summed price
+# (the tie-break); team = TEAM.nnn:number; div = its division, 0 = the top.
+
+ rank  stars  average  price  name              file              team    div
+
+    1  4         8.45    439  ITALY             EUROPE             80:23  0
+    2  4         8.45    430  GERMANY           EUROPE             80:17  0
+    3  4         8.36    432  AC MILAN          EUROCUP            20:0   0
+    4  4         8.36    432  AC MILAN          ITALY              20:0   0
+    5  4         8.27    417  BARCELONA         EUROCWC            35:8   0
+    6  4         8.27    417  BARCELONA         SPAIN              35:8   0
+    7  4         8.18    416  BRAZIL            SOUTH_AMERICA      82:2   0
+    8  4         8.09    409  HOLLAND           EUROPE             80:19  0
+    9  4         8.00    409  REAL MADRID       SPAIN              35:35  0
+   10  4         8.00    407  ENGLAND           EUROPE             80:11  0
+   11  4         8.00    406  JUVENTUS          EUROCUP            20:22  0
+   12  4         8.00    406  JUVENTUS          ITALY              20:22  0
+   13  4         8.00    406  MANCHESTER UTD    ENGLAND             8:20  0
+   14  4         8.00    406  MANCHESTER UTD    EUROCUP             8:20  0
+   15  4         8.00    402  SAO PAULO         BRAZIL             46:20  0
+   16  4         7.91    402  NEWCASTLE UNITED  ENGLAND             8:22  0
+   17  4         7.91    402  NEWCASTLE UNITED  UEFACUP             8:22  0
+   18  4         7.91    399  SPAIN             EUROPE             80:42  0
+   19  4         7.91    388  FRANCE            EUROPE             80:15  0
+   20  4         7.82    394  PORTUGAL          EUROPE             80:34  0
+   21  4         7.82    393  PROFESSIONALS     CUSTOM             72:30  0
+   22  4         7.82    391  ATLETICO MINEIRO  BRAZIL             46:1   0
+   23  4         7.82    383  AJAX              EUROCUP            25:0   0
+   24  4         7.82    383  AJAX              HOLLAND            25:0   0
+   25  4         7.73    383  LIVERPOOL         ENGLAND             8:18  0
+   26  4         7.73    383  LIVERPOOL         EUROCWC             8:18  0
+   27  4         7.64    390  SENSIBLE FC       CUSTOM             72:34  0
+   28  4         7.64    384  PARMA             ITALY              20:31  0
+   29  4         7.64    379  ASTON VILLA       ENGLAND             8:1   0
+   30  4         7.55    378  RUSSIA            EUROPE             80:37  0
+   31  4         7.55    374  ARGENTINA         SOUTH_AMERICA      82:0   0
+   32  3.5       7.45    378  ARSENAL           ENGLAND             8:0   0
+   33  3.5       7.45    375  CROATIA           EUROPE             80:7   0
+   34  3.5       7.45    374  BOR. DORTMUND     EUROCUP            14:4   0
+   35  3.5       7.45    374  BOR. DORTMUND     GERMANY            14:4   0
+   36  3.5       7.45    368  EMOTION OVERKILL  CUSTOM             72:13  0
+   37  3.5       7.45    365  BLACKBURN ROVERS  ENGLAND             8:4   0
+   38  3.5       7.45    361  CZECH REPUBLIC    EUROPE             80:9   0
+   39  3.5       7.45    359  INTER MILAN       ITALY              20:21  0
+   40  3.5       7.45    359  INTER MILAN       UEFACUP            20:21  0
+   41  3.5       7.36    376  BAYERN MUNICH     GERMANY            14:3   0
+   42  3.5       7.36    364  BELGIUM           EUROPE             80:5   0
+   43  3.5       7.36    364  ROMANIA           EUROPE             80:36  0
+   44  3.5       7.36    355  SWEDEN            EUROPE             80:43  0
+   45  3.5       7.27    362  EVERTON           ENGLAND             8:12  0
+   46  3.5       7.27    362  LAZIO             ITALY              20:23  0
+   47  3.5       7.27    362  LAZIO             UEFACUP            20:23  0
+   48  3.5       7.27    360  RANGERS           EUROCUP            33:33  0
+   49  3.5       7.27    360  RANGERS           SCOTLAND           33:33  0
+   50  3.5       7.27    357  SCOTLAND          EUROPE             80:39  0
+   51  3.5       7.18    360  YUGOSLAVIA        EUROPE             80:48  0
+   52  3.5       7.18    347  REPUBLIC IRELAND  EUROPE             80:35  0
+   53  3.5       7.18    341  ON THE MILKFLOAT  CUSTOM             72:29  0
+   54  3.5       7.09    354  FLOWN CANARIES    CUSTOM             72:16  0
+   55  3.5       7.09    352  TOTTENHAM H.      ENGLAND             8:38  0
+   56  3.5       7.09    351  ROMA              ITALY              20:40  0
+   57  3.5       7.09    351  ROMA              UEFACUP            20:40  0
+   58  3.5       7.09    350  FC PORTO          EUROCUP            29:12  0
+   59  3.5       7.09    350  FC PORTO          PORTUGAL           29:12  0
+   60  3.5       7.09    349  SIXTEEN DWARVES   CUSTOM             72:35  0
+   61  3.5       7.09    346  PARIS ST-GERMAIN  EUROCWC            13:30  0
+   62  3.5       7.09    346  PARIS ST-GERMAIN  FRANCE             13:30  0
+   63  3.5       7.09    345  LIVERPOOL XI      CUSTOM             72:23  0
+   64  3.5       7.09    345  VITORIA           BRAZIL             46:23  0
+   65  3.5       7.09    343  CHELSEA           ENGLAND             8:8   0
+   66  3.5       7.00    344  DENMARK           EUROPE             80:10  0
+   67  3.5       7.00    344  DEP. LA CORUNA    SPAIN              35:16  0
+   68  3.5       7.00    331  MIDDLESBROUGH     ENGLAND             8:21  0
+   69  3.5       7.00    331  VFB STUTTGART     GERMANY            14:39  0
+   70  3.5       6.91    342  URUGUAY           SOUTH_AMERICA      82:8   0
+   71  3.5       6.91    340  BULGARIA          EUROPE             80:6   0
+   72  3.5       6.91    340  FIORENTINA        EUROCWC            20:18  0
+   73  3.5       6.91    340  FIORENTINA        ITALY              20:18  0
+   74  3.5       6.91    335  SWITZERLAND       EUROPE             80:44  0
+   75  3.5       6.91    331  LEEDS UNITED      ENGLAND             8:16  0
+   76  3.5       6.91    330  ANDERLECHT        BELGIUM             2:0   0
+   77  3.5       6.91    330  ANDERLECHT        UEFACUP             2:0   0
+   78  3.5       6.91    328  PSV               EUROCWC            25:21  0
+   79  3.5       6.91    328  PSV               HOLLAND            25:21  0
+   80  3.5       6.91    327  ATLETICO MADRID   EUROCUP            35:6   0
+   81  3.5       6.91    327  ATLETICO MADRID   SPAIN              35:6   0
+   82  3.5       6.82    325  FEYENOORD         HOLLAND            25:10  0
+   83  3.5       6.82    325  FEYENOORD         UEFACUP            25:10  0
+   84  3.5       6.82    322  WALES             EUROPE             80:47  0
+   85  3.5       6.73    331  SPORTING LISBON   PORTUGAL           29:20  0
+   86  3.5       6.73    331  SPORTING LISBON   UEFACUP            29:20  0
+   87  3.5       6.73    328  NOTT'M FOREST     ENGLAND             8:24  0
+   88  3.5       6.73    321  CELTIC            SCOTLAND           33:9   0
+   89  3.5       6.73    321  TESTERS UTD       CUSTOM             72:37  0
+   90  3.5       6.73    319  SHEFFIELD WED.    ENGLAND             8:32  0
+   91  3.5       6.64    325  VALENCIA          SPAIN              35:44  0
+   92  3.5       6.64    325  VALENCIA          UEFACUP            35:44  0
+   93  3.5       6.64    313  KEBAB SHOP        CUSTOM             72:22  0
+   94  3.5       6.64    309  SAMPDORIA         ITALY              20:42  0
+   95  3.5       6.55    321  COLOMBIA          SOUTH_AMERICA      82:4   0
+   96  3.5       6.55    314  MANCHESTER CITY   ENGLAND             8:19  1
+   97  3.5       6.55    311  CRUZEIRO          BRAZIL             46:8   0
+   98  3.5       6.55    309  COVENTRY CITY     ENGLAND             8:9   0
+   99  3.5       6.55    303  MONCHENGLADBACH   GERMANY            14:25  0
+  100  3.5       6.55    303  MONCHENGLADBACH   UEFACUP            14:25  0
+  101  3         6.45    312  WEST HAM UNITED   ENGLAND             8:41  0
+  102  3         6.45    309  BETIS             SPAIN              35:10  0
+  103  3         6.45    305  BAYER LEVERKUSEN  GERMANY            14:2   0
+  104  3         6.45    304  WAVE UNITED       CUSTOM             72:46  0
+  105  3         6.45    298  KARLSRUHE         GERMANY            14:23  0
+  106  3         6.45    298  KARLSRUHE         UEFACUP            14:23  0
+  107  3         6.45    298  WERDER BREMEN     GERMANY            14:44  0
+  108  3         6.45    294  CYFA BABES        CUSTOM             72:10  0
+  109  3         6.36    314  BENFICA           EUROCWC            29:2   0
+  110  3         6.36    314  BENFICA           PORTUGAL           29:2   0
+  111  3         6.36    311  NORWAY            EUROPE             80:32  0
+  112  3         6.36    311  SCOUT BADGES      CUSTOM             72:32  0
+  113  3         6.36    307  THE SLAGHEAP      CUSTOM             72:41  0
+  114  3         6.36    302  FLAMENGO          BRAZIL             46:9   0
+  115  3         6.36    301  MONACO            FRANCE             13:23  0
+  116  3         6.36    301  MONACO            UEFACUP            13:23  0
+  117  3         6.36    300  NAPOLI            ITALY              20:28  0
+  118  3         6.36    291  ZARAGOZA          SPAIN              35:47  0
+  119  3         6.36    288  ATHLETIC BILBAO   SPAIN              35:4   0
+  120  3         6.36    283  AUSTRIA           EUROPE             80:2   0
+  121  3         6.27    299  CLUB BRUGES       BELGIUM             2:4   0
+  122  3         6.27    299  CLUB BRUGES       UEFACUP             2:4   0
+  123  3         6.27    290  SPORTING GIJON    SPAIN              35:41  0
+  124  3         6.27    287  BOLIVIA           SOUTH_AMERICA      82:1   0
+  125  3         6.27    282  VASCO DA GAMA     BRAZIL             46:22  0
+  126  3         6.27    281  COLOGNE           GERMANY            14:7   0
+  127  3         6.27    281  POLAND            EUROPE             80:33  0
+  128  3         6.18    285  GREECE            EUROPE             80:18  0
+  129  3         6.18    283  TENERIFE          SPAIN              35:42  0
+  130  3         6.18    283  TENERIFE          UEFACUP            35:42  0
+  131  3         6.18    282  HAMBURG           GERMANY            14:17  0
+  132  3         6.18    282  HAMBURG           UEFACUP            14:17  0
+  133  3         6.18    281  LYON              FRANCE             13:19  0
+  134  3         6.18    281  TURKEY            EUROPE             80:45  0
+  135  3         6.18    277  STANDARD LIEGE    BELGIUM             2:17  0
+  136  3         6.18    269  THE BIBLE         CUSTOM             72:38  0
+  137  3         6.09    294  RANDOM THINGS     CUSTOM             72:31  0
+  138  3         6.09    290  GREMIO            BRAZIL             46:12  0
+  139  3         6.09    279  KAISERSLAUTERN    EUROCWC            14:22  1
+  140  3         6.09    279  KAISERSLAUTERN    GERMANY            14:22  1
+  141  3         6.09    278  AUXERRE           EUROCUP            13:1   0
+  142  3         6.09    278  AUXERRE           FRANCE             13:1   0
+  143  3         6.09    276  CAGLIARI          ITALY              20:9   0
+  144  3         6.09    276  GEORGIA           EUROPE             80:16  0
+  145  3         6.09    273  UDINESE           ITALY              20:47  0
+  146  3         6.09    271  ESPANYOL          SPAIN              35:19  0
+  147  3         6.09    271  ESPANYOL          UEFACUP            35:19  0
+  148  3         6.09    270  RAPID VIENNA      AUSTRIA             1:5   0
+  149  3         6.09    270  RAPID VIENNA      EUROCUP             1:5   0
+  150  3         6.09    265  PALMEIRAS         BRAZIL             46:16  0
+  151  3         6.00    294  BINARY ATHLETIC   CUSTOM             72:5   0
+  152  3         6.00    281  LEICESTER CITY    ENGLAND             8:17  0
+  153  3         6.00    279  BOTAFOGO          BRAZIL             46:3   0
+  154  3         6.00    275  SPARTAK MOSCOW    RUSSIA             31:16  0
+  155  3         6.00    275  SPARTAK MOSCOW    UEFACUP            31:16  0
+  156  3         6.00    273  SLAVIA PRAGUE     CZECH_REPUBLIC      6:8   0
+  157  3         6.00    273  SLAVIA PRAGUE     UEFACUP             6:8   0
+  158  3         6.00    272  SOUTHAMPTON       ENGLAND             8:33  0
+  159  3         6.00    272  WIMBLEDON         ENGLAND             8:42  0
+  160  3         6.00    270  STEAUA BUCHAREST  EUROCUP            30:18  0
+  161  3         6.00    270  STEAUA BUCHAREST  ROMANIA            30:18  0
+  162  3         6.00    268  SENEGAL           AFRICA             81:23  0
+  163  3         6.00    266  SEVILLA           SPAIN              35:40  0
+  164  3         6.00    265  YAKUHEMA MERUNOS  JAPAN              55:26  0
+  165  3         6.00    264  FREIBURG          GERMANY            14:12  0
+  166  3         5.91    277  RIVER PLATE       ARGENTINA          43:33  0
+  167  3         5.91    269  AUSTRALIA         OCEANIA            85:0   0
+  168  3         5.91    268  THE COLLECTORS    CUSTOM             72:39  0
+  169  3         5.91    267  MARSEILLE         FRANCE             13:20  0
+  170  3         5.91    266  RENNES            FRANCE             13:33  0
+  171  3         5.91    265  CHILE             SOUTH_AMERICA      82:3   0
+  172  3         5.91    265  REGGIANA          ITALY              20:38  0
+  173  3         5.91    264  CORINTHIANS       BRAZIL             46:5   0
+  174  3         5.91    263  SPARTA PRAGUE     CZECH_REPUBLIC      6:10  0
+  175  3         5.91    263  SPARTA PRAGUE     EUROCWC             6:10  0
+  176  3         5.91    262  EINTR. FRANKFURT  GERMANY            14:9   1
+  177  3         5.91    261  ABERDEEN          SCOTLAND           33:0   0
+  178  3         5.91    261  ABERDEEN          UEFACUP            33:0   0
+  179  3         5.91    260  OVIEDO            SPAIN              35:31  0
+  180  3         5.91    258  SLOVAKIA          EUROPE             80:40  0
+  181  3         5.91    256  BOBBY BANYAN FC   CUSTOM             72:6   0
+  182  3         5.82    267  FINLAND           EUROPE             80:14  0
+  183  3         5.82    266  NANTES            FRANCE             13:27  0
+  184  3         5.82    264  REAL SOCIEDAD     SPAIN              35:37  0
+  185  3         5.82    263  BORDEAUX          FRANCE             13:4   0
+  186  3         5.82    262  WOLVERHAMPTON W.  ENGLAND             8:43  1
+  187  3         5.82    259  NORTHERN IRELAND  EUROPE             80:31  0
+  188  3         5.82    249  RACING SANTANDER  SPAIN              35:33  0
+  189  3         5.73    258  CELTA VIGO        SPAIN              35:14  0
+  190  3         5.73    258  SANTOS            BRAZIL             46:19  0
+  191  3         5.73    256  GAMESWORLD        CUSTOM             72:18  0
+  192  3         5.73    254  SCHALKE           GERMANY            14:30  0
+  193  3         5.73    254  SCHALKE           UEFACUP            14:30  0
+  194  3         5.73    254  VITESSE           HOLLAND            25:31  0
+  195  3         5.73    251  ATALANTA          ITALY              20:4   0
+  196  3         5.73    249  DYNAMO DRESDEN    GERMANY            14:8   4
+  197  3         5.73    248  UNITED STATES     NORTH_AMERICA      83:14  0
+  198  3         5.73    244  BASTIA            FRANCE             13:2   0
+  199  3         5.73    244  HUNGARY           EUROPE             80:20  0
+  200  3         5.73    243  VICENZA           ITALY              20:50  0
+  201  3         5.64    257  Q.P.R.            ENGLAND             8:29  1
+  202  3         5.64    252  JUST NIPPING OUT  CUSTOM             72:21  0
+  203  3         5.64    251  SUNDERLAND        ENGLAND             8:36  0
+  204  3         5.64    250  STRASBOURG        FRANCE             13:37  0
+  205  3         5.64    248  J TEAM            CUSTOM             72:20  0
+  206  3         5.64    248  NORWICH CITY      ENGLAND             8:23  1
+  207  3         5.64    247  SHEFFIELD UNITED  ENGLAND             8:31  1
+  208  3         5.64    243  ANTWERP           BELGIUM             2:1   0
+  209  3         5.64    243  DERBY COUNTY      ENGLAND             8:11  0
+  210  3         5.64    243  METZ              FRANCE             13:22  0
+  211  3         5.64    243  METZ              UEFACUP            13:22  0
+  212  3         5.64    241  BOLTON WANDERERS  ENGLAND             8:5   1
+  213  3         5.64    240  RODA JC           HOLLAND            25:24  0
+  214  3         5.55    254  90 MINUTES XI     CUSTOM             72:0   0
+  215  3         5.55    251  SALAMANCA         SPAIN              35:38  1
+  216  3         5.55    250  BOLOGNA           ITALY              20:7   0
+  217  3         5.55    248  1860 MUNICH       GERMANY            14:0   0
+  218  3         5.55    248  UNIQUE            CUSTOM             72:44  0
+  219  3         5.55    247  YUKUHEMA FLAGILS  JAPAN              55:27  0
+  220  3         5.55    245  GENOA             ITALY              20:20  1
+  221  3         5.55    244  HANSA ROSTOCK     GERMANY            14:19  0
+  222  3         5.55    244  TORINO            ITALY              20:46  1
+  223  3         5.55    242  ARM. BIELEFELD    GERMANY            14:1   0
+  224  3         5.55    242  DAILY STAR FC     CUSTOM             72:11  0
+  225  3         5.55    242  TWENTE            HOLLAND            25:28  0
+  226  3         5.55    241  DUNDEE UNITED     SCOTLAND           33:15  0
+  227  3         5.55    239  CHELMSFORD CITY   CUSTOM             72:9   0
+  228  3         5.55    237  ISRAEL            EUROPE             80:22  0
+  229  3         5.55    236  JOBALO OWATA      JAPAN              55:9   0
+  230  3         5.55    236  NEGUYA GREMPAS    JAPAN              55:16  0
+  231  2.5       5.45    242  CAEN              FRANCE             13:5   0
+  232  2.5       5.45    242  COMPOSTELA        SPAIN              35:15  0
+  233  2.5       5.45    241  BRESCIA           ITALY              20:8   1
+  234  2.5       5.45    240  NOT SO DIPPY UTD  CUSTOM             72:26  0
+  235  2.5       5.45    239  BOCA JUNIORS      ARGENTINA          43:8   0
+  236  2.5       5.45    238  CHEAP THRILLS     CUSTOM             72:7   0
+  237  2.5       5.45    238  MACEDONIA         EUROPE             80:28  0
+  238  2.5       5.45    238  NACIONAL          URUGUAY            71:16  0
+  239  2.5       5.45    237  ALBACETE          SPAIN              35:1   1
+  240  2.5       5.45    234  GAMESMASTER       CUSTOM             72:17  0
+  241  2.5       5.45    234  LE HAVRE          FRANCE             13:13  0
+  242  2.5       5.45    233  ALIANZA LIMA      PERU               65:1   0
+  243  2.5       5.45    233  OLDHAM ATHLETIC   ENGLAND             8:25  1
+  244  2.5       5.45    233  SV SALZBURG       AUSTRIA             1:8   0
+  245  2.5       5.45    232  LOKEREN           BELGIUM             2:12  0
+  246  2.5       5.45    232  TIROL INNSBRUCK   AUSTRIA             1:9   0
+  247  2.5       5.45    231  PORTUGUESA        BRAZIL             46:18  0
+  248  2.5       5.45    231  TOULON            FRANCE             13:38  1
+  249  2.5       5.45    230  LILLE             FRANCE             13:16  0
+  250  2.5       5.45    229  GERMINAL EKEREN   BELGIUM             2:8   0
+  251  2.5       5.45    229  JAF OCHOHARA      JAPAN              55:8   0
+  252  2.5       5.45    228  SLOVENIA          EUROPE             80:41  0
+  253  2.5       5.45    227  KOSHAMA INTLERS   JAPAN              55:12  0
+  254  2.5       5.45    225  URAWA RODS        JAPAN              55:24  0
+  255  2.5       5.45    225  VFL BOCHUM        GERMANY            14:40  0
+  256  2.5       5.45    220  LECCE             ITALY              20:24  1
+  257  2.5       5.45    217  SON HIROSHIMA     JAPAN              55:20  0
+  258  2.5       5.36    240  RAYO VALLECANO    SPAIN              35:34  0
+  259  2.5       5.36    238  ASCOLI            ITALY              20:3   4
+  260  2.5       5.36    236  HERCULES          SPAIN              35:22  0
+  261  2.5       5.36    236  MEMBERS ONLY      CUSTOM             72:24  0
+  262  2.5       5.36    235  AEK ATHENS        EUROCWC            15:0   0
+  263  2.5       5.36    235  AEK ATHENS        GREECE             15:0   0
+  264  2.5       5.36    235  CHARLEROI         BELGIUM             2:3   0
+  265  2.5       5.36    235  PANATHINAIKOS     GREECE             15:19  0
+  266  2.5       5.36    234  UKRAINE           EUROPE             80:46  0
+  267  2.5       5.36    233  INTERNACIONAL     BRAZIL             46:14  0
+  268  2.5       5.36    233  IPSWICH TOWN      ENGLAND             8:15  1
+  269  2.5       5.36    233  SPORT RECIFE      BRAZIL             46:21  0
+  270  2.5       5.36    232  BOLIVAR           BOLIVIA            45:1   0
+  271  2.5       5.36    232  BULLMORE HIR.     JAPAN              55:1   0
+  272  2.5       5.36    232  LENS              FRANCE             13:15  0
+  273  2.5       5.36    232  OLYMPIAKOS        GREECE             15:17  0
+  274  2.5       5.36    232  TRUE BLUE         CUSTOM             72:42  0
+  275  2.5       5.36    231  IVORY COAST       AFRICA             81:13  0
+  276  2.5       5.36    230  BESIKTAS          TURKEY             38:5   0
+  277  2.5       5.36    230  BESIKTAS          UEFACUP            38:5   0
+  278  2.5       5.36    230  BOAVISTA          PORTUGAL           29:3   0
+  279  2.5       5.36    230  BOAVISTA          UEFACUP            29:3   0
+  280  2.5       5.36    230  GALATASARAY       EUROCWC            38:10  0
+  281  2.5       5.36    230  GALATASARAY       TURKEY             38:10  0
+  282  2.5       5.36    230  HEARTS            SCOTLAND           33:23  0
+  283  2.5       5.36    230  MEXICO            NORTH_AMERICA      83:8   0
+  284  2.5       5.36    229  BAHIA             BRAZIL             46:2   0
+  285  2.5       5.36    229  CESENA            ITALY              20:11  1
+  286  2.5       5.36    229  VERONA            ITALY              20:49  0
+  287  2.5       5.36    229  VIRDY KEWISAKI    JAPAN              55:25  0
+  288  2.5       5.36    228  ATL. NACIONAL     COLOMBIA           49:2   0
+  289  2.5       5.36    228  AUSTRIA VIENNA    AUSTRIA             1:0   0
+  290  2.5       5.36    228  UTRECHT           HOLLAND            25:29  0
+  291  2.5       5.36    227  CERCLE BRUGES     BELGIUM             2:2   0
+  292  2.5       5.36    227  CERCLE BRUGES     EUROCWC             2:2   0
+  293  2.5       5.36    226  KV MECHELEN       BELGIUM             2:10  0
+  294  2.5       5.36    226  ROSENBORG         EUROCUP            27:11  0
+  295  2.5       5.36    226  ROSENBORG         NORWAY             27:11  0
+  296  2.5       5.36    226  UNIVERSITARIO     PERU               65:15  0
+  297  2.5       5.36    225  GIMNASIA-ESGRIMA  ARGENTINA          43:20  0
+  298  2.5       5.36    225  NICE              FRANCE             13:28  0
+  299  2.5       5.36    225  WHAT I AM         CUSTOM             72:47  0
+  300  2.5       5.36    224  RWD MOLENBEEK     BELGIUM             2:15  0
+  301  2.5       5.36    222  SELECT MAGAZINE   CUSTOM             72:33  0
+  302  2.5       5.36    221  MSV DUISBURG      GERMANY            14:26  0
+  303  2.5       5.36    220  BIRMINGHAM CITY   ENGLAND             8:3   1
+  304  2.5       5.27    235  INDEPENDIENTE     ARGENTINA          43:24  0
+  305  2.5       5.27    235  TRABZONSPOR       TURKEY             38:21  0
+  306  2.5       5.27    235  TRABZONSPOR       UEFACUP            38:21  0
+  307  2.5       5.27    234  NIGERIA           AFRICA             81:22  0
+  308  2.5       5.27    233  FERENCVAROS       HUNGARY            16:5   0
+  309  2.5       5.27    233  FERENCVAROS       UEFACUP            16:5   0
+  310  2.5       5.27    233  SHUMUZA S-PALSE   JAPAN              55:19  0
+  311  2.5       5.27    232  ZAMBIA            AFRICA             81:32  0
+  312  2.5       5.27    231  FENERBAHCE        EUROCUP            38:9   0
+  313  2.5       5.27    231  FENERBAHCE        TURKEY             38:9   0
+  314  2.5       5.27    231  IFK GOTHENBURG    EUROCUP            36:8   0
+  315  2.5       5.27    231  IFK GOTHENBURG    SWEDEN             36:8   0
+  316  2.5       5.27    231  MVV               HOLLAND            25:18  1
+  317  2.5       5.27    231  VALLADOLID        SPAIN              35:45  0
+  318  2.5       5.27    229  CRYSTAL PALACE    ENGLAND             8:10  1
+  319  2.5       5.27    229  SLOVAN BR'SLAVA   SLOVAKIA           78:8   0
+  320  2.5       5.27    228  LEGIA WARSAW      POLAND             28:7   0
+  321  2.5       5.27    228  LEGIA WARSAW      UEFACUP            28:7   0
+  322  2.5       5.27    227  BRAGANTINO        BRAZIL             46:4   0
+  323  2.5       5.27    227  HAJDUK SPLIT      CROATIA             4:2   0
+  324  2.5       5.27    227  MERIDA            SPAIN              35:27  1
+  325  2.5       5.27    227  STURM GRAZ        AUSTRIA             1:7   0
+  326  2.5       5.27    227  STURM GRAZ        EUROCWC             1:7   0
+  327  2.5       5.27    226  ALBANIA           EUROPE             80:0   0
+  328  2.5       5.27    226  BARI              ITALY              20:6   1
+  329  2.5       5.27    226  DINAMO KIEV       UKRAINE            39:2   0
+  330  2.5       5.27    226  FOGGIA            ITALY              20:19  1
+  331  2.5       5.27    226  NEWELLS OLD BOYS  ARGENTINA          43:28  0
+  332  2.5       5.27    226  STOKE CITY        ENGLAND             8:35  1
+  333  2.5       5.27    225  GENT              BELGIUM             2:7   0
+  334  2.5       5.27    224  HIBERNIAN         SCOTLAND           33:24  0
+  335  2.5       5.27    224  LOGRONES          SPAIN              35:25  0
+  336  2.5       5.27    221  CHEESEBOARD       CUSTOM             72:8   0
+  337  2.5       5.27    221  FLUMINENSE        BRAZIL             46:10  0
+  338  2.5       5.27    221  LIERSE            BELGIUM             2:11  0
+  339  2.5       5.27    221  RKC               HOLLAND            25:23  0
+  340  2.5       5.27    221  WILLEM II         HOLLAND            25:34  0
+  341  2.5       5.27    219  PIACENZA          ITALY              20:34  0
+  342  2.5       5.27    216  PERU              SOUTH_AMERICA      82:7   0
+  343  2.5       5.27    216  PERUGIA           ITALY              20:32  0
+  344  2.5       5.27    214  BELARUS           EUROPE             80:4   0
+  345  2.5       5.27    211  GENK              BELGIUM             2:6   0
+  346  2.5       5.18    230  GRASSHOPPERS      EUROCUP            37:5   0
+  347  2.5       5.18    230  GRASSHOPPERS      SWITZERLAND        37:5   0
+  348  2.5       5.18    229  CANNES            FRANCE             13:6   0
+  349  2.5       5.18    228  MONTPELLIER       FRANCE             13:24  0
+  350  2.5       5.18    228  TRINIDAD-TOBAGO   NORTH_AMERICA      83:13  0
+  351  2.5       5.18    227  CREMONESE         ITALY              20:15  1
+  352  2.5       5.18    227  GRONINGEN         HOLLAND            25:13  0
+  353  2.5       5.18    227  SPARTA ROTTERDAM  HOLLAND            25:25  0
+  354  2.5       5.18    226  GOIAS             BRAZIL             46:11  0
+  355  2.5       5.18    226  PADOVA            ITALY              20:29  1
+  356  2.5       5.18    226  PESCARA           ITALY              20:33  1
+  357  2.5       5.18    225  CRICIUMA          BRAZIL             46:7   0
+  358  2.5       5.18    223  KFC UERDINGEN     GERMANY            14:24  1
+  359  2.5       5.18    219  FORT. DUSSELDORF  GERMANY            14:10  0
+  360  2.5       5.18    217  NAC               HOLLAND            25:19  0
+  361  2.5       5.18    216  UP THE EAGLES     CUSTOM             72:45  0
+  362  2.5       5.18    215  LOMMEL            BELGIUM             2:13  0
+  363  2.5       5.18    214  MARTIGUES         FRANCE             13:21  1
+  364  2.5       5.18    213  VIT. GUIMARAES    PORTUGAL           29:24  0
+  365  2.5       5.18    213  VIT. GUIMARAES    UEFACUP            29:24  0
+  366  2.5       5.18    212  PARANA CLUBE      BRAZIL             46:17  0
+  367  2.5       5.18    211  HUDDERSFIELD      ENGLAND             8:14  1
+  368  2.5       5.18    211  PORTSMOUTH        ENGLAND             8:28  1
+  369  2.5       5.18    208  A C ARTISAN       CUSTOM             72:1   0
+  370  2.5       5.18    207  MOLDOVA           EUROPE             80:30  0
+  371  2.5       5.18    207  SAN JOSE CLASH    USA                73:12  0
+  372  2.5       5.18    205  MOTHERWELL        SCOTLAND           33:28  0
+  373  2.5       5.18    205  UNIV. CRAIOVA     ROMANIA            30:20  0
+  374  2.5       5.09    223  CORITIBA          BRAZIL             46:6   0
+  375  2.5       5.09    220  JUVENTUDE         BRAZIL             46:15  0
+  376  2.5       5.09    218  TRANMERE ROVERS   ENGLAND             8:39  1
+  377  2.5       5.09    215  ANCONA            ITALY              20:2   4
+  378  2.5       5.09    209  LITHUANIA         EUROPE             80:26  0
+  379  2.5       5.09    209  MODENA            ITALY              20:26  4
+  380  2.5       5.09    209  VENEZIA           ITALY              20:48  1
+  381  2.5       5.09    208  DEP. ESPANOL      ARGENTINA          43:12  0
+  382  2.5       5.09    207  SOCHAUX           FRANCE             13:36  1
+  383  2.5       5.09    206  DORDRECHT         HOLLAND            25:5   1
+  384  2.5       5.09    206  RED STAR B'GRADE  EUROCWC            41:7   0
+  385  2.5       5.09    206  RED STAR B'GRADE  YUGOSLAVIA         41:7   0
+  386  2.5       5.09    205  SOUTH AFRICA      AFRICA             81:25  0
+  387  2.5       5.09    204  COLOMBUS CREW     USA                73:0   0
+  388  2.5       5.09    204  COSTA RICA        NORTH_AMERICA      83:2   0
+  389  2.5       5.09    204  HEERENVEEN        HOLLAND            25:15  0
+  390  2.5       5.09    204  MACCABI TEL-AVIV  ISRAEL             19:14  0
+  391  2.5       5.09    204  MELGAR AREQUIPA   PERU               65:9   0
+  392  2.5       5.09    204  METALSAN          BOLIVIA            45:7   4
+  393  2.5       5.09    204  NEUCHATEL XAMAX   SWITZERLAND        37:10  0
+  394  2.5       5.09    204  NEUCHATEL XAMAX   UEFACUP            37:10  0
+  395  2.5       5.09    204  SOUTH KOREA       ASIA               84:24  0
+  396  2.5       5.09    204  WALDHOF MANNHEIM  GERMANY            14:42  1
+  397  2.5       5.09    203  AAB               DENMARK             7:0   0
+  398  2.5       5.09    203  AIK               EUROCWC            36:0   0
+  399  2.5       5.09    203  AIK               SWEDEN             36:0   0
+  400  2.5       5.09    203  ECUADOR           SOUTH_AMERICA      82:5   0
+  401  2.5       5.09    203  EXTREMADURA       SPAIN              35:20  0
+  402  2.5       5.09    203  GUINGAMP          FRANCE             13:11  0
+  403  2.5       5.09    203  MAMELODI SUNDOWN  SOUTH_AFRICA       69:6   0
+  404  2.5       5.09    203  NANCY             FRANCE             13:26  0
+  405  2.5       5.09    202  FC DEN HAAG       HOLLAND            25:9   1
+  406  2.5       5.09    202  HERTHA BERLIN     GERMANY            14:20  1
+  407  2.5       5.09    200  CROATIA ZAGREB    CROATIA             4:1   0
+  408  2.5       5.09    200  UNIV. CATOLICA    CHILE              48:14  0
+  409  2.5       5.09    200  VELEZ SARSFIELD   ARGENTINA          43:39  0
+  410  2.5       5.09    200  VFB LEIPZIG       GERMANY            14:36  1
+  411  2.5       5.09    199  KISPEST-HONVED    EUROCWC            16:8   0
+  412  2.5       5.09    199  KISPEST-HONVED    HUNGARY            16:8   0
+  413  2.5       5.09    199  PAOK              GREECE             15:22  0
+  414  2.5       5.09    198  BLOOMING S. CRUZ  BOLIVIA            45:0   0
+  415  2.5       5.09    198  DINAMO MINSK      BELARUS            76:2   0
+  416  2.5       5.09    198  NUREMBERG         GERMANY            14:27  4
+  417  2.5       5.09    197  ICELAND           EUROPE             80:21  0
+  418  2.5       5.00    222  ARGENTINOS JNRS.  ARGENTINA          43:2   1
+  419  2.5       5.00    221  ATL PARANAENSE    BRAZIL             46:0   0
+  420  2.5       5.00    214  GHANA             AFRICA             81:11  0
+  421  2.5       5.00    209  OSTER             SWEDEN             36:15  0
+  422  2.5       5.00    208  HANNOVER 96       GERMANY            14:18  4
+  423  2.5       5.00    207  PISA              ITALY              20:35  4
+  424  2.5       5.00    206  MILLONARIOS       COLOMBIA           49:14  0
+  425  2.5       5.00    206  NIEDEROSTERREICH  AUSTRIA             1:4   0
+  426  2.5       5.00    206  VOLENDAM          HOLLAND            25:32  0
+  427  2.5       5.00    205  EMPEROR CITY      CUSTOM             72:14  0
+  428  2.5       5.00    205  KAIZER CHIEFS     SOUTH_AFRICA       69:5   0
+  429  2.5       5.00    205  NEC               HOLLAND            25:20  0
+  430  2.5       5.00    205  SILKEBORG         DENMARK             7:9   0
+  431  2.5       5.00    205  SPORTING CRISTAL  PERU               65:12  0
+  432  2.5       5.00    204  AMERICA CALI      COLOMBIA           49:0   0
+  433  2.5       5.00    204  CLUB NECAXA       MEXICO             60:10  0
+  434  2.5       5.00    204  NY-NJ METROSTARS  USA                73:10  0
+  435  2.5       5.00    203  DEP. MUNICIPAL    PERU               65:5   0
+  436  2.5       5.00    203  LA GALAXY         USA                73:6   0
+  437  2.5       5.00    203  OLIMPIA           PARAGUAY           64:7   0
+  438  2.5       5.00    203  SERVETTE          SWITZERLAND        37:11  0
+  439  2.5       5.00    203  SLAVIA SOFIA      BULGARIA            3:14  0
+  440  2.5       5.00    203  VFL WOLFSBURG     GERMANY            14:41  1
+  441  2.5       5.00    203  WASHINGTON DC     USA                73:17  0
+  442  2.5       5.00    202  CAMEROON          AFRICA             81:6   0
+  443  2.5       5.00    202  FARENSE           PORTUGAL           29:11  0
+  444  2.5       5.00    202  GO AHEAD EAGLES   HOLLAND            25:12  1
+  445  2.5       5.00    202  MARITIMO          PORTUGAL           29:16  0
+  446  2.5       5.00    202  OSASUNA           SPAIN              35:30  1
+  447  2.5       5.00    201  BELENENSES        PORTUGAL           29:1   0
+  448  2.5       5.00    201  BVSC              HUNGARY            16:1   0
+  449  2.5       5.00    201  CD COBRELOA       CHILE              48:2   0
+  450  2.5       5.00    201  CSKA SOFIA        BULGARIA            3:2   0
+  451  2.5       5.00    201  DANUBIO           URUGUAY            71:7   0
+  452  2.5       5.00    201  KANSAS CITY WIZ   USA                73:5   0
+  453  2.5       5.00    201  LEVSKI SOFIA      BULGARIA            3:6   0
+  454  2.5       5.00    201  LEVSKI SOFIA      EUROCWC             3:6   0
+  455  2.5       5.00    201  MOROCCO           AFRICA             81:19  0
+  456  2.5       5.00    201  TAMPA BAY MUTINY  USA                73:14  0
+  457  2.5       5.00    201  UNION MINAS       PERU               65:14  0
+  458  2.5       5.00    200  AARAU             SWITZERLAND        37:0   0
+  459  2.5       5.00    200  ATLETICO JUNIOR   COLOMBIA           49:4   0
+  460  2.5       5.00    200  BRONDBY           DENMARK             7:3   0
+  461  2.5       5.00    200  BRONDBY           UEFACUP             7:3   0
+  462  2.5       5.00    200  DALLAS BURN       USA                73:3   0
+  463  2.5       5.00    200  GRAZER AK         AUSTRIA             1:2   0
+  464  2.5       5.00    200  GRAZER AK         UEFACUP             1:2   0
+  465  2.5       5.00    200  HARELBEKE         BELGIUM             2:9   0
+  466  2.5       5.00    200  LLEIDA            SPAIN              35:24  1
+  467  2.5       5.00    200  LYNGBY            DENMARK             7:7   0
+  468  2.5       5.00    200  OB                DENMARK             7:8   0
+  469  2.5       5.00    200  OFI CRETE         GREECE             15:16  0
+  470  2.5       5.00    200  PARTICK THISTLE   SCOTLAND           33:29  1
+  471  2.5       5.00    200  PARTIZAN B'GRADE  YUGOSLAVIA         41:3   0
+  472  2.5       5.00    200  PORT VALE         ENGLAND             8:27  1
+  473  2.5       5.00    200  SIGMA OLOMOUC     CZECH_REPUBLIC      6:7   0
+  474  2.5       5.00    200  SWINDON TOWN      ENGLAND             8:37  1
+  475  2.5       5.00    200  WATTENSCHEID      GERMANY            14:43  4
+  476  2.5       5.00    199  AGF               DENMARK             7:2   0
+  477  2.5       5.00    199  AGF               EUROCWC             7:2   0
+  478  2.5       5.00    199  AVELLINO          ITALY              20:5   4
+  479  2.5       5.00    199  BOTEV PLOVDIV     BULGARIA            3:1   0
+  480  2.5       5.00    199  CHERNOMORETS      UKRAINE            39:1   0
+  481  2.5       5.00    199  COLO COLO         CHILE              48:7   0
+  482  2.5       5.00    199  EGYPT             AFRICA             81:8   0
+  483  2.5       5.00    199  FC COPENHAGEN     DENMARK             7:4   0
+  484  2.5       5.00    199  FORTUNA COLOGNE   GERMANY            14:11  1
+  485  2.5       5.00    199  GKS KATOWICE      POLAND             28:2   0
+  486  2.5       5.00    199  JORGE WILSTERMAN  BOLIVIA            45:6   0
+  487  2.5       5.00    199  MILLWALL          ENGLAND             8:73  2
+  488  2.5       5.00    199  MTK               HUNGARY            16:9   0
+  489  2.5       5.00    199  OXFORD UNITED     ENGLAND             8:26  1
+  490  2.5       5.00    199  SAARBRUCKEN       GERMANY            14:29  4
+  491  2.5       5.00    199  TOULOUSE          FRANCE             13:39  1
+  492  2.5       5.00    199  VOJVODINA N. SAD  YUGOSLAVIA         41:8   0
+  493  2.5       5.00    198  BANIK OSTRAVA     CZECH_REPUBLIC      6:0   0
+  494  2.5       5.00    198  DEFENSOR SPORT    URUGUAY            71:8   0
+  495  2.5       5.00    198  DEP. SIPESA       PERU               65:6   0
+  496  2.5       5.00    198  DINAMO MOSCOW     RUSSIA             31:3   0
+  497  2.5       5.00    198  GUABIRA           BOLIVIA            45:4   0
+  498  2.5       5.00    198  GUEUGNON          FRANCE             13:10  1
+  499  2.5       5.00    198  LUGANO            SWITZERLAND        37:8   0
+  500  2.5       5.00    198  OLIMPIJA L'JANA   EUROCWC            34:11  0
+  501  2.5       5.00    198  OLIMPIJA L'JANA   SLOVENIA           34:11  0
+  502  2.5       5.00    198  OSIJEK            CROATIA             4:7   0
+  503  2.5       5.00    198  PENAROL           URUGUAY            71:17  0
+  504  2.5       5.00    198  SAINT-ETIENNE     FRANCE             13:35  1
+  505  2.5       5.00    198  WIDZEW LODZ       EUROCUP            28:23  0
+  506  2.5       5.00    198  WIDZEW LODZ       POLAND             28:23  0
+  507  2.5       5.00    197  CERRO PORTENO     PARAGUAY           64:2   0
+  508  2.5       5.00    197  DNEPROPETROVSK    UKRAINE            39:3   0
+  509  2.5       5.00    197  NEW ENGLAND REV.  USA                73:9   0
+  510  2.5       5.00    197  RAPID BUCHAREST   ROMANIA            30:15  0
+  511  2.5       5.00    196  APOLLON ATHENS    GREECE             15:1   0
+  512  2.5       5.00    196  CYPRUS            EUROPE             80:8   0
+  513  2.5       5.00    196  DEPORTIVO CALI    COLOMBIA           49:10  0
+  514  2.5       5.00    196  LOKOMOTIV SOFIA   BULGARIA            3:9   0
+  515  2.5       5.00    196  MACCABI HAIFA     ISRAEL             19:10  0
+  516  2.5       5.00    196  MALMO             SWEDEN             36:12  0
+  517  2.5       5.00    196  SION              EUROCWC            37:12  0
+  518  2.5       5.00    196  SION              SWITZERLAND        37:12  0
+  519  2.5       5.00    196  UNAM              MEXICO             60:34  0
+  520  2.5       5.00    195  AMERICA           MEXICO             60:0   0
+  521  2.5       5.00    195  IFK NORRKOPING    SWEDEN             36:9   0
+  522  2.5       5.00    194  BURNLEY           ENGLAND             8:51  2
+  523  2.5       5.00    194  ST. PAULI         GERMANY            14:31  0
+  524  2.5       5.00    193  DINAMO BUCHAREST  ROMANIA            30:5   0
+  525  2.5       5.00    193  FALKIRK           SCOTLAND           33:19  1
+  526  2.5       5.00    193  KILMARNOCK        SCOTLAND           33:25  0
+  527  2.5       5.00    193  SALERNITANA       ITALY              20:41  1
+  528  2.5       5.00    193  THE STRONGEST     BOLIVIA            45:12  0
+  529  2.5       5.00    192  CHIEVO            ITALY              20:12  1
+  530  2.5       5.00    192  COLORADO RAPIDS   USA                73:2   0
+  531  2.5       5.00    192  GUARANI           BRAZIL             46:13  0
+  532  2.5       5.00    192  ROSARIO CENTRAL   ARGENTINA          43:34  0
+  533  2.5       5.00    191  COMO              ITALY              20:13  4
+  534  2.5       5.00    188  MOUSCRON          BELGIUM             2:14  0
+  535  2.5       4.91    217  GIMBA OSOKA       JAPAN              55:6   0
+  536  2.5       4.91    206  READING           ENGLAND             8:30  1
+  537  2.5       4.91    201  LUZERN            SWITZERLAND        37:9   0
+  538  2.5       4.91    198  COSENZA           ITALY              20:14  1
+  539  2.5       4.91    195  SAN LORENZO       ARGENTINA          43:36  0
+  540  2.5       4.91    191  PALERMO           ITALY              20:30  1
+  541  2.5       4.91    188  GIMNASIA Y TIRO   ARGENTINA          43:19  1
+  542  2.5       4.91    187  RAVENNA           ITALY              20:37  1
+  543  2.5       4.82    200  PJN FATARES       JAPAN              55:18  1
+  544  2.5       4.82    195  SINT-TRUIDEN      BELGIUM             2:16  0
+  545  2.5       4.82    193  EENDRACHT AALST   BELGIUM             2:5   0
+  546  2.5       4.82    192  MONZA             ITALY              20:27  4
+  547  2.5       4.82    192  NOTTS COUNTY      ENGLAND             8:75  2
+  548  2.5       4.82    192  OAP HOME (BOYS)   CUSTOM             72:27  0
+  549  2.5       4.82    191  GRIMSBY TOWN      ENGLAND             8:13  1
+  550  2.5       4.82    191  RACING CLUB       ARGENTINA          43:32  0
+  551  2.5       4.82    190  CHARLTON ATH.     ENGLAND             8:7   1
+  552  2.5       4.82    189  ESTUDIANTES       ARGENTINA          43:16  0
+  553  2.5       4.82    189  LUTON TOWN        ENGLAND             8:71  2
+  554  2.5       4.82    188  PARAGUAY          SOUTH_AMERICA      82:6   0
+  555  2.5       4.82    177  SHUMEN            BULGARIA            3:13  0
+  556  2.5       4.73    190  FIDELIS ANDRIA    ITALY              20:17  4
+  557  2.5       4.73    189  BAD JOKES         CUSTOM             72:4   0
+  558  2.5       4.73    188  ACIREALE          ITALY              20:1   4
+  559  2.5       4.73    186  BABY BOOMER       CUSTOM             72:2   0
+  560  2.5       4.73    183  SPAL              ITALY              20:43  4
+  561  2.5       4.73    178  CHEMNITZER FC     GERMANY            14:6   4
+  562  2.5       4.73    176  AZ                HOLLAND            25:1   0
+  563  2.5       4.73    176  UNION CHEB        CZECH_REPUBLIC      6:13  0
+  564  2.5       4.73    174  FINNPA            FINLAND            12:1   0
+  565  2.5       4.64    191  CANADA            NORTH_AMERICA      83:1   0
+  566  2.5       4.64    188  WEST BROMWICH     ENGLAND             8:40  1
+  567  2.5       4.64    186  LUCCHESE          ITALY              20:25  1
+  568  2.5       4.64    185  SAUDI ARABIA      ASIA               84:22  0
+  569  2.5       4.64    184  BARNSLEY          ENGLAND             8:2   1
+  570  2.5       4.64    184  MALTA             EUROPE             80:29  0
+  571  2.5       4.64    182  KYOTO P SANGA     JAPAN              55:14  1
+  572  2.5       4.64    182  SOUTHEND UNITED   ENGLAND             8:34  1
+  573  2.5       4.64    178  BRADFORD CITY     ENGLAND             8:6   1
+  574  2.5       4.64    177  ETAR V. TARNOVO   BULGARIA            3:4   0
+  575  2.5       4.64    176  PETROLERO         BOLIVIA            45:9   0
+  576  2.5       4.64    175  FC ZURICH         SWITZERLAND        37:4   0
+  577  2.5       4.64    174  ATH. BILBAO B     SPAIN              35:3   1
+  578  2.5       4.64    174  CLUB LIBERTAD     PARAGUAY           64:3   0
+  579  2.5       4.64    174  HURACAN BUCEO     URUGUAY            71:11  1
+  580  2.5       4.64    173  BELLA VISTA       URUGUAY            71:1   1
+  581  2.5       4.64    173  HEARTS OF OAK     GHANA              79:4   0
+  582  2.5       4.64    173  IA                ICELAND            17:5   0
+  583  2.5       4.64    172  DOUGLAS HAIG      ARGENTINA          43:15  1
+  584  2.5       4.55    181  BRISTOL CITY      ENGLAND             8:49  2
+  585  2.5       4.55    181  TUSHOBA           JAPAN              55:23  1
+  586  2.5       4.55    180  NORWICH AND BAN   CUSTOM             72:25  0
+  587  2.5       4.55    178  PETRA DRNOVICE    CZECH_REPUBLIC      6:6   0
+  588  2.5       4.55    176  GORNIK ZABRZE     POLAND             28:3   0
+  589  2.5       4.55    176  HINDO             JAPAN              55:7   1
+  590  2.5       4.55    176  MALI              AFRICA             81:18  0
+  591  2.5       4.55    176  PROVINCIAL        CHILE              48:10  0
+  592  2.5       4.55    176  STOCKPORT COUNTY  ENGLAND             8:84  2
+  593  2.5       4.55    175  IND. MEDELLIN     COLOMBIA           49:12  0
+  594  2.5       4.55    175  LILLESTROM        NORWAY             27:6   0
+  595  2.5       4.55    175  ORLANDO PIRATES   SOUTH_AFRICA       69:9   0
+  596  2.5       4.55    174  CERRO             URUGUAY            71:5   0
+  597  2.5       4.55    174  DE GRAAFSCHAP     HOLLAND            25:3   0
+  598  2.5       4.55    174  HVIDOVRE          DENMARK             7:6   0
+  599  2.5       4.55    174  MULHOUSE          FRANCE             13:25  1
+  600  2.5       4.55    174  VIKING            NORWAY             27:20  0
+  601  2.5       4.55    173  REGGINA           ITALY              20:39  1
+  602  2.5       4.55    173  RUCH CHORZOW      POLAND             28:14  4
+  603  2.5       4.55    172  CARL ZEISS JENA   GERMANY            14:5   1
+  604  2.5       4.55    172  DJURGARDEN        SWEDEN             36:3   0
+  605  2.5       4.55    172  ESTRELA AMADORA   PORTUGAL           29:9   0
+  606  2.5       4.55    172  RBC               HOLLAND            25:22  1
+  607  2.5       4.55    172  TORPEDO MOSCOW    RUSSIA             31:19  0
+  608  2.5       4.55    172  TORPEDO MOSCOW    UEFACUP            31:19  0
+  609  2.5       4.55    172  UJPESTI TE        HUNGARY            16:16  0
+  610  2.5       4.55    171  ANORTHOSIS        CYPRUS              5:3   0
+  611  2.5       4.55    171  DEPORTIVO QUITO   ECUADOR            50:5   0
+  612  2.5       4.55    171  LEON              PERU               65:8   0
+  613  2.5       4.55    171  PETROLUL          ROMANIA            30:12  0
+  614  2.5       4.55    171  ROT-WEISS ESSEN   GERMANY            14:28  1
+  615  2.5       4.55    171  STUTTGART KICKER  GERMANY            14:32  1
+  616  2.5       4.55    170  ALIANZA ATLETICO  PERU               65:0   0
+  617  2.5       4.55    170  UNITED ARAB EMIS  ASIA               84:28  0
+  618  2.5       4.55    170  YOUNG BOYS BERNE  SWITZERLAND        37:14  0
+  619  2.5       4.55    164  ZWOLLE            HOLLAND            25:35  1
+  620  2         4.45    177  LASK LINZ         AUSTRIA             1:3   0
+  621  2         4.45    176  HERFOLGE          DENMARK             7:5   0
+  622  2         4.45    175  LATVIA            EUROPE             80:24  0
+  623  2         4.45    175  RED STAR 93       FRANCE             13:32  1
+  624  2         4.45    175  SALGUEIROS        PORTUGAL           29:19  0
+  625  2         4.45    175  UNIV. DE CHILE    CHILE              48:15  0
+  626  2         4.45    174  CSKA MOSCOW       RUSSIA             31:1   0
+  627  2         4.45    174  HOMBURG           GERMANY            14:21  4
+  628  2         4.45    174  MARIBOR BRANIK    SLOVENIA           34:7   0
+  629  2         4.45    174  ST. GALLEN        SWITZERLAND        37:13  0
+  630  2         4.45    173  APOEL NICOSIA     CYPRUS              5:4   0
+  631  2         4.45    173  ARMENIA           EUROPE             80:1   0
+  632  2         4.45    173  BRANN             EUROCWC            27:1   0
+  633  2         4.45    173  BRANN             NORWAY             27:1   0
+  634  2         4.45    173  LARISSA           GREECE             15:13  0
+  635  2         4.45    173  LAUSANNE          SWITZERLAND        37:7   0
+  636  2         4.45    173  LAVAL             FRANCE             13:12  1
+  637  2         4.45    172  ARIS              GREECE             15:2   0
+  638  2         4.45    172  BEITAR JERUSALEM  ISRAEL             19:0   0
+  639  2         4.45    172  EMPOLI            ITALY              20:16  1
+  640  2         4.45    172  ESPINHO           PORTUGAL           29:7   0
+  641  2         4.45    172  FARUL CONSTANTA   ROMANIA            30:7   0
+  642  2         4.45    172  GIL VICENTE       PORTUGAL           29:14  0
+  643  2         4.45    172  INTER BRATISLAVA  SLOVAKIA           78:5   0
+  644  2         4.45    172  OREBRO            SWEDEN             36:13  0
+  645  2         4.45    172  REAL MADRID B     SPAIN              35:36  1
+  646  2         4.45    172  VFB OLDENBURG     GERMANY            14:38  1
+  647  2         4.45    171  CAMBUUR           HOLLAND            25:2   1
+  648  2         4.45    171  CARAZO OSIKA      JAPAN              55:2   0
+  649  2         4.45    171  COLON SANTA FE    ARGENTINA          43:11  0
+  650  2         4.45    171  HALMSTAD          SWEDEN             36:5   0
+  651  2         4.45    171  HELSINGBORG       SWEDEN             36:7   0
+  652  2         4.45    171  HELSINGBORG       UEFACUP            36:7   0
+  653  2         4.45    171  KARPATY LVOV      UKRAINE            39:4   0
+  654  2         4.45    171  LUXEMBOURG        EUROPE             80:27  0
+  655  2         4.45    171  MALLORCA          SPAIN              35:26  1
+  656  2         4.45    171  MYPA              EUROCWC            12:8   0
+  657  2         4.45    171  MYPA              FINLAND            12:8   0
+  658  2         4.45    170  FC JAZZ           FINLAND            12:0   0
+  659  2         4.45    170  GUINEA            AFRICA             81:12  0
+  660  2         4.45    170  LOKOMOTIV MOSCOW  EUROCWC            31:10  0
+  661  2         4.45    170  LOKOMOTIV MOSCOW  RUSSIA             31:10  0
+  662  2         4.45    170  NUEVA CHICAGO     ARGENTINA          43:29  1
+  663  2         4.45    170  RAMPLA JUNIORS    URUGUAY            71:20  0
+  664  2         4.45    170  UNION SANTA FE    ARGENTINA          43:38  0
+  665  2         4.45    169  CHATEAUROUX       FRANCE             13:8   1
+  666  2         4.45    169  GUTERSLOH         GERMANY            14:16  1
+  667  2         4.45    169  ORIENTE           BOLIVIA            45:8   0
+  668  2         4.45    169  SHAKHTYOR         UKRAINE            39:11  0
+  669  2         4.45    169  U.S.M.H           ALGERIA            42:12  0
+  670  2         4.45    168  BUDUCNOST         YUGOSLAVIA         41:0   0
+  671  2         4.45    168  CIENCIANO         PERU               65:4   0
+  672  2         4.45    168  GABON             AFRICA             81:10  0
+  673  2         4.45    168  VVV               HOLLAND            25:33  1
+  674  2         4.45    167  KUWAIT            ASIA               84:11  0
+  675  2         4.45    167  WALSALL           ENGLAND             8:87  2
+  676  2         4.45    166  SAN AGUSTIN       PERU               65:10  0
+  677  2         4.45    165  INST. CORDOBA     ARGENTINA          43:25  1
+  678  2         4.45    164  VITORIA SETUBAL   PORTUGAL           29:25  0
+  679  2         4.45    163  CLUB SANTOS       MEXICO             60:12  0
+  680  2         4.45    161  ATSEKI            JAPAN              55:0   1
+  681  2         4.36    175  DUNDEE            SCOTLAND           33:14  1
+  682  2         4.36    173  DEP. EL NACIONAL  ECUADOR            50:4   0
+  683  2         4.36    173  UNION ESPANOLA    CHILE              48:13  0
+  684  2         4.36    173  YORK CITY         ENGLAND             8:92  2
+  685  2         4.36    172  CLUB PUEBLA       MEXICO             60:11  0
+  686  2         4.36    172  PROLETER          YUGOSLAVIA         41:4   0
+  687  2         4.36    172  TIRSENSE          PORTUGAL           29:21  4
+  688  2         4.36    171  AB                DENMARK             7:1   0
+  689  2         4.36    171  BASEL             SWITZERLAND        37:1   0
+  690  2         4.36    171  CD PALESTINO      CHILE              48:5   0
+  691  2         4.36    171  CHAVES            PORTUGAL           29:6   0
+  692  2         4.36    171  ISTANBULSPOR      TURKEY             38:13  0
+  693  2         4.36    171  LIBERIA           AFRICA             81:16  0
+  694  2         4.36    171  NACIONAL          PARAGUAY           64:6   0
+  695  2         4.36    171  NK ZAGREB         CROATIA             4:6   0
+  696  2         4.36    171  O'HIGGINS         CHILE              48:9   0
+  697  2         4.36    171  PRESIDENTE HAYES  PARAGUAY           64:8   0
+  698  2         4.36    171  PROGRESO          URUGUAY            71:18  0
+  699  2         4.36    171  RIVER PLATE       URUGUAY            71:22  0
+  700  2         4.36    170  ATL. COLEGIALES   PARAGUAY           64:0   0
+  701  2         4.36    170  BANFIELD          ARGENTINA          43:6   0
+  702  2         4.36    170  BARCELONA B       SPAIN              35:9   1
+  703  2         4.36    170  BEIRA MAR         PORTUGAL           29:0   4
+  704  2         4.36    170  CENTRAL ESPANOL   URUGUAY            71:3   0
+  705  2         4.36    170  FSV MAINZ 05      GERMANY            14:14  1
+  706  2         4.36    170  NEW ZEALAND       OCEANIA            85:2   0
+  707  2         4.36    170  SPORT COLOMBIA    PARAGUAY           64:10  0
+  708  2         4.36    170  TARANTO           ITALY              20:44  4
+  709  2         4.36    170  VAC               HUNGARY            16:17  0
+  710  2         4.36    169  BARCELONA         ECUADOR            50:0   0
+  711  2         4.36    169  CASTEL DI SANGRO  ITALY              20:10  1
+  712  2         4.36    169  FC LINZ           AUSTRIA             1:1   0
+  713  2         4.36    169  FORTUNA SITTARD   HOLLAND            25:11  0
+  714  2         4.36    169  HAPOEL HAIFA      ISRAEL             19:5   0
+  715  2         4.36    169  HELLENIC          SOUTH_AFRICA       69:3   0
+  716  2         4.36    169  KOCAELISPOR       TURKEY             38:17  0
+  717  2         4.36    169  LOK. PLOVDIV      BULGARIA            3:8   0
+  718  2         4.36    169  MOROKA SWALLOWS   SOUTH_AFRICA       69:8   0
+  719  2         4.36    169  ORGRYTE           SWEDEN             36:14  0
+  720  2         4.36    169  SPORT BOYS        PERU               65:11  0
+  721  2         4.36    169  UMTATA BUCKS      SOUTH_AFRICA       69:12  0
+  722  2         4.36    169  WUPPERTAL         GERMANY            14:45  4
+  723  2         4.36    168  AIRDRIE           SCOTLAND           33:1   1
+  724  2         4.36    168  DUNAJSKA STREDA   SLOVAKIA           78:3   0
+  725  2         4.36    168  SPARTAK VLAD.     RUSSIA             31:17  0
+  726  2         4.36    168  SV MEPPEN         GERMANY            14:33  1
+  727  2         4.36    168  TEKSTILSCHIK      RUSSIA             31:18  0
+  728  2         4.36    167  FAJIEDO BLAX      JAPAN              55:4   1
+  729  2         4.36    167  GUARANI           PARAGUAY           64:5   0
+  730  2         4.36    167  GYOR              HUNGARY            16:6   0
+  731  2         4.36    167  LKS LODZ          POLAND             28:8   0
+  732  2         4.36    167  PLATENSE          ARGENTINA          43:30  0
+  733  2         4.36    166  DEN BOSCH         HOLLAND            25:4   1
+  734  2         4.36    166  HELMOND SPORT     HOLLAND            25:16  1
+  735  2         4.36    166  MOLDE             NORWAY             27:9   0
+  736  2         4.36    165  ALMIRANTE BROWN   ARGENTINA          43:1   1
+  737  2         4.36    165  NASSER HUSSEIN    ALGERIA            42:8   0
+  738  2         4.36    165  TERNANA           ITALY              20:45  4
+  739  2         4.36    164  FERROCARRIL       ARGENTINA          43:17  0
+  740  2         4.36    164  HJK               FINLAND            12:3   0
+  741  2         4.36    164  ZEMUN             YUGOSLAVIA         41:9   0
+  742  2         4.36    163  KEWOSAKI STEEL    JAPAN              55:11  1
+  743  2         4.36    158  KAFO              JAPAN              55:10  1
+  744  2         4.36    157  FIJOTSU           JAPAN              55:5   1
+  745  2         4.36    156  SUONO             JAPAN              55:21  1
+  746  2         4.27    171  IRAKLIS           GREECE             15:8   0
+  747  2         4.27    170  MURA M. SOBOTA    SLOVENIA           34:9   0
+  748  2         4.27    170  VARTEKS VARAZDIN  CROATIA             4:11  0
+  749  2         4.27    170  VARTEKS VARAZDIN  EUROCWC             4:11  0
+  750  2         4.27    169  CRUZ AZUL         MEXICO             60:15  0
+  751  2         4.27    169  QWAQWA STARS      SOUTH_AFRICA       69:10  0
+  752  2         4.27    169  RIED IM INNKREIS  AUSTRIA             1:6   0
+  753  2         4.27    168  GIMNASIA JUJUY    ARGENTINA          43:18  0
+  754  2         4.27    168  GLORIA BISTRITA   EUROCWC            30:8   0
+  755  2         4.27    168  GLORIA BISTRITA   ROMANIA            30:8   0
+  756  2         4.27    168  MIRAMAR RANGERS   NEW_ZEALAND        62:9   1
+  757  2         4.27    167  BURGOS            SPAIN              35:11  4
+  758  2         4.27    167  CESKE BUDEJOVICE  CZECH_REPUBLIC      6:2   0
+  759  2         4.27    167  EIBAR             SPAIN              35:18  1
+  760  2         4.27    167  PISTOIESE         ITALY              20:36  4
+  761  2         4.27    167  ST. JOHNSTONE     SCOTLAND           33:35  1
+  762  2         4.27    167  ZAGLEBIE LUBIN    POLAND             28:25  0
+  763  2         4.27    166  ATL. MARBELLA     SPAIN              35:5   1
+  764  2         4.27    166  DESTROYERS        BOLIVIA            45:3   0
+  765  2         4.27    166  INDEPENDIENTE PS  BOLIVIA            45:5   0
+  766  2         4.27    166  LECH POZNAN       POLAND             28:6   0
+  767  2         4.27    166  WATFORD           ENGLAND             8:88  2
+  768  2         4.27    165  BODO GLIMT        NORWAY             27:0   0
+  769  2         4.27    165  QUILMES           ARGENTINA          43:31  1
+  770  2         4.27    164  AZERBAIJAN        EUROPE             80:3   0
+  771  2         4.27    164  DUNFERMLINE       SCOTLAND           33:16  0
+  772  2         4.27    164  ZALGIRIS VILNIUS  LITHUANIA          22:10  0
+  773  2         4.27    163  BRAGA             PORTUGAL           29:4   0
+  774  2         4.27    162  HUR. CORRIENTES   ARGENTINA          43:22  0
+  775  2         4.27    161  KOSHIMA ROYSIL    JAPAN              55:13  0
+  776  2         4.27    161  UNIVERSITARIO     BOLIVIA            45:13  4
+  777  2         4.27    154  TOKYO GUS         JAPAN              55:22  1
+  778  2         4.27    150  CR BELCOURT       ALGERIA            42:2   0
+  779  2         4.27    148  ARGES PITESTI     ROMANIA            30:0   0
+  780  2         4.27    147  ILVES             FINLAND            12:4   0
+  781  2         4.27    147  TOP OSS           HOLLAND            25:27  1
+  782  2         4.27    144  ALTAY             TURKEY             38:0   0
+  783  2         4.27    144  ESTORIL           PORTUGAL           29:8   4
+  784  2         4.18    165  DEP. TOLIMA       COLOMBIA           49:8   0
+  785  2         4.18    156  LANUS             ARGENTINA          43:26  0
+  786  2         4.18    156  NEC YAMAGATA      JAPAN              55:15  1
+  787  2         4.18    153  HAPOEL P-TIKVA    ISRAEL             19:7   0
+  788  2         4.18    150  ATHINAIKOS        GREECE             15:3   0
+  789  2         4.18    150  CD HUACHIPATO     CHILE              48:4   0
+  790  2         4.18    150  ECIJA             SPAIN              35:17  1
+  791  2         4.18    150  HURACAN           ARGENTINA          43:23  0
+  792  2         4.18    150  SAN MARINO        EUROPE             80:38  0
+  793  2         4.18    150  TENNIS BERLIN     GERMANY            14:34  4
+  794  2         4.18    149  CORK CITY         REPUBLIC_IRELAND   18:3   0
+  795  2         4.18    148  HAMMARBY          SWEDEN             36:6   4
+  796  2         4.18    148  PLYMOUTH ARGYLE   ENGLAND             8:77  2
+  797  2         4.18    147  HAKA              FINLAND            12:2   0
+  798  2         4.18    147  KAUCUK OPAVA      CZECH_REPUBLIC      6:5   0
+  799  2         4.18    147  KOPER             SLOVENIA           34:5   0
+  800  2         4.18    147  LINFIELD          NORTHERN_IRELAND   26:12  0
+  801  2         4.18    147  TOROS NEZA        MEXICO             60:31  0
+  802  2         4.18    147  TROYES            FRANCE             13:40  1
+  803  2         4.18    146  CIBALIA VINKOVCI  CROATIA             4:0   0
+  804  2         4.18    146  DENIZLISPOR       TURKEY             38:7   0
+  805  2         4.18    146  HAARLEM           HOLLAND            25:14  1
+  806  2         4.18    146  HRADEC KRALOVE    CZECH_REPUBLIC      6:3   0
+  807  2         4.18    146  NTV KENTU         JAPAN              55:17  1
+  808  2         4.18    146  RAD BELGRADE      YUGOSLAVIA         41:5   0
+  809  2         4.18    145  CARLISLE UNITED   ENGLAND             8:55  3
+  810  2         4.18    145  MOSS              NORWAY             27:10  0
+  811  2         4.18    144  AMAZULU           SOUTH_AFRICA       69:0   0
+  812  2         4.18    144  CLUB GUADALAJARA  MEXICO             60:7   0
+  813  2         4.18    144  CREWE ALEXANDRA   ENGLAND             8:59  2
+  814  2         4.18    144  LIVERPOOL         URUGUAY            71:14  0
+  815  2         4.18    144  LOK. N. NOVGOROD  RUSSIA             31:9   0
+  816  2         4.18    143  ESSEX BOYS        CUSTOM             72:15  0
+  817  2         4.18    143  FELGUEIRAS        PORTUGAL           29:13  4
+  818  2         4.18    143  UN LEON           MEXICO             60:33  0
+  819  2         4.18    141  BK HACKEN         SWEDEN             36:1   4
+  820  2         4.18    141  CD ANTOFAGASTA    CHILE              48:1   0
+  821  2         4.18    140  VASAS             HUNGARY            16:18  0
+  822  2         4.18    139  VPS               FINLAND            12:11  0
+  823  2         4.09    151  JAPAN             ASIA               84:9   0
+  824  2         4.09    150  DEP. MANDIYU      ARGENTINA          43:13  1
+  825  2         4.09    150  STABAEK           NORWAY             27:14  0
+  826  2         4.09    150  TALLERES ESC.     ARGENTINA          43:37  1
+  827  2         4.09    149  CHINA             ASIA               84:3   0
+  828  2         4.09    149  EINDHOVEN         HOLLAND            25:6   1
+  829  2         4.09    149  FSV ZWICKAU       GERMANY            14:15  1
+  830  2         4.09    149  GENCLERBIRLIGI    TURKEY             38:12  0
+  831  2         4.09    149  STALOWA WOLA      POLAND             28:19  4
+  832  2         4.09    148  AMICA WRONKI      POLAND             28:0   0
+  833  2         4.09    148  BRUNSWICK UNITED  AUSTRALIA          44:10  4
+  834  2         4.09    148  BUKOVINA          UKRAINE            39:0   0
+  835  2         4.09    148  SZOMBIERKI BYTOM  POLAND             28:21  4
+  836  2         4.09    147  ATL. BUCARAMANGA  COLOMBIA           49:1   4
+  837  2         4.09    147  BEAUVAIS          FRANCE             13:3   1
+  838  2         4.09    147  BULLE             SWITZERLAND        37:2   4
+  839  2         4.09    147  EXCELSIOR         HOLLAND            25:8   1
+  840  2         4.09    147  OMONIA NICOSIA    CYPRUS              5:12  0
+  841  2         4.09    147  UHERSKE HRADISTE  CZECH_REPUBLIC      6:12  0
+  842  2         4.09    147  WISLA KRAKOW      POLAND             28:24  4
+  843  2         4.09    146  ALMERIA           SPAIN              35:2   1
+  844  2         4.09    146  BERWICK RANGERS   SCOTLAND           33:6   2
+  845  2         4.09    146  BOURNEMOUTH       ENGLAND             8:46  2
+  846  2         4.09    146  DEGERFORS         SWEDEN             36:2   0
+  847  2         4.09    146  KAMAZ             RUSSIA             31:6   0
+  848  2         4.09    146  NAPREDAK          YUGOSLAVIA         41:2   0
+  849  2         4.09    146  OBUASI GOLDFIELD  GHANA              79:6   0
+  850  2         4.09    146  PAPATOETOE        NEW_ZEALAND        62:18  0
+  851  2         4.09    146  PARTIZANI TIRANA  ALBANIA             0:9   0
+  852  2         4.09    146  SLOVAN LIBEREC    CZECH_REPUBLIC      6:9   0
+  853  2         4.09    146  STAL MIELEC       POLAND             28:18  0
+  854  2         4.09    145  ANTALYASPOR       TURKEY             38:2   0
+  855  2         4.09    145  AUDAX ITALIANO    CHILE              48:0   0
+  856  2         4.09    145  BRIGHTON          ENGLAND             8:48  3
+  857  2         4.09    145  CHESTER CITY      ENGLAND             8:56  3
+  858  2         4.09    145  CICLON TARIJA     BOLIVIA            45:2   0
+  859  2         4.09    145  CISMI OIL         JAPAN              55:3   1
+  860  2         4.09    145  EL SALVADOR       NORTH_AMERICA      83:3   0
+  861  2         4.09    145  ELECTROPUTERE     ROMANIA            30:6   4
+  862  2         4.09    145  GRAEME'S FAMILY   CUSTOM             72:19  0
+  863  2         4.09    145  INTER SIBIU       ROMANIA            30:9   0
+  864  2         4.09    145  J.S.K ALGER       ALGERIA            42:5   0
+  865  2         4.09    145  JEUNESSE ESCH     LUXEMBOURG         23:7   0
+  866  2         4.09    145  LDU QUITO         ECUADOR            50:9   0
+  867  2         4.09    145  PERPIGNAN         FRANCE             13:31  1
+  868  2         4.09    145  PIRIN BL'GRAD     BULGARIA            3:12  0
+  869  2         4.09    145  ROPS              FINLAND            12:9   0
+  870  2         4.09    145  SAMSUNSPOR        TURKEY             38:19  0
+  871  2         4.09    145  SPORTUL STUD.     ROMANIA            30:17  0
+  872  2         4.09    145  UNIV. CLUJ        ROMANIA            30:19  0
+  873  2         4.09    145  VALLETTA          MALTA              24:13  0
+  874  2         4.09    145  W.A.M             ALGERIA            42:14  0
+  875  2         4.09    145  WYCOMBE WDRS      ENGLAND             8:91  2
+  876  2         4.09    144  ATLETICO RAFAELA  ARGENTINA          43:4   1
+  877  2         4.09    144  DINAMO TIRANA     ALBANIA             0:4   0
+  878  2         4.09    144  FSV FRANKFURT     GERMANY            14:13  4
+  879  2         4.09    144  HAPOEL TEL-AVIV   ISRAEL             19:8   0
+  880  2         4.09    144  LOS ANGELES       USA                73:7   4
+  881  2         4.09    144  MARSONIA S. BROD  CROATIA             4:5   0
+  882  2         4.09    144  MURCIA            SPAIN              35:28  4
+  883  2         4.09    144  POGON SZCZECIN    POLAND             28:11  0
+  884  2         4.09    144  SAN LORENZO       PARAGUAY           64:9   0
+  885  2         4.09    144  U.S.M.B.A.        ALGERIA            42:11  0
+  886  2         4.09    143  CD TEMUCO         CHILE              48:6   0
+  887  2         4.09    143  CSEPEL            HUNGARY            16:2   0
+  888  2         4.09    143  DINAMO 93 MINSK   BELARUS            76:0   0
+  889  2         4.09    143  DUMBARTON         SCOTLAND           33:13  2
+  890  2         4.09    143  FAMALICAO         PORTUGAL           29:10  4
+  891  2         4.09    143  LIECHTENSTEIN     EUROPE             80:25  0
+  892  2         4.09    143  NIORT             FRANCE             13:29  1
+  893  2         4.09    143  NIVA TERNOPOL     UKRAINE            39:9   0
+  894  2         4.09    143  SANTIAGO WDRS.    CHILE              48:12  0
+  895  2         4.09    143  SVIT ZLIN         CZECH_REPUBLIC      6:11  0
+  896  2         4.09    143  TATRAN PRESOV     SLOVAKIA           78:10  0
+  897  2         4.09    143  TPS               FINLAND            12:10  0
+  898  2         4.09    143  TROMSO            NORWAY             27:18  0
+  899  2         4.09    143  U.S.M. BLIDA      ALGERIA            42:10  0
+  900  2         4.09    143  UTA ARAD          ROMANIA            30:21  4
+  901  2         4.09    143  UTS OLYMPIC       AUSTRALIA          44:44  0
+  902  2         4.09    143  ZHEMCHUZHINA      RUSSIA             31:22  0
+  903  2         4.09    143  ZIMBABWE          AFRICA             81:33  0
+  904  2         4.09    142  CENTRAL CORDOBA   ARGENTINA          43:9   1
+  905  2         4.09    142  HULL CITY         ENGLAND             8:68  3
+  906  2         4.09    142  JUAN AURICH       PERU               65:7   0
+  907  2         4.09    142  SHAMROCK ROVERS   REPUBLIC_IRELAND   18:10  0
+  908  2         4.09    142  SKEID             NORWAY             27:12  0
+  909  2         4.09    142  SYDNEY UNITED     AUSTRALIA          44:42  0
+  910  2         4.09    142  XANTHI            GREECE             15:24  0
+  911  2         4.09    141  ASMARAL MOSCOW    RUSSIA             31:0   0
+  912  2         4.09    141  AT ZAMORA         VENEZUELA          77:1   0
+  913  2         4.09    141  AVENIR BEGGEN     LUXEMBOURG         23:1   0
+  914  2         4.09    141  BRISTOL ROVERS    ENGLAND             8:50  2
+  915  2         4.09    141  CHARLEVILLE       FRANCE             13:7   1
+  916  2         4.09    141  DEPORTIVO MORON   ARGENTINA          43:14  1
+  917  2         4.09    141  HAMARKAMERATENE   NORWAY             27:3   4
+  918  2         4.09    141  HAPOEL BEERSHEBA  ISRAEL             19:3   0
+  919  2         4.09    141  OLIMPIA-LECHIA    POLAND             28:9   0
+  920  2         4.09    141  PARRAMATTA        AUSTRALIA          44:33  2
+  921  2         4.09    141  SUDAN             AFRICA             81:26  0
+  922  2         4.09    141  TELSTAR           HOLLAND            25:26  1
+  923  2         4.09    141  VIBORG            DENMARK             7:11  0
+  924  2         4.09    140  ENVIGADO FC       COLOMBIA           49:11  0
+  925  2         4.09    140  FAROE ISLES       EUROPE             80:13  0
+  926  2         4.09    140  NATIONAL          ROMANIA            30:10  0
+  927  2         4.09    140  NATIONAL          UEFACUP            30:10  0
+  928  2         4.09    140  RIJEKA            CROATIA             4:8   0
+  929  2         4.09    140  SLASK WROCLAW     POLAND             28:16  0
+  930  2         4.09    140  TRELLEBORG        SWEDEN             36:16  0
+  931  2         4.09    139  AYR UNITED        SCOTLAND           33:5   2
+  932  2         4.09    139  CASTELLON         SPAIN              35:13  4
+  933  2         4.09    139  JAGIELLONIA       POLAND             28:5   4
+  934  2         4.09    139  LE MANS           FRANCE             13:14  1
+  935  2         4.09    139  SKONTO RIGA       LATVIA             21:7   0
+  936  2         4.09    137  CHIASSO           SWITZERLAND        37:3   4
+  937  2         4.00    149  GETAFE            SPAIN              35:21  1
+  938  2         4.00    148  SOKOL-GKS TYCHY   POLAND             28:17  0
+  939  2         4.00    147  BADAJOZ           SPAIN              35:7   1
+  940  2         4.00    147  WOLLONGONG CITY   AUSTRALIA          44:49  0
+  941  2         4.00    146  BNEI YEHUDA       ISRAEL             19:2   0
+  942  2         4.00    146  CERRO CORA        PARAGUAY           64:1   0
+  943  2         4.00    146  CICLISTA LIMA     PERU               65:3   0
+  944  2         4.00    146  DEP. PEREIRA      COLOMBIA           49:6   0
+  945  2         4.00    146  HIBERNIANS        MALTA              24:3   0
+  946  2         4.00    146  PANILIAKOS        GREECE             15:20  0
+  947  2         4.00    146  SESTAO            SPAIN              35:39  1
+  948  2         4.00    145  ADELAIDE CITY     AUSTRALIA          44:3   0
+  949  2         4.00    145  ANKARAGUCU        TURKEY             38:1   0
+  950  2         4.00    145  BEROE S. ZAGORA   BULGARIA            3:0   0
+  951  2         4.00    145  BOBY BRNO         CZECH_REPUBLIC      6:1   0
+  952  2         4.00    145  CADIZ             SPAIN              35:12  4
+  953  2         4.00    145  CAMPOMAIORENSE    PORTUGAL           29:5   4
+  954  2         4.00    145  CD CONCEPCION     CHILE              48:3   0
+  955  2         4.00    145  COQUIMBO UNIDO    CHILE              48:8   0
+  956  2         4.00    145  EPINAL            FRANCE             13:9   1
+  957  2         4.00    145  GLENAVON          NORTHERN_IRELAND   26:9   0
+  958  2         4.00    145  IK ODDEVOLD       SWEDEN             36:10  0
+  959  2         4.00    145  IND. SANTA FE     COLOMBIA           49:13  0
+  960  2         4.00    145  KRIENS            SWITZERLAND        37:6   4
+  961  2         4.00    145  LEGANES           SPAIN              35:23  1
+  962  2         4.00    145  LOK. GORNA ORIA.  BULGARIA            3:7   0
+  963  2         4.00    145  LORIENT           FRANCE             13:17  1
+  964  2         4.00    145  MALAWI            AFRICA             81:17  0
+  965  2         4.00    145  MELBOURNE KNIGHT  AUSTRALIA          44:23  0
+  966  2         4.00    145  ONCE CALDAS       COLOMBIA           49:15  0
+  967  2         4.00    145  RACING            URUGUAY            71:19  1
+  968  2         4.00    145  ST. MIRREN        SCOTLAND           33:36  1
+  969  2         4.00    144  ATLETICO TUCUMAN  ARGENTINA          43:5   1
+  970  2         4.00    144  BURSASPOR         TURKEY             38:6   0
+  971  2         4.00    144  CS EMELEC         ECUADOR            50:2   0
+  972  2         4.00    144  GREAT OLYMPICS    GHANA              79:3   0
+  973  2         4.00    144  KR                EUROCWC            17:8   0
+  974  2         4.00    144  KR                ICELAND            17:8   0
+  975  2         4.00    144  LANDSKRONA        SWEDEN             36:11  4
+  976  2         4.00    144  PANIONIOS         GREECE             15:21  0
+  977  2         4.00    144  PARMALAT          HUNGARY            16:11  0
+  978  2         4.00    144  PIERIKOS          GREECE             15:23  4
+  979  2         4.00    144  PUBLIKUM CELJE    SLOVENIA           34:15  0
+  980  2         4.00    144  STIRLING ALBION   SCOTLAND           33:38  1
+  981  2         4.00    144  VILLARREAL        SPAIN              35:46  1
+  982  2         4.00    144  W.A.B.            ALGERIA            42:13  0
+  983  2         4.00    143  1.FC KOSICE       SLOVAKIA           78:0   0
+  984  2         4.00    143  GAIS              SWEDEN             36:4   4
+  985  2         4.00    143  GREEN CROSS       ECUADOR            50:7   0
+  986  2         4.00    143  PALAMOS           SPAIN              35:32  4
+  987  2         4.00    143  U.S.CHAOUIA       ALGERIA            42:9   0
+  988  2         4.00    143  URALMASH          RUSSIA             31:20  0
+  989  2         4.00    143  VEJLE             DENMARK             7:10  0
+  990  2         4.00    143  VIKTORIA PLZEN    CZECH_REPUBLIC      6:14  0
+  991  2         4.00    142  ASANTE KOTOKO     GHANA              79:0   0
+  992  2         4.00    142  ATLETICO TORINO   PERU               65:2   0
+  993  2         4.00    142  BLOEMFONTEIN      SOUTH_AFRICA       69:1   0
+  994  2         4.00    142  CARDIFF CITY      ENGLAND             8:54  3
+  995  2         4.00    142  CEAHLAUL P-N      ROMANIA            30:2   0
+  996  2         4.00    142  CLYDEBANK         SCOTLAND           33:11  1
+  997  2         4.00    142  CS GREVENMACHER   LUXEMBOURG         23:2   0
+  998  2         4.00    142  DEBRECEN          HUNGARY            16:3   0
+  999  2         4.00    142  DOXA              GREECE             15:4   4
+ 1000  2         4.00    142  EMMEN             HOLLAND            25:7   1
+ 1001  2         4.00    142  LOUHANS-CUISEAUX  FRANCE             13:18  1
+ 1002  2         4.00    142  MELBOURNE SC      AUSTRALIA          44:24  1
+ 1003  2         4.00    142  NUEVE DE OCTUBRE  ECUADOR            50:10  0
+ 1004  2         4.00    142  OLMEDO RIO BAMBA  ECUADOR            50:11  0
+ 1005  2         4.00    142  RAITH ROVERS      SCOTLAND           33:32  0
+ 1006  2         4.00    142  RIO AVE           PORTUGAL           29:18  0
+ 1007  2         4.00    142  ROTHERHAM UNITED  ENGLAND             8:80  2
+ 1008  2         4.00    142  SIOFOK            HUNGARY            16:13  4
+ 1009  2         4.00    142  SK TIRANA         ALBANIA             0:12  0
+ 1010  2         4.00    142  SPARTAK PLOVDIV   BULGARIA            3:15  0
+ 1011  2         4.00    142  SWANSEA CITY      ENGLAND             8:85  3
+ 1012  2         4.00    142  TAVRIA            UKRAINE            39:12  0
+ 1013  2         4.00    142  VIKTORIA ZIZKOV   CZECH_REPUBLIC      6:15  0
+ 1014  2         4.00    142  WREXHAM           ENGLAND             8:90  2
+ 1015  2         4.00    142  ZAWISZA B.        POLAND             28:26  4
+ 1016  2         4.00    141  ARSENAL           ARGENTINA          43:3   1
+ 1017  2         4.00    141  BELGRANO          ARGENTINA          43:7   1
+ 1018  2         4.00    141  BRASOV            ROMANIA            30:1   0
+ 1019  2         4.00    141  CLUB LEON         MEXICO             60:8   0
+ 1020  2         4.00    141  ETHNIKOS          GREECE             15:6   0
+ 1021  2         4.00    141  HAMILTON ACAD.    SCOTLAND           33:22  2
+ 1022  2         4.00    141  IRAN              ASIA               84:7   0
+ 1023  2         4.00    141  JARO              FINLAND            12:6   0
+ 1024  2         4.00    141  KALAMATA          GREECE             15:10  0
+ 1025  2         4.00    141  KONGSVINGER       NORWAY             27:5   0
+ 1026  2         4.00    141  M C ORAN          ALGERIA            42:6   0
+ 1027  2         4.00    141  MC ALGER          ALGERIA            42:7   0
+ 1028  2         4.00    141  ROTOR VOLGOGRAD   RUSSIA             31:14  0
+ 1029  2         4.00    141  SAINT-BRIEUC      FRANCE             13:34  1
+ 1030  2         4.00    141  SOUTH MELBOURNE   AUSTRALIA          44:39  0
+ 1031  2         4.00    141  UNTERHACHING      GERMANY            14:35  1
+ 1032  2         4.00    141  VALENCE           FRANCE             13:41  1
+ 1033  2         4.00    141  ZALAEGERSZEG      HUNGARY            16:20  0
+ 1034  2         4.00    141  ZILINA            SLOVAKIA           78:11  0
+ 1035  2         4.00    140  AMIENS            FRANCE             13:0   1
+ 1036  2         4.00    140  BEKESCSABA        HUNGARY            16:0   0
+ 1037  2         4.00    140  C.A.BATNA         ALGERIA            42:1   0
+ 1038  2         4.00    140  HEIDELBERG UTD    AUSTRALIA          44:19  1
+ 1039  2         4.00    140  IONIKOS           GREECE             15:7   0
+ 1040  2         4.00    140  ORENSE            SPAIN              35:29  4
+ 1041  2         4.00    140  SYRIA             ASIA               84:26  0
+ 1042  2         4.00    140  UMEA FC           SWEDEN             36:17  0
+ 1043  2         4.00    140  YVERDON           SWITZERLAND        37:15  4
+ 1044  2         4.00    139  BLACKPOOL         ENGLAND             8:45  2
+ 1045  2         4.00    139  BURUNDI           AFRICA             81:5   0
+ 1046  2         4.00    139  INTER TURKU       FINLAND            12:5   0
+ 1047  2         4.00    139  LEYTON ORIENT     ENGLAND             8:69  3
+ 1048  2         4.00    139  SHREWSBURY TOWN   ENGLAND             8:83  2
+ 1049  2         4.00    139  VFB LUBECK        GERMANY            14:37  1
+ 1050  2         4.00    138  LECA              PORTUGAL           29:15  0
+ 1051  2         4.00    138  LEVADIAKOS        GREECE             15:14  4
+ 1052  2         4.00    138  LYN               NORWAY             27:7   4
+ 1053  2         4.00    138  PACOS FERREIRA    PORTUGAL           29:17  4
+ 1054  2         4.00    138  PETERBOROUGH UTD  ENGLAND             8:76  2
+ 1055  2         4.00    138  SWOS DEADLINES    CUSTOM             72:36  0
+ 1056  2         4.00    138  TOLEDO            SPAIN              35:43  1
+ 1057  2         4.00    137  DEP. TULIA        COLOMBIA           49:9   0
+ 1058  2         4.00    137  HAJDUK KULA       YUGOSLAVIA         41:1   0
+ 1059  2         4.00    137  OTELUL GALATI     ROMANIA            30:11  0
+ 1060  2         4.00    137  UNIAO MADEIRA     PORTUGAL           29:23  4
+ 1061  2         4.00    137  VERES RIVNE       UKRAINE            39:15  0
+ 1062  2         4.00    136  ALAVES            SPAIN              35:0   1
+ 1063  2         4.00    136  CAMBRIDGE UNITED  ENGLAND             8:53  3
+ 1064  2         4.00    136  POTROSNIK         SLOVENIA           34:13  0
+ 1065  2         4.00    135  PRESTON           AUSTRALIA          44:35  3
+ 1066  2         4.00    135  STRANRAER         SCOTLAND           33:39  2
+ 1067  2         4.00    129  ESTONIA           EUROPE             80:12  0
+ 1068  2         3.91    145  MOUNT WELLINGTON  NEW_ZEALAND        62:12  0
+ 1069  2         3.91    144  START             NORWAY             27:15  0
+ 1070  2         3.91    143  APOLLON LIMASSOL  CYPRUS              5:5   0
+ 1071  2         3.91    143  INKER ZAPRESIC    CROATIA             4:3   0
+ 1072  2         3.91    142  HUTNIK KRAKOW     POLAND             28:4   0
+ 1073  2         3.91    142  ROMAR MAZEIKIAI   LITHUANIA          22:6   0
+ 1074  2         3.91    142  UNIAO LEIRIA      PORTUGAL           29:22  0
+ 1075  2         3.91    141  POLITEHNICA T.    ROMANIA            30:14  0
+ 1076  2         3.91    141  STOMIL OLSZTYN    POLAND             28:20  0
+ 1077  2         3.91    140  BRENTFORD         ENGLAND             8:47  2
+ 1078  2         3.91    140  RADNICKI NIS      YUGOSLAVIA         41:6   0
+ 1079  2         3.91    139  BURY              ENGLAND             8:52  2
+ 1080  2         3.91    139  VERA CRUZ         MEXICO             60:37  0
+ 1081  2         3.91    138  J.S.B.M           ALGERIA            42:4   0
+ 1082  2         3.91    137  KIM VITEBSK       BELARUS            76:6   0
+ 1083  2         3.91    134  DEP. QUINDIO      COLOMBIA           49:7   0
+ 1084  2         3.91    133  STADLER           HUNGARY            16:15  0
+ 1085  2         3.91    132  UNION HUARAL      PERU               65:13  0
+ 1086  2         3.91    132  WANDERERS         URUGUAY            71:25  0
+ 1087  2         3.82    138  UNION MAGDALENA   COLOMBIA           49:16  0
+ 1088  2         3.82    136  MARCONI FAIRFIED  AUSTRALIA          44:22  0
+ 1089  2         3.82    135  PORTADOWN         NORTHERN_IRELAND   26:15  0
+ 1090  2         3.82    133  VANCOUVER 86      USA                73:16  4
+ 1091  2         3.82    132  S.MARTIN TUCUMAN  ARGENTINA          43:35  1
+ 1092  2         3.82    132  SPORTIVO LUQUENO  PARAGUAY           64:11  0
+ 1093  2         3.73    131  VASTRA FROLUNDA   SWEDEN             36:18  4
+ 1094  2         3.73    123  ATLANTE           MEXICO             60:1   0
+ 1095  2         3.64    135  PRIMORJE          SLOVENIA           34:14  0
+ 1096  2         3.64    121  VENEZUELA         SOUTH_AMERICA      82:9   0
+ 1097  2         3.64    118  OKEAN NAKHODNA    RUSSIA             31:12  0
+ 1098  2         3.64    116  AEK LARNACA       CYPRUS              5:0   0
+ 1099  2         3.64    116  AEK LARNACA       EUROCWC             5:0   0
+ 1100  2         3.64    114  NORTH SHORE UTD   NEW_ZEALAND        62:16  0
+ 1101  2         3.55    119  NEFTOKHIMIK       BULGARIA            3:11  0
+ 1102  2         3.55    118  WEST ADELAIDE     AUSTRALIA          44:46  0
+ 1103  2         3.55    117  NEWCASTLE B'KERS  AUSTRALIA          44:28  0
+ 1104  2         3.55    117  ROCHDALE          ENGLAND             8:79  3
+ 1105  2         3.55    116  APANECA           EL_SALVADOR        51:6   0
+ 1106  2         3.55    116  CARACAS           VENEZUELA          77:2   0
+ 1107  2         3.55    116  CLUB MONTERREY    MEXICO             60:9   0
+ 1108  2         3.55    116  LINCOLN CITY      ENGLAND             8:70  3
+ 1109  2         3.55    116  MJONDALEN         NORWAY             27:8   4
+ 1110  2         3.55    116  ZENIT             RUSSIA             31:21  4
+ 1111  2         3.55    115  BAKIRKOYSPOR      TURKEY             38:4   4
+ 1112  2         3.55    115  CS PETANGE        LUXEMBOURG         23:3   0
+ 1113  2         3.55    115  CWMBRAN TOWN      WALES              40:8   0
+ 1114  2         3.55    115  LUCH VLADIVOSTOK  RUSSIA             31:11  0
+ 1115  2         3.55    115  QATAR             ASIA               84:21  0
+ 1116  2         3.55    115  ST. PATRICK'S     REPUBLIC_IRELAND   18:13  0
+ 1117  2         3.55    115  URGENTE LIMENO    EL_SALVADOR        51:44  0
+ 1118  2         3.55    114  CUCUTA DEPORTIVO  COLOMBIA           49:5   0
+ 1119  2         3.55    114  E.S.SETIF         ALGERIA            42:3   0
+ 1120  2         3.55    114  STENHOUSEMUIR     SCOTLAND           33:37  2
+ 1121  2         3.55    113  FLORIANA          MALTA              24:1   0
+ 1122  1.5       3.45    120  LEKS LOVECH       BULGARIA            3:5   0
+ 1123  1.5       3.45    120  SCARBOROUGH       ENGLAND             8:81  3
+ 1124  1.5       3.45    117  CELAYA            MEXICO             60:5   1
+ 1125  1.5       3.45    117  IZOLA             SLOVENIA           34:4   0
+ 1126  1.5       3.45    117  REAL ROVERS       SOUTH_AFRICA       69:11  0
+ 1127  1.5       3.45    117  REGIONAL ATACAMA  CHILE              48:11  0
+ 1128  1.5       3.45    117  SOPRON            HUNGARY            16:14  4
+ 1129  1.5       3.45    116  BANSKA BYSTRICA   SLOVAKIA           78:1   0
+ 1130  1.5       3.45    116  ETHIOPIA          AFRICA             81:9   0
+ 1131  1.5       3.45    116  FYLLINGEN         NORWAY             27:2   4
+ 1132  1.5       3.45    116  KALAMARIAS        GREECE             15:9   4
+ 1133  1.5       3.45    116  PANERYS VILNIUS   LITHUANIA          22:5   0
+ 1134  1.5       3.45    116  SLIEMA WANDERERS  MALTA              24:9   0
+ 1135  1.5       3.45    116  SOGNDAL           NORWAY             27:13  4
+ 1136  1.5       3.45    116  TEVALTE TALLINN   ESTONIA            10:11  0
+ 1137  1.5       3.45    116  TOLUCA            MEXICO             60:30  0
+ 1138  1.5       3.45    115  CLYDE             SCOTLAND           33:10  2
+ 1139  1.5       3.45    115  DUNDALK           REPUBLIC_IRELAND   18:6   0
+ 1140  1.5       3.45    115  SAN JOSE ORURO    BOLIVIA            45:11  0
+ 1141  1.5       3.45    115  TORONTO BLIZZARD  USA                73:15  4
+ 1142  1.5       3.45    115  UNION LUXEMBOURG  LUXEMBOURG         23:13  0
+ 1143  1.5       3.45    114  ATLETICO MARTE    EL_SALVADOR        51:9   0
+ 1144  1.5       3.45    114  ATLETICO MORELIA  MEXICO             60:2   0
+ 1145  1.5       3.45    114  AYDINSPOR         TURKEY             38:3   4
+ 1146  1.5       3.45    114  DIOSGYOR          HUNGARY            16:4   4
+ 1147  1.5       3.45    114  ETHNIKOS AKHNAS   CYPRUS              5:7   0
+ 1148  1.5       3.45    114  FORFAR ATHLETIC   SCOTLAND           33:20  3
+ 1149  1.5       3.45    114  HALADAS           HUNGARY            16:7   0
+ 1150  1.5       3.45    114  INDIA             ASIA               84:5   0
+ 1151  1.5       3.45    114  JABLONEC          CZECH_REPUBLIC      6:4   0
+ 1152  1.5       3.45    114  LUIS ANGEL FIRPO  EL_SALVADOR        51:33  0
+ 1153  1.5       3.45    114  MANSFIELD TOWN    ENGLAND             8:72  3
+ 1154  1.5       3.45    114  MONTREAL IMPACT   USA                73:8   4
+ 1155  1.5       3.45    114  NAOUSSA           GREECE             15:15  4
+ 1156  1.5       3.45    114  NAPIER CITY       NEW_ZEALAND        62:13  1
+ 1157  1.5       3.45    114  PRIEVIDZA         SLOVAKIA           78:7   0
+ 1158  1.5       3.45    114  ROSLYN WAKARI     NEW_ZEALAND        62:21  2
+ 1159  1.5       3.45    114  SCUNTHORPE UTD    ENGLAND             8:82  3
+ 1160  1.5       3.45    114  SD AUCAS          ECUADOR            50:12  0
+ 1161  1.5       3.45    114  TEMP SHETOVKA     UKRAINE            39:13  0
+ 1162  1.5       3.45    114  VAAL PROFS        SOUTH_AFRICA       69:13  0
+ 1163  1.5       3.45    114  VALUR             ICELAND            17:11  0
+ 1164  1.5       3.45    114  WIGAN ATHLETIC    ENGLAND             8:89  3
+ 1165  1.5       3.45    113  A.S.AIN-M'LILA    ALGERIA            42:0   0
+ 1166  1.5       3.45    113  BAYGON-ADET       EL_SALVADOR        51:10  0
+ 1167  1.5       3.45    113  DEPORTIVO ITALIA  VENEZUELA          77:3   0
+ 1168  1.5       3.45    113  EAST FIFE         SCOTLAND           33:17  1
+ 1169  1.5       3.45    113  F91 DUDELANGE     LUXEMBOURG         23:5   0
+ 1170  1.5       3.45    113  GLENTORAN         NORTHERN_IRELAND   26:10  0
+ 1171  1.5       3.45    113  SV LEO VICTOR     SURINAM            66:6   0
+ 1172  1.5       3.45    113  VANSPOR           TURKEY             38:22  0
+ 1173  1.5       3.45    113  VOLYN LUTSK       UKRAINE            39:16  0
+ 1174  1.5       3.45    113  WARTA POZNAN      POLAND             28:22  4
+ 1175  1.5       3.45    112  ALL BOYS          ARGENTINA          43:0   1
+ 1176  1.5       3.45    112  EAST STIRLING     SCOTLAND           33:18  3
+ 1177  1.5       3.45    112  FULHAM            ENGLAND             8:63  3
+ 1178  1.5       3.45    112  GODOY CRUZ        ARGENTINA          43:21  1
+ 1179  1.5       3.45    112  HALIFAX TOWN      ENGLAND             8:65  4
+ 1180  1.5       3.45    112  ISTRA PULA        CROATIA             4:4   0
+ 1181  1.5       3.45    112  KUBAN KRASNODAR   RUSSIA             31:8   4
+ 1182  1.5       3.45    112  METALLIST K.      UKRAINE            39:7   0
+ 1183  1.5       3.45    112  MORWELL FALCONS   AUSTRALIA          44:26  0
+ 1184  1.5       3.45    112  NORTH KOREA       ASIA               84:16  0
+ 1185  1.5       3.45    112  POLI IASI         ROMANIA            30:13  0
+ 1186  1.5       3.45    111  DINAMO STAVROPOL  RUSSIA             31:4   0
+ 1187  1.5       3.45    111  HIT GORICA        SLOVENIA           34:2   0
+ 1188  1.5       3.45    111  LEIFTUR           ICELAND            17:9   0
+ 1189  1.5       3.45    111  LOK. KOSICE       SLOVAKIA           78:6   0
+ 1190  1.5       3.45    111  WESTERN           NEW_ZEALAND        62:28  2
+ 1191  1.5       3.45    110  HAPOEL BEIT SHAN  ISRAEL             19:4   0
+ 1192  1.5       3.45    110  JOMO COSMOS       SOUTH_AFRICA       69:4   0
+ 1193  1.5       3.45    110  KORINTHOS         GREECE             15:12  4
+ 1194  1.5       3.45    110  KRIVBASS          UKRAINE            39:6   0
+ 1195  1.5       3.45    109  CHESTERFIELD      ENGLAND             8:57  2
+ 1196  1.5       3.45    108  VALDEZ SC         ECUADOR            50:13  4
+ 1197  1.5       3.45    106  RUDAR VELNJE      SLOVENIA           34:16  0
+ 1198  1.5       3.36    121  PANAMA            NORTH_AMERICA      83:10  0
+ 1199  1.5       3.36    117  POLONIA WARSAW    POLAND             28:12  4
+ 1200  1.5       3.36    116  BANGOR CITY       WALES              40:3   0
+ 1201  1.5       3.36    116  BARNET            ENGLAND             8:44  3
+ 1202  1.5       3.36    116  DACIA UNIREA      ROMANIA            30:4   4
+ 1203  1.5       3.36    116  MINERVEN          VENEZUELA          77:13  0
+ 1204  1.5       3.36    116  PANAHAIKI         GREECE             15:18  0
+ 1205  1.5       3.36    116  STRINDHEIM        NORWAY             27:16  4
+ 1206  1.5       3.36    116  TORQUAY UNITED    ENGLAND             8:86  3
+ 1207  1.5       3.36    115  BEITAR TEL-AVIV   ISRAEL             19:1   0
+ 1208  1.5       3.36    115  CHACARITA JNRS.   ARGENTINA          43:10  1
+ 1209  1.5       3.36    115  GKS BELCHATOW     POLAND             28:1   0
+ 1210  1.5       3.36    115  KONYASPOR         TURKEY             38:18  4
+ 1211  1.5       3.36    115  METALLURG Z.      UKRAINE            39:8   0
+ 1212  1.5       3.36    115  NORMA TALLINN     ESTONIA            10:8   0
+ 1213  1.5       3.36    115  SIARKA T.         POLAND             28:15  0
+ 1214  1.5       3.36    115  UNIV.GUADALAJARA  MEXICO             60:36  0
+ 1215  1.5       3.36    114  ALGERIA           AFRICA             81:0   0
+ 1216  1.5       3.36    114  CHRISTCHURCH UTD  NEW_ZEALAND        62:3   2
+ 1217  1.5       3.36    114  HODD              NORWAY             27:4   4
+ 1218  1.5       3.36    114  MONTANA           BULGARIA            3:10  0
+ 1219  1.5       3.36    114  MOZAMBIQUE        AFRICA             81:20  0
+ 1220  1.5       3.36    114  ROBIN HOOD        SURINAM            66:3   0
+ 1221  1.5       3.36    114  SARIYER           TURKEY             38:20  4
+ 1222  1.5       3.36    114  TORPEDO ZAPOROJE  UKRAINE            39:14  0
+ 1223  1.5       3.36    114  UA GUADALAJARA    MEXICO             60:32  0
+ 1224  1.5       3.36    114  WELLINGTON UTD    NEW_ZEALAND        62:27  1
+ 1225  1.5       3.36    113  ATLETICO HUILA    COLOMBIA           49:3   0
+ 1226  1.5       3.36    113  BOHEMIANS         REPUBLIC_IRELAND   18:0   0
+ 1227  1.5       3.36    113  KREMENCHUK        UKRAINE            39:5   0
+ 1228  1.5       3.36    113  MONTROSE          SCOTLAND           33:27  3
+ 1229  1.5       3.36    113  PETROCHEMIA       POLAND             28:10  4
+ 1230  1.5       3.36    113  RAKOW CZESTOCHOA  POLAND             28:13  0
+ 1231  1.5       3.36    113  WAIKATO UNITED    NEW_ZEALAND        62:22  0
+ 1232  1.5       3.36    112  AGUILA            EL_SALVADOR        51:4   0
+ 1233  1.5       3.36    112  BRISBANE STRIKES  AUSTRALIA          44:9   0
+ 1234  1.5       3.36    112  CLUB ATLAS        MEXICO             60:6   0
+ 1235  1.5       3.36    112  DARLINGTON        ENGLAND             8:60  3
+ 1236  1.5       3.36    112  DONCASTER ROVERS  ENGLAND             8:61  3
+ 1237  1.5       3.36    112  FLAMURTARI VLORE  ALBANIA             0:6   0
+ 1238  1.5       3.36    112  HARTLEPOOL UTD    ENGLAND             8:66  3
+ 1239  1.5       3.36    112  LOS ANDES         ARGENTINA          43:27  1
+ 1240  1.5       3.36    112  MANUREWA          NEW_ZEALAND        62:8   0
+ 1241  1.5       3.36    112  PRESTON N. END    ENGLAND             8:78  2
+ 1242  1.5       3.36    112  SEGESTA SISAK     CROATIA             4:9   0
+ 1243  1.5       3.36    112  SHELBOURNE        REPUBLIC_IRELAND   18:11  0
+ 1244  1.5       3.36    112  VLLAZNIA SHKODER  ALBANIA             0:15  0
+ 1245  1.5       3.36    111  DAWU YOUNGSTERS   GHANA              79:2   0
+ 1246  1.5       3.36    111  EDESSAIKOS        GREECE             15:5   0
+ 1247  1.5       3.36    111  EKRANAS PANEVEZS  LITHUANIA          22:1   0
+ 1248  1.5       3.36    111  FC NITRA          SLOVAKIA           78:4   0
+ 1249  1.5       3.36    111  GAZIANTEPSPOR     TURKEY             38:11  0
+ 1250  1.5       3.36    111  HAMRUN SPARTANS   MALTA              24:2   0
+ 1251  1.5       3.36    111  INDONESIA         ASIA               84:6   0
+ 1252  1.5       3.36    111  IRAQ              ASIA               84:8   0
+ 1253  1.5       3.36    111  ROSTSELMASH       RUSSIA             31:13  0
+ 1254  1.5       3.36    110  KARSIYAKA         TURKEY             38:15  0
+ 1255  1.5       3.36    110  KRYLYA S. SAMARA  RUSSIA             31:7   0
+ 1256  1.5       3.36    110  MACCABI P-TIKVA   ISRAEL             19:13  0
+ 1257  1.5       3.36    110  NEMAN GRODNO      BELARUS            76:9   0
+ 1258  1.5       3.36    110  NIVA VINNITSA     EUROCWC            39:10  0
+ 1259  1.5       3.36    110  NIVA VINNITSA     UKRAINE            39:10  0
+ 1260  1.5       3.36    110  SIBENIK           CROATIA             4:10  0
+ 1261  1.5       3.36    109  CRUSADERS         NORTHERN_IRELAND   26:7   0
+ 1262  1.5       3.36    109  DOBRUDZHA         BULGARIA            3:3   0
+ 1263  1.5       3.36    109  FAKEL VORONEZH    RUSSIA             31:5   4
+ 1264  1.5       3.36    109  NEW PLYMOUTH      NEW_ZEALAND        62:15  1
+ 1265  1.5       3.36    109  OLYMPIAKOS        CYPRUS              5:10  0
+ 1266  1.5       3.36    109  ZAFRIRIM HOLON    ISRAEL             19:16  0
+ 1267  1.5       3.36    108  DERRY CITY        REPUBLIC_IRELAND   18:4   0
+ 1268  1.5       3.36    108  FAS               EL_SALVADOR        51:29  0
+ 1269  1.5       3.36    108  GILLINGHAM        ENGLAND             8:64  2
+ 1270  1.5       3.36    108  HONG KONG         ASIA               84:4   0
+ 1271  1.5       3.36    108  NEOPLAN STARS     GHANA              79:5   0
+ 1272  1.5       3.36    107  CHEMLON HUMENNE   EUROCWC            78:2   0
+ 1273  1.5       3.36    107  CHEMLON HUMENNE   SLOVAKIA           78:2   0
+ 1274  1.5       3.36    107  LU KUANG          TAIWAN             67:6   0
+ 1275  1.5       3.36    107  SELENA BACAU      ROMANIA            30:16  0
+ 1276  1.5       3.36    107  WOOLSTON WMC      NEW_ZEALAND        62:29  2
+ 1277  1.5       3.36    106  KAYSERISPOR       TURKEY             38:16  0
+ 1278  1.5       3.36    105  TAMPA BAY         USA                73:13  4
+ 1279  1.5       3.36    105  UNICOL            VENEZUELA          77:20  0
+ 1280  1.5       3.27    119  HAPOEL KFAR-SABA  ISRAEL             19:6   4
+ 1281  1.5       3.27    117  MACCABI HERZLIYA  ISRAEL             19:11  0
+ 1282  1.5       3.27    115  MINEROS GUAYANA   VENEZUELA          77:12  0
+ 1283  1.5       3.27    115  NEA SALAMINA      CYPRUS              5:9   0
+ 1284  1.5       3.27    114  WITS UNIVERSITY   SOUTH_AFRICA       69:15  0
+ 1285  1.5       3.27    113  COLCHESTER UTD    ENGLAND             8:58  3
+ 1286  1.5       3.27    113  MAURITIUS         ASIA               84:14  0
+ 1287  1.5       3.27    113  ST. VINCENT       NORTH_AMERICA      83:11  0
+ 1288  1.5       3.27    113  TOGO              AFRICA             81:29  0
+ 1289  1.5       3.27    112  BANGOR            NORTHERN_IRELAND   26:3   0
+ 1290  1.5       3.27    112  ESKISEHIRSPOR     TURKEY             38:8   0
+ 1291  1.5       3.27    112  FLORA TALLINN     ESTONIA            10:3   0
+ 1292  1.5       3.27    112  LIVINGSTON        SCOTLAND           33:26  2
+ 1293  1.5       3.27    112  VEENDAM           HOLLAND            25:30  1
+ 1294  1.5       3.27    112  WELLINGTON OLYM.  NEW_ZEALAND        62:26  1
+ 1295  1.5       3.27    112  WITBANK ACES      SOUTH_AFRICA       69:14  0
+ 1296  1.5       3.27    111  AM COSMOS         SLOVENIA           34:0   0
+ 1297  1.5       3.27    111  CSM RESITA        ROMANIA            30:3   4
+ 1298  1.5       3.27    111  FRAM              ICELAND            17:2   0
+ 1299  1.5       3.27    111  KAVALA            GREECE             15:11  4
+ 1300  1.5       3.27    111  PETONE            NEW_ZEALAND        62:19  1
+ 1301  1.5       3.27    111  REAL SANTA CRUZ   BOLIVIA            45:10  0
+ 1302  1.5       3.27    111  SINGAPORE         ASIA               84:23  0
+ 1303  1.5       3.27    111  TANZANIA          AFRICA             81:28  0
+ 1304  1.5       3.27    110  ANGOLA            AFRICA             81:1   0
+ 1305  1.5       3.27    110  CAPE COAST        GHANA              79:1   0
+ 1306  1.5       3.27    110  CD CUENCA         ECUADOR            50:1   4
+ 1307  1.5       3.27    110  DELFIN SC         ECUADOR            50:3   0
+ 1308  1.5       3.27    110  GUATEMALA         NORTH_AMERICA      83:4   0
+ 1309  1.5       3.27    110  KARABUKSPOR       TURKEY             38:14  4
+ 1310  1.5       3.27    110  MACCABI NETANYA   ISRAEL             19:12  0
+ 1311  1.5       3.27    110  MP                FINLAND            12:7   0
+ 1312  1.5       3.27    110  QUEEN OF SOUTH    SCOTLAND           33:30  2
+ 1313  1.5       3.27    110  SPARTAK TRNAVA    SLOVAKIA           78:9   0
+ 1314  1.5       3.27    109  ALLOA             SCOTLAND           33:3   3
+ 1315  1.5       3.27    109  EXETER CITY       ENGLAND             8:62  3
+ 1316  1.5       3.27    109  GREENOCK MORTON   SCOTLAND           33:21  1
+ 1317  1.5       3.27    109  HERACLES          HOLLAND            25:17  1
+ 1318  1.5       3.27    109  IRONY ASHDOD      ISRAEL             19:9   0
+ 1319  1.5       3.27    109  KENYA             AFRICA             81:14  0
+ 1320  1.5       3.27    109  MANNING RANGERS   SOUTH_AFRICA       69:7   0
+ 1321  1.5       3.27    109  NORTHAMPTON TOWN  ENGLAND             8:74  3
+ 1322  1.5       3.27    109  STROMSGODSET      NORWAY             27:17  0
+ 1323  1.5       3.27    109  WAITAKERE CITY    NEW_ZEALAND        62:23  0
+ 1324  1.5       3.27    109  ZARYA LUGANSK     UKRAINE            39:17  0
+ 1325  1.5       3.27    109  ZEYTINBURNU       TURKEY             38:23  4
+ 1326  1.5       3.27    108  ALIANZA           EL_SALVADOR        51:5   0
+ 1327  1.5       3.27    108  DNEPR MOGILEV     BELARUS            76:3   0
+ 1328  1.5       3.27    108  HEREFORD UNITED   ENGLAND             8:67  3
+ 1329  1.5       3.27    107  DEPORTIVO TUY     VENEZUELA          77:4   0
+ 1330  1.5       3.27    107  LDU PORTOVIEJO    ECUADOR            50:8   0
+ 1331  1.5       3.27    107  PECSI MSC         HUNGARY            16:12  0
+ 1332  1.5       3.27    103  ORWAHU STORES UD  GHANA              79:7   0
+ 1333  1.5       3.18    107  INTER CARDIFF     WALES              40:13  0
+ 1334  1.5       3.18    107  SAN CRISTOBAL     VENEZUELA          77:16  0
+ 1335  1.5       3.18    106  ZIVILA NAKLO      SLOVENIA           34:19  0
+ 1336  1.5       3.18    102  W.A.TLEMCEN       ALGERIA            42:15  0
+ 1337  1.5       3.09    109  MARINOS DE SUCRE  VENEZUELA          77:10  0
+ 1338  1.5       3.09    106  VIF FOTBALL       NORWAY             27:19  0
+ 1339  1.5       3.09    105  DONKEY UNITED     CUSTOM             72:12  0
+ 1340  1.5       3.09    104  SV TRANSVAAL      SURINAM            66:9   0
+ 1341  1.5       3.09    102  RISHON LEZION     EUROCWC            19:15  0
+ 1342  1.5       3.09    102  RISHON LEZION     ISRAEL             19:15  0
+ 1343  1.5       3.09    101  TAIWAN            ASIA               84:27  0
+ 1344  1.5       3.09     96  TA-PENG           TAIWAN             67:9   0
+ 1345  1.5       3.09     86  STEKLAR           SLOVENIA           34:17  4
+ 1346  1.5       3.00    103  SAMAN DE ARAGUA   VENEZUELA          77:15  0
+ 1347  1.5       3.00    102  ESPOLI            ECUADOR            50:6   0
+ 1348  1.5       3.00    102  INDUSTRIALES      VENEZUELA          77:7   0
+ 1349  1.5       3.00     94  COLORADO FOXES    USA                73:1   4
+ 1350  1.5       3.00     93  FEI-TO            TAIWAN             67:4   0
+ 1351  1.5       3.00     89  BALLYMENA UNITED  NORTHERN_IRELAND   26:2   0
+ 1352  1.5       3.00     88  GALWAY UNITED     REPUBLIC_IRELAND   18:7   0
+ 1353  1.5       3.00     88  SAN FRANCISCO     USA                73:11  4
+ 1354  1.5       3.00     87  HB                EUROCWC            11:4   0
+ 1355  1.5       3.00     87  HB                FAROE_ISLANDS      11:4   0
+ 1356  1.5       3.00     86  CONGO             AFRICA             81:7   0
+ 1357  1.5       3.00     86  TORPEDO MINSK     BELARUS            76:14  0
+ 1358  1.5       2.91     86  GOMSELMASH GOMEL  BELARUS            76:5   0
+ 1359  1.5       2.91     85  CARRICK RANGERS   NORTHERN_IRELAND   26:4   0
+ 1360  1.5       2.91     85  ELEKTROELEMENT    SLOVENIA           34:1   4
+ 1361  1.5       2.91     85  MYANMAR           ASIA               84:15  0
+ 1362  1.5       2.91     85  ST. PATRICK       MALTA              24:12  0
+ 1363  1.5       2.91     83  COWDENBEATH       SCOTLAND           33:12  3
+ 1364  1.5       2.91     83  MARTIMO           VENEZUELA          77:11  0
+ 1365  1.5       2.82     85  DINAMO BREST      BELARUS            76:1   0
+ 1366  1.5       2.82     84  ILIRIA F-KRUJE    ALBANIA             0:7   0
+ 1367  1.5       2.82     83  ALKI LARNACA      CYPRUS              5:2   0
+ 1368  1.5       2.82     83  LEICHHARDT        AUSTRALIA          44:21  2
+ 1369  1.5       2.82     83  PARDAUGAVA RIGA   LATVIA             21:5   0
+ 1370  1.5       2.82     83  QUERETARO         MEXICO             60:25  1
+ 1371  1.5       2.82     82  ARBROATH          SCOTLAND           33:4   3
+ 1372  1.5       2.82     82  SWAZILAND         AFRICA             81:27  0
+ 1373  1.5       2.82     82  UNI DE LOS ANDES  VENEZUELA          77:19  0
+ 1374  1.5       2.82     81  CALEDONIAN TH.    SCOTLAND           33:8   3
+ 1375  1.5       2.82     81  RANGERS           NEW_ZEALAND        62:20  2
+ 1376  1.5       2.82     80  ZURRIEQ           MALTA              24:14  0
+ 1377  1.5       2.82     79  TON PENTRE        WALES              40:21  0
+ 1378  1.5       2.73     87  MING-CHUAN        TAIWAN             67:7   0
+ 1379  1.5       2.73     85  CHI-HAI           TAIWAN             67:1   0
+ 1380  1.5       2.73     84  COLERAINE         NORTHERN_IRELAND   26:6   0
+ 1381  1.5       2.73     84  SIRIJUS KLAIPEDA  LITHUANIA          22:8   0
+ 1382  1.5       2.73     84  WILTZ 71          LUXEMBOURG         23:14  0
+ 1383  1.5       2.73     83  ARIS LIMASSOL     CYPRUS              5:6   0
+ 1384  1.5       2.73     83  BIRKIRKARA LUXOL  MALTA              24:0   0
+ 1385  1.5       2.73     83  CENTRAL UNITED    NEW_ZEALAND        62:1   0
+ 1386  1.5       2.73     83  EAST BENGAL       INDIA              75:2   0
+ 1387  1.5       2.73     83  GREEN ISLAND      NEW_ZEALAND        62:5   2
+ 1388  1.5       2.73     83  OLYMPIA RIGA      LATVIA             21:4   0
+ 1389  1.5       2.73     83  ROSS COUNTY       SCOTLAND           33:34  3
+ 1390  1.5       2.73     83  TIBURONES         EL_SALVADOR        51:42  0
+ 1391  1.5       2.73     83  UGANDA            AFRICA             81:31  0
+ 1392  1.5       2.73     82  ALBION ROVERS     SCOTLAND           33:2   3
+ 1393  1.5       2.73     82  ELBASANI          ALBANIA             0:5   0
+ 1394  1.5       2.73     82  FORT LAUDERDALE   USA                73:4   4
+ 1395  1.5       2.73     82  KRKA NOVOTERM     SLOVENIA           34:6   0
+ 1396  1.5       2.73     82  NYIREGYHAZI       HUNGARY            16:10  4
+ 1397  1.5       2.73     82  PEI-YIN           TAIWAN             67:8   0
+ 1398  1.5       2.73     82  SHKUMBINI PEQIN   ALBANIA             0:10  0
+ 1399  1.5       2.73     82  TA-TUNG           TAIWAN             67:10  0
+ 1400  1.5       2.73     82  TORPEDO MOGILEV   BELARUS            76:15  0
+ 1401  1.5       2.73     82  VIKINGUR          ICELAND            17:12  4
+ 1402  1.5       2.73     81  HOLYWELL TOWN     WALES              40:12  0
+ 1403  1.5       2.73     81  MOUNT MANGANUI    NEW_ZEALAND        62:11  0
+ 1404  1.5       2.73     81  TACHIRA           VENEZUELA          77:17  0
+ 1405  1.5       2.73     80  LIMERICK          REPUBLIC_IRELAND   18:8   0
+ 1406  1.5       2.73     80  LOWER HUTT CITY   NEW_ZEALAND        62:7   1
+ 1407  1.5       2.73     80  QUEEN'S PARK      SCOTLAND           33:31  3
+ 1408  1.5       2.73     80  SPORA LUXEMBOURG  LUXEMBOURG         23:10  0
+ 1409  1.5       2.73     80  SPORTING MERTZIG  LUXEMBOURG         23:11  0
+ 1410  1.5       2.73     79  BREIDABLIK        ICELAND            17:0   0
+ 1411  1.5       2.73     79  NELSON SUBURBS    NEW_ZEALAND        62:14  1
+ 1412  1.5       2.73     78  SHAKHTER SOLIGOK  BELARUS            76:11  0
+ 1413  1.5       2.64     83  APOLONIA FIER     ALBANIA             0:1   0
+ 1414  1.5       2.64     83  RODANGE 91        LUXEMBOURG         23:9   0
+ 1415  1.5       2.64     83  WATERSIDE KARORI  NEW_ZEALAND        62:25  1
+ 1416  1.5       2.64     82  ARDS              NORTHERN_IRELAND   26:0   0
+ 1417  1.5       2.64     82  BRECHIN CITY      SCOTLAND           33:7   2
+ 1418  1.5       2.64     82  COJUTEPEQUE       EL_SALVADOR        51:27  0
+ 1419  1.5       2.64     82  FANDOK BOBRUISK   BELARUS            76:4   0
+ 1420  1.5       2.64     81  CHRISTCHURCH TEC  NEW_ZEALAND        62:2   2
+ 1421  1.5       2.64     81  CLIFTONVILLE      NORTHERN_IRELAND   26:5   0
+ 1422  1.5       2.64     81  OPTIMIZEM         SLOVENIA           34:12  0
+ 1423  1.5       2.64     80  CORRECAMINOS      MEXICO             60:14  0
+ 1424  1.5       2.64     80  DISTILLERY        NORTHERN_IRELAND   26:8   0
+ 1425  1.5       2.64     80  EBBW VALE         WALES              40:9   0
+ 1426  1.5       2.64     80  EP JOHVI          ESTONIA            10:1   0
+ 1427  1.5       2.64     80  FH                ICELAND            17:1   0
+ 1428  1.5       2.64     80  GRINDAVIK         ICELAND            17:4   0
+ 1429  1.5       2.64     80  HALSWELL UNITED   NEW_ZEALAND        62:6   2
+ 1430  1.5       2.64     80  NIKOL TALLINN     ESTONIA            10:7   0
+ 1431  1.5       2.64     80  TRUJILLANOS       VENEZUELA          77:18  0
+ 1432  1.5       2.64     79  BESA KAVAJE       ALBANIA             0:2   0
+ 1433  1.5       2.64     79  DUNEDIN TEC       NEW_ZEALAND        62:4   2
+ 1434  1.5       2.64     79  KEFLAVIK          ICELAND            17:7   0
+ 1435  1.5       2.64     79  MOHUN CALCUTTA    INDIA              75:5   0
+ 1436  1.5       2.64     79  PAKISTAN          ASIA               84:18  0
+ 1437  1.5       2.64     79  TOMORI BERAT      ALBANIA             0:14  0
+ 1438  1.5       2.64     78  SHQIPONJA         ALBANIA             0:11  0
+ 1439  1.5       2.64     78  WATERFORD UNITED  REPUBLIC_IRELAND   18:14  4
+ 1440  1.5       2.64     77  PARALIMNI         CYPRUS              5:13  0
+ 1441  1.5       2.64     77  WANGANUI EAST     NEW_ZEALAND        62:24  1
+ 1442  1.5       2.64     76  CONWY UNITED      WALES              40:7   0
+ 1443  1.5       2.64     76  YEMEN             ASIA               84:30  0
+ 1444  1.5       2.64     75  SHINNIK           RUSSIA             31:15  4
+ 1445  1.5       2.55     82  FBK KAUNAS        LITHUANIA          22:2   0
+ 1446  1.5       2.55     82  RED BOYS D'DANGE  LUXEMBOURG         23:8   0
+ 1447  1.5       2.55     81  AEL LIMASSOL      CYPRUS              5:1   0
+ 1448  1.5       2.55     81  ESTUDIANTES       VENEZUELA          77:6   0
+ 1449  1.5       2.55     81  IBV               ICELAND            17:6   0
+ 1450  1.5       2.55     81  SIAULIAI-SAKALAS  LITHUANIA          22:7   0
+ 1451  1.5       2.55     80  OMAN              ASIA               84:17  0
+ 1452  1.5       2.55     79  ARAS KLAIPEDA     LITHUANIA          22:0   0
+ 1453  1.5       2.55     79  DINAMO G-TYUMEN   RUSSIA             31:2   4
+ 1454  1.5       2.55     79  ISTRAGAS JADRAN   SLOVENIA           34:3   0
+ 1455  1.5       2.55     79  LESOTHO           AFRICA             81:15  0
+ 1456  1.5       2.55     79  LOK VITEBSK       BELARUS            76:7   0
+ 1457  1.5       2.55     79  RABAT AJAX        MALTA              24:8   0
+ 1458  1.5       2.55     79  SIERRA LEONE      AFRICA             81:24  0
+ 1459  1.5       2.55     79  TEUTA DURRES      ALBANIA             0:13  0
+ 1460  1.5       2.55     78  CAPE TOWN SPURS   SOUTH_AFRICA       69:2   0
+ 1461  1.5       2.55     78  ST. GEORGES       AUSTRALIA          44:40  2
+ 1462  1.5       2.55     78  VIETNAM           ASIA               84:29  0
+ 1463  1.5       2.55     78  WOLLONGONG UTD    AUSTRALIA          44:50  2
+ 1464  1.5       2.55     77  BURNSIDE          NEW_ZEALAND        62:0   2
+ 1465  1.5       2.55     77  JORDAN            ASIA               84:10  0
+ 1466  1.5       2.55     76  CALCUTTA SPORT.   INDIA              75:1   0
+ 1467  1.5       2.55     76  VESZPREM          HUNGARY            16:19  4
+ 1468  1         2.45     78  MAVRICA           SLOVENIA           34:8   0
+ 1469  1         2.45     78  ORATIA UNITED     NEW_ZEALAND        62:17  0
+ 1470  1         2.45     77  BAHRAIN           ASIA               84:0   0
+ 1471  1         2.45     76  BRUNEI            ASIA               84:2   0
+ 1472  1         2.45     76  FOLA ESCH         LUXEMBOURG         23:6   4
+ 1473  1         2.45     75  ZELEZNICAR        SLOVENIA           34:18  4
+ 1474  1         2.45     73  MOUNT ALBERT      NEW_ZEALAND        62:10  0
+ 1475  1         2.45     73  NAFTA LENDAVA     SLOVENIA           34:10  4
+ 1476  1         2.45     73  PORTHMADOG        WALES              40:20  0
+ 1477  1         2.36     78  RAF YELGAVA       EUROCWC            21:6   0
+ 1478  1         2.36     78  RAF YELGAVA       LATVIA             21:6   0
+ 1479  1         2.36     77  INKARAS KAUNAS    LITHUANIA          22:4   0
+ 1480  1         2.36     77  MALAYSIA          ASIA               84:13  0
+ 1481  1         2.36     75  THOR              ICELAND            17:10  4
+ 1482  1         2.09     58  AUSEKLIS          LATVIA             21:0   0
+ 1483  1         2.09     55  MAESTEG PARK      WALES              40:17  0
+ 1484  1         2.09     55  SLIGO ROVERS      REPUBLIC_IRELAND   18:12  4
+ 1485  1         2.09     54  BALLYCLARE C.     NORTHERN_IRELAND   26:1   0
+ 1486  1         2.09     54  LLANIDLOES        WALES              40:15  4
+ 1487  1         2.09     54  SWIFT HESPERANGE  LUXEMBOURG         23:12  4
+ 1488  1         2.09     53  ABERGAVENNY       WALES              40:0   4
+ 1489  1         2.09     53  MQABBA HAJDUKS    MALTA              24:5   4
+ 1490  1         2.09     52  CUERNAVACA        MEXICO             60:16  1
+ 1491  1         2.00     65  OAP HOME (GIRLS)  CUSTOM             72:28  0
+ 1492  1         2.00     54  BORDER SECURITY   INDIA              75:0   0
+ 1493  1         2.00     54  DOMAGNANO         SAN_MARINO         32:2   0
+ 1494  1         2.00     53  INTER DE TIJUANA  MEXICO             60:20  1
+ 1495  1         2.00     53  MOLD ALEXANDRA    WALES              40:18  0
+ 1496  1         2.00     53  ST. ANDREWS       MALTA              24:10  4
+ 1497  1         2.00     52  ANZOATEGUI        VENEZUELA          77:0   0
+ 1498  1         2.00     52  FYLKIR            ICELAND            17:3   4
+ 1499  1         2.00     52  LLANELLI          WALES              40:14  0
+ 1500  1         2.00     51  JUN LIJIAN        TAIWAN             67:5   0
+ 1501  1         2.00     51  MERKUUR TARTU     ESTONIA            10:6   0
+ 1502  1         2.00     51  PVV               SURINAM            66:2   0
+ 1503  1         2.00     51  TRANS NARVA       ESTONIA            10:12  0
+ 1504  1         2.00     50  EASTERN SUBURBS   AUSTRALIA          44:17  2
+ 1505  1         2.00     50  S.U.O.O.          MEXICO             60:26  1
+ 1506  1         1.91     53  BENIN             AFRICA             81:2   0
+ 1507  1         1.91     52  ARIS BONNEVOIE    LUXEMBOURG         23:0   0
+ 1508  1         1.91     52  COBRAS            MEXICO             60:13  1
+ 1509  1         1.91     52  DAPENG            TAIWAN             67:3   0
+ 1510  1         1.91     52  FC DAG RIGA       LATVIA             21:1   0
+ 1511  1         1.91     52  MARTE MORELOS     MEXICO             60:24  1
+ 1512  1         1.91     52  MELLIEHA          MALTA              24:4   4
+ 1513  1         1.91     52  SAN FRANCISCO     MEXICO             60:27  1
+ 1514  1         1.91     52  SHINNIK BOBRUISK  BELARUS            76:12  0
+ 1515  1         1.91     52  SV CORONA BOYS    SURINAM            66:5   0
+ 1516  1         1.91     52  TEPIC             MEXICO             60:29  1
+ 1517  1         1.91     52  TORPEDO ZHODINO   BELARUS            76:16  4
+ 1518  1         1.91     51  BRAY WANDERERS    REPUBLIC_IRELAND   18:1   4
+ 1519  1         1.91     51  DUNAMO TALLINN    ESTONIA            10:0   0
+ 1520  1         1.91     51  NAXXAR LIONS      MALTA              24:6   0
+ 1521  1         1.91     51  PHILIPPINES       ASIA               84:20  0
+ 1522  1         1.91     51  VIDUS RIGA        LATVIA             21:9   0
+ 1523  1         1.91     51  WORMELDANGE       LUXEMBOURG         23:15  4
+ 1524  1         1.91     50  BESELIDHJA LEZHE  ALBANIA             0:3   0
+ 1525  1         1.91     50  BOTSWANA          AFRICA             81:3   0
+ 1526  1         1.91     50  CANBERRA COSMOS   AUSTRALIA          44:11  0
+ 1527  1         1.91     50  KEEMIK K-J        ESTONIA            10:5   4
+ 1528  1         1.91     50  OBUVSHCHIK LIDA   BELARUS            76:10  4
+ 1529  1         1.91     50  OMAGH TOWN        NORTHERN_IRELAND   26:14  0
+ 1530  1         1.91     50  SURINAM           NORTH_AMERICA      83:12  0
+ 1531  1         1.91     50  TAURAS-KARSUVA    LITHUANIA          22:9   0
+ 1532  1         1.91     49  COBH RAMBLERS     REPUBLIC_IRELAND   18:2   0
+ 1533  1         1.82     53  TERVIS PARNU      ESTONIA            10:10  0
+ 1534  1         1.82     52  HONDURAS          NORTH_AMERICA      83:6   0
+ 1535  1         1.82     51  BEI LANG          TAIWAN             67:0   0
+ 1536  1         1.82     51  CONNAH'S QUAY     WALES              40:6   0
+ 1537  1         1.82     51  DEL DE ACAPULCO   MEXICO             60:17  1
+ 1538  1         1.82     51  DEPORTIVO CANCUN  MEXICO             60:18  1
+ 1539  1         1.82     51  KALEV SILLAMAE    ESTONIA            10:4   0
+ 1540  1         1.82     51  MONAGHAN UNITED   REPUBLIC_IRELAND   18:9   0
+ 1541  1         1.82     51  PIETA HOTSPURS    MALTA              24:7   4
+ 1542  1         1.82     50  ALBPETROL PATOS   ALBANIA             0:0   0
+ 1543  1         1.82     50  BRITON FERRY      WALES              40:4   0
+ 1544  1         1.82     50  EL VIGIA          VENEZUELA          77:5   0
+ 1545  1         1.82     50  ETZELLA           LUXEMBOURG         23:4   4
+ 1546  1         1.82     50  EVAGORAS PAPHOS   CYPRUS              5:8   0
+ 1547  1         1.82     50  LLANEROS          VENEZUELA          77:8   0
+ 1548  1         1.82     50  MOLDECHNO         BELARUS            76:8   0
+ 1549  1         1.82     50  MONAGAS           VENEZUELA          77:14  0
+ 1550  1         1.82     50  OLYMPIA LIEPAYA   LATVIA             21:3   0
+ 1551  1         1.82     50  SRI LANKA         ASIA               84:25  0
+ 1552  1         1.82     50  ST. GEORGES       MALTA              24:11  4
+ 1553  1         1.82     49  B 36              FAROE_ISLANDS      11:0   0
+ 1554  1         1.82     49  LINCES DE CELAYA  MEXICO             60:23  1
+ 1555  1         1.82     49  STROITEL DOROGI   BELARUS            76:13  0
+ 1556  1         1.82     49  UNI TECH DE NEZA  MEXICO             60:35  1
+ 1557  1         1.82     49  WARRINGAH DOLPHN  AUSTRALIA          44:45  2
+ 1558  1         1.82     48  AFAN LIDO         WALES              40:2   0
+ 1559  1         1.82     48  CAERSWS           WALES              40:5   0
+ 1560  1         1.82     48  DEPT TEPATITLAN   MEXICO             60:19  1
+ 1561  1         1.82     48  EAST SUBURBS      AUSTRALIA          44:16  3
+ 1562  1         1.82     48  HAVERFORDWEST     WALES              40:11  0
+ 1563  1         1.82     48  NEWRY TOWN        NORTHERN_IRELAND   26:13  0
+ 1564  1         1.82     48  TRE FIORI         SAN_MARINO         32:9   0
+ 1565  1         1.82     47  YULATAN           MEXICO             60:38  1
+ 1566  1         1.82     46  ADAMSTOWN         AUSTRALIA          44:1   2
+ 1567  1         1.82     46  TAI DIAN          TAIWAN             67:11  0
+ 1568  1         1.73     50  BLACKTOWN CITY    AUSTRALIA          44:5   2
+ 1569  1         1.73     50  IRAPUATO          MEXICO             60:21  1
+ 1570  1         1.73     50  LA PIEDAD         MEXICO             60:22  1
+ 1571  1         1.73     50  LACI              ALBANIA             0:8   0
+ 1572  1         1.73     50  MARACAIBO         VENEZUELA          77:9   0
+ 1573  1         1.73     50  OMONIA ARADIPPOU  CYPRUS              5:11  0
+ 1574  1         1.73     49  CANTERBURY        AUSTRALIA          44:12  2
+ 1575  1         1.73     49  VAIROGS REZEKNE   LATVIA             21:8   0
+ 1576  1         1.73     48  BAD HABITS        CUSTOM             72:3   0
+ 1577  1         1.73     48  DROGHEDA UNITED   REPUBLIC_IRELAND   18:5   0
+ 1578  1         1.73     48  FFLINT TOWN       WALES              40:10  0
+ 1579  1         1.73     48  GI                FAROE_ISLANDS      11:3   0
+ 1580  1         1.73     48  MAHINDRA          INDIA              75:3   0
+ 1581  1         1.73     48  TAMPICO-MADERO    MEXICO             60:28  0
+ 1582  1         1.73     46  LLANSANTFFRAID    EUROCWC            40:16  0
+ 1583  1         1.73     46  LLANSANTFFRAID    WALES              40:16  0
+ 1584  1         1.73     46  MILLS PHAGWARRA   INDIA              75:4   0
+ 1585  1         1.73     45  ZYDRIUS MARIJAME  LITHUANIA          22:11  0
+ 1586  1         1.64     49  B 71              FAROE_ISLANDS      11:2   0
+ 1587  1         1.64     49  TALLINNA SADAM    ESTONIA            10:9   0
+ 1588  1         1.64     48  GELEZINIS VILKAS  LITHUANIA          22:3   0
+ 1589  1         1.64     47  ABERYSTWYTH       WALES              40:1   0
+ 1590  1         1.64     47  LARNE             NORTHERN_IRELAND   26:11  0
+ 1591  1         1.64     46  B 68              FAROE_ISLANDS      11:1   0
+ 1592  1         1.64     46  KI                FAROE_ISLANDS      11:6   0
+ 1593  1         1.64     46  VALENCIA          VENEZUELA          77:21  0
+ 1594  1         1.64     43  TWI               CUSTOM             72:43  0
+ 1595  1         1.64     40  BANGLADESH        ASIA               84:1   0
+ 1596  1         1.55     47  VEDRICH RECHITSA  BELARUS            76:17  0
+ 1597  1         1.55     46  DA TONG           TAIWAN             67:2   0
+ 1598  1         1.55     45  NEWTOWN           WALES              40:19  0
+ 1599  1         1.55     42  ZALATEPEC         MEXICO             60:39  1
+ 1600  0.5       1.45     45  ESDAG TARTU       ESTONIA            10:2   0
+ 1601  0.5       1.27     26  FOLGORE           SAN_MARINO         32:4   0
+ 1602  0.5       1.27     25  GAUYA VALMIERA    LATVIA             21:2   0
+ 1603  0.5       1.27     24  CALVARIO-METAPAN  EL_SALVADOR        51:24  3
+ 1604  0.5       1.27     24  ESPANA FC         EL_SALVADOR        51:28  1
+ 1605  0.5       1.27     24  ROCKDALE HINDEN   AUSTRALIA          44:37  2
+ 1606  0.5       1.27     23  ISIDRO MENENDEZ   EL_SALVADOR        51:32  3
+ 1607  0.5       1.27     22  CERRITO           URUGUAY            71:4   1
+ 1608  0.5       1.27     22  ROCHEDALE ROVERS  AUSTRALIA          44:36  3
+ 1609  0.5       1.27     21  ADELAIDE C.S.C.   AUSTRALIA          44:2   1
+ 1610  0.5       1.27     21  BRISBANE LIONS    AUSTRALIA          44:8   3
+ 1611  0.5       1.27     21  COALSTARS         AUSTRALIA          44:13  3
+ 1612  0.5       1.27     21  ENFIELD CITY      AUSTRALIA          44:18  1
+ 1613  0.5       1.27     21  VENDAVAL          EL_SALVADOR        51:45  2
+ 1614  0.5       1.27     20  C.D SALVADORENO   EL_SALVADOR        51:14  3
+ 1615  0.5       1.27     20  CENTRAL ESP       URUGUAY            71:2   1
+ 1616  0.5       1.27     20  CHALATENANGO      EL_SALVADOR        51:26  2
+ 1617  0.5       1.27     20  QUEZALTEPEQUE     EL_SALVADOR        51:38  3
+ 1618  0.5       1.27     20  TUNISIA           AFRICA             81:30  0
+ 1619  0.5       1.27     20  WHITE CITY        AUSTRALIA          44:48  1
+ 1620  0.5       1.27     19  C.D.HURACAN       EL_SALVADOR        51:18  3
+ 1621  0.5       1.27     19  EL TANQUE         URUGUAY            71:9   1
+ 1622  0.5       1.27     18  ADVANA F.C.       EL_SALVADOR        51:2   1
+ 1623  0.5       1.27     18  CAILUNGO          SAN_MARINO         32:0   0
+ 1624  0.5       1.27     18  NICARAGUA         NORTH_AMERICA      83:9   0
+ 1625  0.5       1.27     17  ONCE MUNICIPAL    EL_SALVADOR        51:35  3
+ 1626  0.5       1.18     24  C.D MALACOFF      EL_SALVADOR        51:12  3
+ 1627  0.5       1.18     23  JAMAICA           NORTH_AMERICA      83:7   0
+ 1628  0.5       1.18     22  NIGER             AFRICA             81:21  0
+ 1629  0.5       1.18     22  RACING JUNIOR     EL_SALVADOR        51:39  3
+ 1630  0.5       1.18     21  ATLETICO BARCELA  EL_SALVADOR        51:8   1
+ 1631  0.5       1.18     21  BACHILLERES       MEXICO             60:4   1
+ 1632  0.5       1.18     21  BURKINA FASO      AFRICA             81:4   0
+ 1633  0.5       1.18     21  CROYDON P.S.C.    AUSTRALIA          44:14  1
+ 1634  0.5       1.18     21  CYC STANMORE      AUSTRALIA          44:15  2
+ 1635  0.5       1.18     21  DEP. HUMAITA      PARAGUAY           64:4   0
+ 1636  0.5       1.18     21  JUVENES           SAN_MARINO         32:5   0
+ 1637  0.5       1.18     21  MURATA            SAN_MARINO         32:8   0
+ 1638  0.5       1.18     20  C.D PLATENSE      EL_SALVADOR        51:13  2
+ 1639  0.5       1.18     20  C.D.INDEPENDIENE  EL_SALVADOR        51:19  2
+ 1640  0.5       1.18     20  FENIX             URUGUAY            71:10  1
+ 1641  0.5       1.18     20  FIJI              OCEANIA            85:1   0
+ 1642  0.5       1.18     20  LAOS              ASIA               84:12  0
+ 1643  0.5       1.18     19  AYENSE            MEXICO             60:3   1
+ 1644  0.5       1.18     19  COLON             URUGUAY            71:6   1
+ 1645  0.5       1.18     19  LIBERTAS          SAN_MARINO         32:6   0
+ 1646  0.5       1.18     19  PERLAS F.C.       EL_SALVADOR        51:37  1
+ 1647  0.5       1.18     19  SUD AMERICA       URUGUAY            71:24  1
+ 1648  0.5       1.18     19  WEST TORRENS      AUSTRALIA          44:47  1
+ 1649  0.5       1.18     18  A.C. ARCENSE      EL_SALVADOR        51:0   2
+ 1650  0.5       1.18     18  ACACIA RIDGE      AUSTRALIA          44:0   3
+ 1651  0.5       1.18     18  BASANEZ           URUGUAY            71:0   0
+ 1652  0.5       1.18     18  FUERTE AGUILARES  EL_SALVADOR        51:30  2
+ 1653  0.5       1.18     18  GERARDO BARRIOS   EL_SALVADOR        51:31  1
+ 1654  0.5       1.18     18  MIRAMAR MISIONES  URUGUAY            71:15  1
+ 1655  0.5       1.18     18  MONTEVITO         SAN_MARINO         32:7   0
+ 1656  0.5       1.18     18  NORTH BRISBANE    AUSTRALIA          44:29  3
+ 1657  0.5       1.18     18  NSI               FAROE_ISLANDS      11:8   4
+ 1658  0.5       1.18     18  PARA HILLS        AUSTRALIA          44:32  1
+ 1659  0.5       1.18     18  SENSUNTEPEQUE     EL_SALVADOR        51:41  2
+ 1660  0.5       1.18     18  SV NATIONAAL      SURINAM            66:7   0
+ 1661  0.5       1.18     18  TULEVIK VILJANDI  ESTONIA            10:13  4
+ 1662  0.5       1.18     18  U.D.E.T           EL_SALVADOR        51:43  1
+ 1663  0.5       1.18     17  ATLETICO BALBOA   EL_SALVADOR        51:7   1
+ 1664  0.5       1.18     17  HURACAN FC        URUGUAY            71:12  1
+ 1665  0.5       1.18     17  NORTH STAR        AUSTRALIA          44:30  3
+ 1666  0.5       1.18     17  PASAQUINA F.C.    EL_SALVADOR        51:36  1
+ 1667  0.5       1.18     16  C.D DRAGON        EL_SALVADOR        51:11  1
+ 1668  0.5       1.18     16  C.D.MAR Y PLATA   EL_SALVADOR        51:20  1
+ 1669  0.5       1.18     16  INTER MOENGO      SURINAM            66:0   0
+ 1670  0.5       1.18     15  LA LUZ            URUGUAY            71:13  1
+ 1671  0.5       1.18     14  BANKSTOWN CITY    AUSTRALIA          44:4   2
+ 1672  0.5       1.18     14  C.D.MARTE         EL_SALVADOR        51:21  2
+ 1673  0.5       1.09     24  IF                FAROE_ISLANDS      11:5   0
+ 1674  0.5       1.09     24  REAL CUSLATLECO   EL_SALVADOR        51:40  2
+ 1675  0.5       1.09     23  C.D. EL ROBLE     EL_SALVADOR        51:16  2
+ 1676  0.5       1.09     22  A.C. UDC          EL_SALVADOR        51:1   2
+ 1677  0.5       1.09     22  GUYANA            NORTH_AMERICA      83:5   0
+ 1678  0.5       1.09     21  C.D.NEO PIPIL     EL_SALVADOR        51:22  2
+ 1679  0.5       1.09     21  MOUNT GRAVATT     AUSTRALIA          44:27  3
+ 1680  0.5       1.09     20  C.D. FUERTE S F   EL_SALVADOR        51:17  1
+ 1681  0.5       1.09     20  COSMOS            SAN_MARINO         32:1   0
+ 1682  0.5       1.09     20  OLYMPIANS         AUSTRALIA          44:31  1
+ 1683  0.5       1.09     19  BLUE EAGLES       AUSTRALIA          44:6   1
+ 1684  0.5       1.09     19  BONNYRIGG         AUSTRALIA          44:7   2
+ 1685  0.5       1.09     19  TARINGA ROVERS    AUSTRALIA          44:43  3
+ 1686  0.5       1.09     19  TB                FAROE_ISLANDS      11:10  0
+ 1687  0.5       1.09     18  AGAVE F.C.        EL_SALVADOR        51:3   1
+ 1688  0.5       1.09     18  FAETANO           SAN_MARINO         32:3   0
+ 1689  0.5       1.09     18  LIF               FAROE_ISLANDS      11:7   0
+ 1690  0.5       1.09     18  SALISBURY UTD     AUSTRALIA          44:38  1
+ 1691  0.5       1.09     18  SIF               FAROE_ISLANDS      11:9   4
+ 1692  0.5       1.09     18  TRE PENNE         SAN_MARINO         32:10  4
+ 1693  0.5       1.09     18  VIRTUS            SAN_MARINO         32:11  4
+ 1694  0.5       1.09     17  RENTISTAS         URUGUAY            71:21  1
+ 1695  0.5       1.09     17  SOLOMON ISLANDS   OCEANIA            85:3   0
+ 1696  0.5       1.09     17  SP ITALIANO       URUGUAY            71:23  1
+ 1697  0.5       1.09     17  SUTHERLAND SHIRE  AUSTRALIA          44:41  2
+ 1698  0.5       1.09     16  C.D SAN RAFAEL    EL_SALVADOR        51:15  3
+ 1699  0.5       1.09     15  CENTRAL IZALCO    EL_SALVADOR        51:25  3
+ 1700  0.5       1.09     14  MODBURY           AUSTRALIA          44:25  1
+ 1701  0.5       1.00     20  ONCE LOBOS        EL_SALVADOR        51:34  3
+ 1702  0.5       1.00     18  PINE RIVERS       AUSTRALIA          44:34  3
+ 1703  0.5       1.00     17  PAPUA NEW GUINEA  ASIA               84:19  0
+ 1704  0.5       1.00     17  SV ROAD           SURINAM            66:8   0
+ 1705  0.5       1.00     16  C.D.SANTIAGUENO   EL_SALVADOR        51:23  3
+ 1706  0.5       1.00     16  VB                FAROE_ISLANDS      11:11  0
+ 1707  0.5       1.00     15  BERMUDA           NORTH_AMERICA      83:0   0
+ 1708  0.5       1.00     15  INALA CITY        AUSTRALIA          44:20  3
+ 1709  0.5       1.00     14  SV BOXEL          SURINAM            66:4   0
+ 1710  0.5       1.00     13  PREKASH           SURINAM            66:1   0
+ 1711  0.5       1.00      6  THE SAD TRUTH     CUSTOM             72:40  0

@@ -15,6 +15,7 @@
 #include "string_utils.h"
 #include "shooting_practice.h"   /* shared: compiled for both targets */
 #include "penalty_shootout.h"    /* shared: compiled for both targets */
+#include "challenge_cup.h"       /* shared: compiled for both targets */
 #include "challenge.h"           /* a saved position skips the pre-match prompts */
 #ifdef SWOS_SDL_BUILD
 #include "uniform.h"        /* a kit chosen for this match (UNIFORM screen) */
@@ -1027,6 +1028,8 @@ void InitAndPlayGame(TeamFileEx *team1, TeamFileEx *team2) {
         NetplaySetup_TakeTieRules();
     }
 #endif
+    /* A CHALLENGE CUP round is a cup tie, named for its round (src/challenge_cup.c). */
+    ChallengeCup_TakeMatchRules();
 
     /* d0=1, d1=minSubs, d2=maxSubs, d3=0, d7=-1, a1=team1, a2=team2 */
     InitializeInGameTeamsAndStartGame(1, (int16_t)_minSubstitutes,
@@ -1151,6 +1154,7 @@ void InitializeInGameTeamsAndStartGame(int16_t randomizePitch, int16_t minSubs,
      * src/penalty_shootout.c). */
     ShootingPractice_BeginMatch();
     PenaltyShootout_BeginMatch();
+    ChallengeCup_BeginMatch();
 
     /* Set secondary colors for both teams */
 #ifdef SWOS_SDL_BUILD

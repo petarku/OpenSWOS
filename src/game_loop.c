@@ -1081,6 +1081,12 @@ end_of_match_flow:
         if (ChallengeProgress_InAttempt())
             arcadeNoReplayMenu = 1;
     }
+    /* Nor a CHALLENGE CUP round: it is played once, win or lose (challenge_cup.c). */
+    {
+        extern int32_t ChallengeCup_InMatch(void);
+        if (ChallengeCup_InMatch())
+            arcadeNoReplayMenu = 1;
+    }
     if (_isGameFriendly != 0 && _trainingGame == 0 && !arcadeNoReplayMenu) {
         ReplayExitMenuAfterFriendly();
         if (_replaySelected != 0) {
