@@ -16,3 +16,11 @@ bin/s/startup-sequence   -text
 bin/c/*                  -text
 packaging/amiga/**       -text
 *.uaem                   -text
+
+# Shell scripts must keep LF endings too, for the same reason. Under autocrlf they were
+# checked out CRLF, and Cygwin's bash (the SDL build's shell on Windows) reads `set -u\r`
+# and `cd "..\r"` and dies -- gen_build_info.sh never wrote include/swos_build.h, so every
+# Cygwin build carried whatever stamp a git-bash build had left there, a commit that was
+# not this one. Git-bash tolerates CR, which is why it went unnoticed.
+*.sh                     text eol=lf
+android/gradlew          text eol=lf
