@@ -425,6 +425,38 @@
           "func": "Specials_MenuSelect"
         }
       ]
+    },
+    {
+      "kind": "entry",
+      "coords": {
+        "x": 12,
+        "y": -76,
+        "w": 24,
+        "h": 14
+      },
+      "commands": [
+        {
+          "op": "nav",
+          "left": -1,
+          "right": -1,
+          "up": -1,
+          "down": -1
+        },
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 14
+        },
+        {
+          "op": "text",
+          "flags": "0x0",
+          "str": "_aSpecials"
+        },
+        {
+          "op": "onselect_fire",
+          "func": "Specials_MenuSelect"
+        }
+      ]
     }
   ]
 }
