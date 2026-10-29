@@ -3675,3 +3675,4 @@ typedef struct Menu_ChallengeCollection {
 } Menu_ChallengeCollection;
 #pragma pack(pop)
 extern Menu_ChallengeCollection _challengeMenu;
+extern Menu_ChallengeCollection _specialsMenu;  /* SPECIALS: the same shape (challenge_cup.c) */

@@ -348,6 +348,8 @@ extern void ShowControlsMenu(void);
 extern void ShowPlayerMarket(void);
 extern void ShowPlayerMarketInit(void);
 extern void ShowStadiumInit(void);
+extern void Specials_MenuInit(void);
+extern void Specials_MenuSelect(void);
 extern void Squad45AfterDraw(void);
 extern void SquadAfterDrawCommon(void);
 extern void SquadCommon(void);
@@ -575,6 +577,7 @@ extern char _aSecondKit[];
 extern char _aSeeded[];
 extern char _aShootingPractice[];
 extern char _aSkills[];
+extern char _aSpecials[];
 extern char _aSquad[];
 extern char _aStar[];
 extern char _aStartCareerAs[];
@@ -1062,6 +1065,8 @@ const MenuSymbol _menuSymbols[] = {
     { "ShowPlayerMarket", (void*)ShowPlayerMarket, SYM_FUNC },
     { "ShowPlayerMarketInit", (void*)ShowPlayerMarketInit, SYM_FUNC },
     { "ShowStadiumInit", (void*)ShowStadiumInit, SYM_FUNC },
+    { "Specials_MenuInit", (void*)Specials_MenuInit, SYM_FUNC },
+    { "Specials_MenuSelect", (void*)Specials_MenuSelect, SYM_FUNC },
     { "Squad45AfterDraw", (void*)Squad45AfterDraw, SYM_FUNC },
     { "SquadAfterDrawCommon", (void*)SquadAfterDrawCommon, SYM_FUNC },
     { "SquadCommon", (void*)SquadCommon, SYM_FUNC },
@@ -1286,6 +1291,7 @@ const MenuSymbol _menuSymbols[] = {
     { "_aSeeded", (void*)_aSeeded, SYM_STRING },
     { "_aShootingPractice", (void*)_aShootingPractice, SYM_STRING },
     { "_aSkills", (void*)_aSkills, SYM_STRING },
+    { "_aSpecials", (void*)_aSpecials, SYM_STRING },
     { "_aSquad", (void*)_aSquad, SYM_STRING },
     { "_aStar", (void*)_aStar, SYM_STRING },
     { "_aStartCareerAs", (void*)_aStartCareerAs, SYM_STRING },

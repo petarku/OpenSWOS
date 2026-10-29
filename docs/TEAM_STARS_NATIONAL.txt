@@ -1,0 +1,150 @@
+# Every team rated in value stars, strongest first (scripts/team_stars.py).
+# stars = the starting eleven's average value stars, to the nearest half;
+# average = the same in half stars, unrounded; price = the eleven's summed price
+# (the tie-break); team = TEAM.nnn:number; div = its division, 0 = the top.
+
+ rank  stars  average  price  name              file              team    div
+
+    1  4         8.45    439  ITALY             EUROPE             80:23  0
+    2  4         8.45    430  GERMANY           EUROPE             80:17  0
+    3  4         8.18    416  BRAZIL            SOUTH_AMERICA      82:2   0
+    4  4         8.09    409  HOLLAND           EUROPE             80:19  0
+    5  4         8.00    407  ENGLAND           EUROPE             80:11  0
+    6  4         7.91    399  SPAIN             EUROPE             80:42  0
+    7  4         7.91    388  FRANCE            EUROPE             80:15  0
+    8  4         7.82    394  PORTUGAL          EUROPE             80:34  0
+    9  4         7.55    378  RUSSIA            EUROPE             80:37  0
+   10  4         7.55    374  ARGENTINA         SOUTH_AMERICA      82:0   0
+   11  3.5       7.45    375  CROATIA           EUROPE             80:7   0
+   12  3.5       7.45    361  CZECH REPUBLIC    EUROPE             80:9   0
+   13  3.5       7.36    364  BELGIUM           EUROPE             80:5   0
+   14  3.5       7.36    364  ROMANIA           EUROPE             80:36  0
+   15  3.5       7.36    355  SWEDEN            EUROPE             80:43  0
+   16  3.5       7.27    357  SCOTLAND          EUROPE             80:39  0
+   17  3.5       7.18    360  YUGOSLAVIA        EUROPE             80:48  0
+   18  3.5       7.18    347  REPUBLIC IRELAND  EUROPE             80:35  0
+   19  3.5       7.00    344  DENMARK           EUROPE             80:10  0
+   20  3.5       6.91    342  URUGUAY           SOUTH_AMERICA      82:8   0
+   21  3.5       6.91    340  BULGARIA          EUROPE             80:6   0
+   22  3.5       6.91    335  SWITZERLAND       EUROPE             80:44  0
+   23  3.5       6.82    322  WALES             EUROPE             80:47  0
+   24  3.5       6.55    321  COLOMBIA          SOUTH_AMERICA      82:4   0
+   25  3         6.36    311  NORWAY            EUROPE             80:32  0
+   26  3         6.36    283  AUSTRIA           EUROPE             80:2   0
+   27  3         6.27    287  BOLIVIA           SOUTH_AMERICA      82:1   0
+   28  3         6.27    281  POLAND            EUROPE             80:33  0
+   29  3         6.18    285  GREECE            EUROPE             80:18  0
+   30  3         6.18    281  TURKEY            EUROPE             80:45  0
+   31  3         6.09    276  GEORGIA           EUROPE             80:16  0
+   32  3         6.00    268  SENEGAL           AFRICA             81:23  0
+   33  3         5.91    269  AUSTRALIA         OCEANIA            85:0   0
+   34  3         5.91    265  CHILE             SOUTH_AMERICA      82:3   0
+   35  3         5.91    258  SLOVAKIA          EUROPE             80:40  0
+   36  3         5.82    267  FINLAND           EUROPE             80:14  0
+   37  3         5.82    259  NORTHERN IRELAND  EUROPE             80:31  0
+   38  3         5.73    248  UNITED STATES     NORTH_AMERICA      83:14  0
+   39  3         5.73    244  HUNGARY           EUROPE             80:20  0
+   40  3         5.55    237  ISRAEL            EUROPE             80:22  0
+   41  2.5       5.45    238  MACEDONIA         EUROPE             80:28  0
+   42  2.5       5.45    228  SLOVENIA          EUROPE             80:41  0
+   43  2.5       5.36    234  UKRAINE           EUROPE             80:46  0
+   44  2.5       5.36    231  IVORY COAST       AFRICA             81:13  0
+   45  2.5       5.36    230  MEXICO            NORTH_AMERICA      83:8   0
+   46  2.5       5.27    234  NIGERIA           AFRICA             81:22  0
+   47  2.5       5.27    232  ZAMBIA            AFRICA             81:32  0
+   48  2.5       5.27    226  ALBANIA           EUROPE             80:0   0
+   49  2.5       5.27    216  PERU              SOUTH_AMERICA      82:7   0
+   50  2.5       5.27    214  BELARUS           EUROPE             80:4   0
+   51  2.5       5.18    228  TRINIDAD-TOBAGO   NORTH_AMERICA      83:13  0
+   52  2.5       5.18    207  MOLDOVA           EUROPE             80:30  0
+   53  2.5       5.09    209  LITHUANIA         EUROPE             80:26  0
+   54  2.5       5.09    205  SOUTH AFRICA      AFRICA             81:25  0
+   55  2.5       5.09    204  COSTA RICA        NORTH_AMERICA      83:2   0
+   56  2.5       5.09    204  SOUTH KOREA       ASIA               84:24  0
+   57  2.5       5.09    203  ECUADOR           SOUTH_AMERICA      82:5   0
+   58  2.5       5.09    197  ICELAND           EUROPE             80:21  0
+   59  2.5       5.00    214  GHANA             AFRICA             81:11  0
+   60  2.5       5.00    202  CAMEROON          AFRICA             81:6   0
+   61  2.5       5.00    201  MOROCCO           AFRICA             81:19  0
+   62  2.5       5.00    199  EGYPT             AFRICA             81:8   0
+   63  2.5       5.00    196  CYPRUS            EUROPE             80:8   0
+   64  2.5       4.82    188  PARAGUAY          SOUTH_AMERICA      82:6   0
+   65  2.5       4.64    191  CANADA            NORTH_AMERICA      83:1   0
+   66  2.5       4.64    185  SAUDI ARABIA      ASIA               84:22  0
+   67  2.5       4.64    184  MALTA             EUROPE             80:29  0
+   68  2.5       4.55    176  MALI              AFRICA             81:18  0
+   69  2.5       4.55    170  UNITED ARAB EMIS  ASIA               84:28  0
+   70  2         4.45    175  LATVIA            EUROPE             80:24  0
+   71  2         4.45    173  ARMENIA           EUROPE             80:1   0
+   72  2         4.45    171  LUXEMBOURG        EUROPE             80:27  0
+   73  2         4.45    170  GUINEA            AFRICA             81:12  0
+   74  2         4.45    168  GABON             AFRICA             81:10  0
+   75  2         4.45    167  KUWAIT            ASIA               84:11  0
+   76  2         4.36    171  LIBERIA           AFRICA             81:16  0
+   77  2         4.36    170  NEW ZEALAND       OCEANIA            85:2   0
+   78  2         4.27    164  AZERBAIJAN        EUROPE             80:3   0
+   79  2         4.18    150  SAN MARINO        EUROPE             80:38  0
+   80  2         4.09    151  JAPAN             ASIA               84:9   0
+   81  2         4.09    149  CHINA             ASIA               84:3   0
+   82  2         4.09    145  EL SALVADOR       NORTH_AMERICA      83:3   0
+   83  2         4.09    143  LIECHTENSTEIN     EUROPE             80:25  0
+   84  2         4.09    143  ZIMBABWE          AFRICA             81:33  0
+   85  2         4.09    141  SUDAN             AFRICA             81:26  0
+   86  2         4.09    140  FAROE ISLES       EUROPE             80:13  0
+   87  2         4.00    145  MALAWI            AFRICA             81:17  0
+   88  2         4.00    141  IRAN              ASIA               84:7   0
+   89  2         4.00    140  SYRIA             ASIA               84:26  0
+   90  2         4.00    139  BURUNDI           AFRICA             81:5   0
+   91  2         4.00    129  ESTONIA           EUROPE             80:12  0
+   92  2         3.64    121  VENEZUELA         SOUTH_AMERICA      82:9   0
+   93  2         3.55    115  QATAR             ASIA               84:21  0
+   94  1.5       3.45    116  ETHIOPIA          AFRICA             81:9   0
+   95  1.5       3.45    114  INDIA             ASIA               84:5   0
+   96  1.5       3.45    112  NORTH KOREA       ASIA               84:16  0
+   97  1.5       3.36    121  PANAMA            NORTH_AMERICA      83:10  0
+   98  1.5       3.36    114  ALGERIA           AFRICA             81:0   0
+   99  1.5       3.36    114  MOZAMBIQUE        AFRICA             81:20  0
+  100  1.5       3.36    111  INDONESIA         ASIA               84:6   0
+  101  1.5       3.36    111  IRAQ              ASIA               84:8   0
+  102  1.5       3.36    108  HONG KONG         ASIA               84:4   0
+  103  1.5       3.27    113  MAURITIUS         ASIA               84:14  0
+  104  1.5       3.27    113  ST. VINCENT       NORTH_AMERICA      83:11  0
+  105  1.5       3.27    113  TOGO              AFRICA             81:29  0
+  106  1.5       3.27    111  SINGAPORE         ASIA               84:23  0
+  107  1.5       3.27    111  TANZANIA          AFRICA             81:28  0
+  108  1.5       3.27    110  ANGOLA            AFRICA             81:1   0
+  109  1.5       3.27    110  GUATEMALA         NORTH_AMERICA      83:4   0
+  110  1.5       3.27    109  KENYA             AFRICA             81:14  0
+  111  1.5       3.09    101  TAIWAN            ASIA               84:27  0
+  112  1.5       3.00     86  CONGO             AFRICA             81:7   0
+  113  1.5       2.91     85  MYANMAR           ASIA               84:15  0
+  114  1.5       2.82     82  SWAZILAND         AFRICA             81:27  0
+  115  1.5       2.73     83  UGANDA            AFRICA             81:31  0
+  116  1.5       2.64     79  PAKISTAN          ASIA               84:18  0
+  117  1.5       2.64     76  YEMEN             ASIA               84:30  0
+  118  1.5       2.55     80  OMAN              ASIA               84:17  0
+  119  1.5       2.55     79  LESOTHO           AFRICA             81:15  0
+  120  1.5       2.55     79  SIERRA LEONE      AFRICA             81:24  0
+  121  1.5       2.55     78  VIETNAM           ASIA               84:29  0
+  122  1.5       2.55     77  JORDAN            ASIA               84:10  0
+  123  1         2.45     77  BAHRAIN           ASIA               84:0   0
+  124  1         2.45     76  BRUNEI            ASIA               84:2   0
+  125  1         2.36     77  MALAYSIA          ASIA               84:13  0
+  126  1         1.91     53  BENIN             AFRICA             81:2   0
+  127  1         1.91     51  PHILIPPINES       ASIA               84:20  0
+  128  1         1.91     50  BOTSWANA          AFRICA             81:3   0
+  129  1         1.91     50  SURINAM           NORTH_AMERICA      83:12  0
+  130  1         1.82     52  HONDURAS          NORTH_AMERICA      83:6   0
+  131  1         1.82     50  SRI LANKA         ASIA               84:25  0
+  132  1         1.64     40  BANGLADESH        ASIA               84:1   0
+  133  0.5       1.27     20  TUNISIA           AFRICA             81:30  0
+  134  0.5       1.27     18  NICARAGUA         NORTH_AMERICA      83:9   0
+  135  0.5       1.18     23  JAMAICA           NORTH_AMERICA      83:7   0
+  136  0.5       1.18     22  NIGER             AFRICA             81:21  0
+  137  0.5       1.18     21  BURKINA FASO      AFRICA             81:4   0
+  138  0.5       1.18     20  FIJI              OCEANIA            85:1   0
+  139  0.5       1.18     20  LAOS              ASIA               84:12  0
+  140  0.5       1.09     22  GUYANA            NORTH_AMERICA      83:5   0
+  141  0.5       1.09     17  SOLOMON ISLANDS   OCEANIA            85:3   0
+  142  0.5       1.00     17  PAPUA NEW GUINEA  ASIA               84:19  0
+  143  0.5       1.00     15  BERMUDA           NORTH_AMERICA      83:0   0

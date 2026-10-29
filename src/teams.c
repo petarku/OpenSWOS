@@ -22,6 +22,7 @@
 #include "shooting_practice.h"  /* SHOOTING PRACTICE gates the team selection below */
 #include "champions36.h"        /* the 36-team european preset substitution */
 #include "classic_comps.h"      /* CLASSICS, above WORLD CUP in the preset world list */
+#include "challenge_cup.h"      /* SPECIALS, under CLASSICS */
 #ifdef SWOS_SDL_BUILD
 #include <stdlib.h>            /* getenv — SWOS_DATA_JSON team-load wire-in */
 #endif
@@ -2905,6 +2906,11 @@ void SelectTeamsInit(void)
  * selection below catches before anything reads the slot as a Competition. */
 extern char    _aClassics[];
 static uint8_t k_classicsMarker;
+/* SPECIALS (src/challenge_cup.c), the row under it: special competitions, CHALLENGE CUP
+ * first. The same kind of marker; picking it closes the chooser as if backed out of, and
+ * PresetCompetitionMenu opens the SPECIALS screen. */
+extern char    _aSpecials[];
+static uint8_t k_specialsMarker;
 
 __attribute__((used, externally_visible))
 void SelectTeamsFinalMenu(uint16_t mode)
@@ -3023,6 +3029,10 @@ loc_E012:
     if ((uint8_t)d7 == 254 && _choosingPreset != 0) {     /* CLASSICS, above WORLD CUP */
         *teamNamesPtr++ = (void *)_aClassics;
         *leaguesPtrOut++ = (void *)&k_classicsMarker;
+        *leagueNumsOut++ = 0xFFFF;
+        d1++;
+        *teamNamesPtr++ = (void *)_aSpecials;
+        *leaguesPtrOut++ = (void *)&k_specialsMarker;
         *leagueNumsOut++ = 0xFFFF;
         d1++;
     }
@@ -3276,6 +3286,11 @@ loc_E2D0:
         if (ClassicComps_Choose())
             goto exit_clear;
         goto loc_E012;
+    }
+    if (_selectedTeamIndex < 0 && _selectedLeagueIndex >= 0 &&
+        _leaguesPtrTable[_selectedLeagueIndex] == (void *)&k_specialsMarker) {
+        Specials_Request();
+        goto exit_clear;
     }
 
     /* Check selectedTeamIndex */
