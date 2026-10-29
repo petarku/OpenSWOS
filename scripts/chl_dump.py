@@ -36,6 +36,7 @@ RULES = {0x01: "DOS_GAMEPLAY", 0x02: "DOS_VIEW", 0x04: "NO_CARDS"}
 TEAM_BYTES = 684
 TACTIC_BYTES = 370
 NUM_TACTICS = 6
+TITLE_BYTES = 40
 
 
 def cstr(b):
@@ -72,6 +73,14 @@ def parse(path):
             "name": cstr(bytes(t[5:22])),
         })
     out["tactics_off"] = toff + 2 * TEAM_BYTES
+    # The match's title and round, 40 bytes each after the tactics -- absent in a file
+    # written before 2026-10-29, whose setup ends at the tactics.
+    title_off = out["tactics_off"] + NUM_TACTICS * TACTIC_BYTES
+    if 96 + out["setup_len"] >= title_off + 2 * TITLE_BYTES:
+        out["title"] = cstr(d[title_off:title_off + TITLE_BYTES])
+        out["round"] = cstr(d[title_off + TITLE_BYTES:title_off + 2 * TITLE_BYTES])
+    else:
+        out["title"] = out["round"] = None
     out["state_off"] = 96 + out["setup_len"]
     out["raw"] = d
     return out
@@ -88,6 +97,8 @@ def report(c):
     print(f"  {c['team1']} {c['goals1']}-{c['goals2']} {c['team2']}  minute {c['minute']}")
     print(f"  setup {c['setup_len']} bytes ({c['scalar_count']} scalars), "
           f"state {c['state_len']} bytes at +{c['state_off']}")
+    if c["title"] is not None:
+        print(f"  title '{c['title']}'  round '{c['round']}'")
     for i, t in enumerate(c["setup_teams"]):
         print(f"  team{i + 1}: '{t['name']}'  file {t['country']} ordinal {t['ordinal']}  "
               f"controls {t['controls']}")
