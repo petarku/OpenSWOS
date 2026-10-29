@@ -37,6 +37,22 @@ ties, one match a round, against stronger and stronger clubs:
 
 Clubs top out at about 4 stars, so "4.5 stars" in the first idea became "4 and up".
 
+**Formations.** Each opponent's formation is drawn with it: half the time the one in its team
+file, half the time one of the round's character, and the ladder says how the next opponent
+lines up ("NEXT: ROMA, PLAYING 3-4-3"):
+
+| rounds | formations (a doubled one is twice as likely) |
+|---|---|
+| FIRST, SECOND | 5-4-1 (x2), 5-3-2, 4-5-1, SWEEP, 5-2-3 |
+| LAST 16, QUARTER-FINAL | 4-4-2, 3-5-2, 4-5-1, 4-3-3, SWEEP, 5-3-2 |
+| SEMI-FINAL, FINAL | 4-3-3 (x2), 4-2-4 (x2), 3-4-3, 3-5-2 |
+
+ATTACK and DEFEND are never used (a team file holding one gets a round formation), nor the
+player's USER slots. A computer side's skills do not depend on its formation --
+`AdjustPlayerSkills` holds a COMPUTER team at 100%, where a human side's are scaled 75..125%
+by how well the formation suits each player -- so this changes how an opponent plays, not how
+strong it is. A computer team keeps its formation for the whole match.
+
 ## 1a. NATIONAL CHALLENGE CUP
 
 **BERMUDA**, the weakest national team, the same way:

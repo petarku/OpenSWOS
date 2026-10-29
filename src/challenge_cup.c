@@ -87,6 +87,27 @@ static const CupDef k_cups[kCups] = {
     { "NATIONAL CHALLENGE CUP", "BERMUDA", 83 /* NORTH AMERICA */, 2, g_nationalCupPools,
       "BERMUDA AGAINST EVER STRONGER NATIONS", "specials/nationalCup" },
 };
+/* The game's twelve formations (TACTIC_DEFAULT .. TACTIC_DEFEND), by number; the six USER
+ * slots are the player's own and are never given to an opponent. */
+enum { kFormations = TACTIC_DEFEND + 1 };
+static const char *const k_formationNames[kFormations] = {
+    "4-4-2", "5-4-1", "4-5-1", "5-3-2", "3-5-2", "4-3-3",
+    "4-2-4", "3-4-3", "SWEEP", "5-2-3", "ATTACK", "DEFEND",
+};
+
+/* How an opponent lines up: half the time as its team file says, half the time a formation
+ * of the round's character -- defensive early, balanced in the middle, attacking at the end.
+ * A computer side's skills do not depend on its formation (AdjustPlayerSkills holds it at
+ * 100%), so this changes how it plays, not how strong it is. ATTACK and DEFEND, the two
+ * extremes, are not used (nor kept from a team file that has one). A formation listed twice
+ * is twice as likely: 5-4-1 early, 4-3-3 and 4-2-4 late. */
+enum { kRoundFormations = 6 };
+static const uint8_t k_roundFormations[3][kRoundFormations] = {
+    { TACTIC_5_4_1, TACTIC_5_3_2, TACTIC_4_5_1, TACTIC_SWEEP, TACTIC_5_2_3, TACTIC_5_4_1 },
+    { TACTIC_DEFAULT, TACTIC_3_5_2, TACTIC_4_5_1, TACTIC_4_3_3, TACTIC_SWEEP, TACTIC_5_3_2 },
+    { TACTIC_4_3_3, TACTIC_4_2_4, TACTIC_3_4_3, TACTIC_3_5_2, TACTIC_4_3_3, TACTIC_4_2_4 },
+};
+
 static const char *const k_roundNames[CHALLENGE_CUP_ROUNDS] = {
     "FIRST ROUND", "SECOND ROUND", "LAST 16", "QUARTER-FINAL", "SEMI-FINAL", "FINAL",
 };
@@ -235,6 +256,17 @@ static int32_t draw_round(const CupDef *cup, int32_t round)
     return 0;
 }
 
+static void choose_formations(void)
+{
+    int32_t round;
+
+    for (round = 0; round < CHALLENGE_CUP_ROUNDS; round++) {
+        TeamFile *team = &s_run.opponent[round].team;
+        if (rand_below(2) || team->tactics >= TACTIC_ATTACK)
+            team->tactics = k_roundFormations[round / 2][rand_below(kRoundFormations)];
+    }
+}
+
 /* A new run of a cup: the underdog and six opponents. 0 = the teams could not be found
  * (shown). */
 static int32_t new_run(int32_t which)
@@ -254,12 +286,14 @@ static int32_t new_run(int32_t which)
         ShowErrorMenu((uint8_t *)"THE CUP'S TEAMS WERE NOT FOUND");
         return 0;
     }
+    choose_formations();
 #ifdef SWOS_SDL_BUILD
     fprintf(stderr, "[challenge-cup] %s, new draw:", cup->title);
     for (round = 0; round < CHALLENGE_CUP_ROUNDS; round++) {
         char name[kNameBytes + 1];
-        fprintf(stderr, " %s (%d)", team_name(&s_run.opponent[round], name),
-                (int)TeamStars_HalfStars(&s_run.opponent[round]));
+        fprintf(stderr, " %s (%d, %s)", team_name(&s_run.opponent[round], name),
+                (int)TeamStars_HalfStars(&s_run.opponent[round]),
+                k_formationNames[s_run.opponent[round].team.tactics]);
     }
     fprintf(stderr, "\n");
 #endif
@@ -360,7 +394,7 @@ enum { SCREEN_SPECIALS, SCREEN_CUP };
 enum { ACT_NONE, ACT_EXIT, ACT_PLAY, ACT_NEW, ACT_CUP /* + k_cups index */ };
 enum {
     ROW_HEADER = 0, ROW_TEAM = 1, ROW_FIRST_ROUND = 2,          /* 2..7: the rounds */
-    ROW_STATUS = 8, ROW_PLAY = 9, ROW_EXIT = 11,
+    ROW_STATUS = 8, ROW_PLAY = 9, ROW_NEXT = 10, ROW_EXIT = 11,
     ROW_SPECIAL_FIRST = 2,          /* SPECIALS: each cup's button, its line under it */
     ROW_SPECIAL_RULES = 8,
 };
@@ -452,13 +486,21 @@ static void cup_screen(void)
     } else {
         swos_io_snprintf(buf, sizeof buf, "WIN SIX TIES TO LIFT THE CUP");
     }
-    row(ROW_STATUS, 148, buf, ACT_NONE, done ? COL_GREEN : s_run.out ? COL_RED : COL_NONE);
+    row(ROW_STATUS, 145, buf, ACT_NONE, done ? COL_GREEN : s_run.out ? COL_RED : COL_NONE);
+    CalcMenuEntryAddress(ROW_STATUS)->dwHeight = 9;
+    if (!done && !s_run.out) {      /* how the next opponent lines up */
+        const TeamFileEx *next = &s_run.opponent[s_run.round];
+        swos_io_snprintf(buf, sizeof buf, "NEXT: %s, PLAYING %s", team_name(next, name),
+                         k_formationNames[next->team.tactics]);
+        row(ROW_NEXT, 156, buf, ACT_NONE, COL_NONE);
+        CalcMenuEntryAddress(ROW_NEXT)->dwHeight = 9;
+    }
 
     if (done || s_run.out) {
-        row(ROW_PLAY, 166, "NEW DRAW", ACT_NEW, COL_GREEN);
+        row(ROW_PLAY, 168, "NEW DRAW", ACT_NEW, COL_GREEN);
     } else {
         swos_io_snprintf(buf, sizeof buf, "PLAY %s", k_roundNames[s_run.round]);
-        row(ROW_PLAY, 166, buf, ACT_PLAY, COL_GREEN);
+        row(ROW_PLAY, 168, buf, ACT_PLAY, COL_GREEN);
     }
     row(ROW_EXIT, 185, "EXIT", ACT_EXIT, COL_EXIT);
 }
