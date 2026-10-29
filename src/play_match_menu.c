@@ -31,6 +31,7 @@
 extern void *_charTables[];
 #define SHOOTOUT_ORDER_COLOR 2  /* menu text colour index: white */
 #include "ghost_teams.h"        /* (GHOST TEAM) where the country would be named */
+#include "formation_fit.h"      /* the computer opponent's formation on VIEW OPPO */
 
 /* Prevent GCC from converting byte loops to memcpy/memset (no libc) */
 #pragma GCC optimize("no-tree-loop-distribute-patterns")
@@ -197,12 +198,51 @@ void SetCurrentSelectedPlayerIndexPointer(void) {
     _currentSelectedPlayerIndexPtr = (uintptr_t)a0;
 }
 
+/* ================================================================
+ * The computer opponent's formation on VIEW OPPO (OpenSWOS).
+ *
+ * In a friendly -- the friendly itself, PRACTICE, the challenge cups: every match played
+ * with no competition under way (_gameType 0) -- the player may pick the computer side's
+ * formation while viewing it, from the ten normal ones (FORMATION_FIT_NORMAL). Its players
+ * then show their own ticks and crosses, and the team its big one, against the formation it
+ * had when VIEW OPPO was opened: the game's measure of how well a formation suits a team
+ * (formation_fit.c), which for a computer side changes where its players' skills are used,
+ * not the skills. Not in a competition or a career, whose team records would keep the
+ * change. The player's own marks live in _playerPositionsArray / _teamSkillCurrent, which
+ * FormationFit_Value leaves as they were; the opponent's are kept here.
+ * ================================================================ */
+static uint8_t  s_oppValues[32], s_oppBaseline[32];
+static uint16_t s_oppTeamValue, s_oppTeamBaseline;
+
+static int16_t OpponentFormationEditable(void) {
+    return _viewingOpponentTeam && !_showingCpuTeams && !_trainingGame && _squadChangesAllowed &&
+           _gameType == 0 && _playMatchTeam2Ptr->team.teamControls == TEAM_COMPUTER;
+}
+
+/* Score the opponent in its formation; `baseline` also makes that what its marks compare with. */
+static void ScoreOpponent(int16_t baseline) {
+    int16_t i;
+    s_oppTeamValue = FormationFit_Value(_playMatchTeam2Ptr, _playMatchTeam2Ptr->team.tactics,
+                                        s_oppValues);
+    if (baseline) {
+        for (i = 0; i < 32; i++) s_oppBaseline[i] = s_oppValues[i];
+        s_oppTeamBaseline = s_oppTeamValue;
+    }
+}
+
 /* ================================================================ */
 __attribute__((used, externally_visible))
 void UpdateCheckMarkSprite(void) {
     MenuEntry *e = &_menuEntries[0];
     e->isInvisible = 1;
-    if (_viewingOpponentTeam) return;
+    if (_viewingOpponentTeam) {
+        if (!OpponentFormationEditable() || s_oppTeamValue == s_oppTeamBaseline) return;
+        e->stringFlags &= ~(1u << 13);
+        e->fgWord = (s_oppTeamValue > s_oppTeamBaseline) ? SPR_CHECK_BIG : SPR_CROSS_BIG;
+        e->stringFlags |= (1u << 13);
+        e->isInvisible = 0;
+        return;
+    }
     e->stringFlags &= ~(1u << 13);
     if (_teamSkillCurrent == _teamSkillSnapshot) return;
     e->fgWord = (_teamSkillCurrent > _teamSkillSnapshot) ? SPR_CHECK_BIG : SPR_CROSS_BIG;
@@ -492,6 +532,8 @@ void SetUpTacticsButtons(void) {
         }
         e->bgColor = c;
         e->isDisabled = (_showingCpuTeams || _viewingOpponentTeam) ? 1 : 0;
+        if (i < FORMATION_FIT_NORMAL && OpponentFormationEditable())
+            e->isDisabled = 0;              /* the computer opponent's formation (above) */
     }
 }
 
@@ -1063,6 +1105,21 @@ int16_t HandleSquadSwapSelectionToggle(int16_t d6) {
 /* ================================================================ */
 __attribute__((used, externally_visible))
 void PlayMatchChangeTactics(MenuEntry *a5) {
+    if (_viewingOpponentTeam) {             /* the computer opponent's (OpponentFormationEditable) */
+        int16_t f = a5->ordinal - _menuEntries[38].ordinal;
+        TeamFileEx *opp = _playMatchTeam2Ptr;
+        if (!OpponentFormationEditable() || f < 0 || f >= FORMATION_FIT_NORMAL ||
+            (int8_t)opp->team.tactics == (int8_t)f)
+            return;
+        opp->team.tactics = (uint8_t)f;
+        opp->team.playerValuesDirty = TEAM_VALUES_DIRTY;
+        ScoreOpponent(0);
+        SetUpTacticsButtons();
+        SetPlayerSurnamesOnSidePitch();
+        UpdateCheckMarkSprite();
+        DrawMenu();
+        return;
+    }
     UpdateLittleCheckmark();
     RedrawPlayerNames();
     int16_t nt = a5->ordinal - _menuEntries[38].ordinal;
@@ -1145,6 +1202,8 @@ void ViewOpponentsSelect(void) {
         if (_playMatchTeam2Ptr->team.teamControls != TEAM_COMPUTER || !_squadChangesAllowed)
             SetCurrentEntry(11);
     }
+    if (OpponentFormationEditable())
+        ScoreOpponent(1);                   /* its marks compare with the formation it has now */
 common:
     SetCurrentSelectedPlayerIndexPointer();
     UpdateLittleCheckmark();
@@ -1324,6 +1383,11 @@ void DrawPlayerEntries(MenuEntry *a5) {
         uint8_t old = _oldPlayerPositionsArray[d1];
         if (cur < old) bgE->fgWord = SPR_CROSS_SMALL;       /* value fell → red cross */
         else if (cur > old) bgE->fgWord = SPR_CHECK_SMALL;  /* value rose → green tick */
+    } else if (d4 < 11 && d1 >= 0 && d1 < 32 && OpponentFormationEditable()) {
+        uint8_t cur = s_oppValues[d1];                      /* the computer opponent's */
+        uint8_t old = s_oppBaseline[d1];
+        if (cur < old) bgE->fgWord = SPR_CROSS_SMALL;
+        else if (cur > old) bgE->fgWord = SPR_CHECK_SMALL;
     }
 
     /* Checkmark entry sync */
