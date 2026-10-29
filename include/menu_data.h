@@ -3675,4 +3675,15 @@ typedef struct Menu_ChallengeCollection {
 } Menu_ChallengeCollection;
 #pragma pack(pop)
 extern Menu_ChallengeCollection _challengeMenu;
-extern Menu_ChallengeCollection _specialsMenu;  /* SPECIALS: the same shape (challenge_cup.c) */
+
+/* SPECIALS (challenge_cup.c): _challengeMenu's shape with fourteen rows, laid out at run time
+ * (the fourteenth: a tester build's SKIP ROUND). */
+#pragma pack(push, 1)
+typedef struct Menu_Specials {
+    MenuHeader hdr;
+    uint16_t coordsMode;
+    MenuEntry_Byte_Nav_Colors_TextPtr_OnSelect entries[14];
+    uint16_t markEndMenu;
+} Menu_Specials;
+#pragma pack(pop)
+extern Menu_Specials _specialsMenu;

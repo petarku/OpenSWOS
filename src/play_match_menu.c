@@ -27,6 +27,7 @@
 #include "shooting_practice.h"  /* g_shootingPracticeMode -- the START PRACTICE label */
 #include "penalty_shootout.h"   /* g_penaltyShootoutMode -- the START SHOOTOUT label */
 #include "formation_fit.h"      /* the computer opponent's formation on VIEW OPPO */
+#include "ghost_teams.h"        /* (GHOST TEAM) where the country would be named */
 
 /* Prevent GCC from converting byte loops to memcpy/memset (no libc) */
 #pragma GCC optimize("no-tree-loop-distribute-patterns")
@@ -690,6 +691,11 @@ void SetVariableButtons(void) {
             if (CustomTeam_IsCustom(tm))
                 cname = custom;
 #endif
+            {   /* a ghost team (ghost_teams.c) is filed under CUSTOM, and is no country's */
+                static uint8_t ghost[] = "GHOST TEAM";
+                if (GhostTeams_IsGhost(tm))
+                    cname = ghost;
+            }
             *nameOut++ = '(';
             nameOut = StringCopy(cname, nameOut);
             *nameOut++ = ')';

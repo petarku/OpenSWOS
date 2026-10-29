@@ -11747,12 +11747,12 @@ Menu_ChallengeCollection _challengeMenu = {
     MENU_MARK_END_MENU
 };
 
-/* OpenSWOS: SPECIALS (src/challenge_cup.c, docs/CHALLENGE_CUP.md): _challengeMenu's shape,
- * 13 rows laid out by Specials_MenuInit. */
+/* OpenSWOS: SPECIALS (src/challenge_cup.c, docs/CHALLENGE_CUP.md): _challengeMenu's shape
+ * with 14 rows, laid out by Specials_MenuInit. */
 extern char _aSpecials[];
 extern void Specials_MenuInit(void);
 extern void Specials_MenuSelect(void);
-Menu_ChallengeCollection _specialsMenu = {
+Menu_Specials _specialsMenu = {
     { Specials_MenuInit, 0, 0, 2 },
     MENU_MARK_BYTE_COORDS,
     {
@@ -11846,6 +11846,14 @@ Menu_ChallengeCollection _specialsMenu = {
         },
         {
             { 12, -91, 24, 14 },
+            { MENU_CMD_NAV, -1, -1, -1, -1 },
+            { MENU_CMD_COLORS, 0xE },
+            { MENU_CMD_TEXT_PTR, 0x0, _aSpecials },
+            { MENU_CMD_ONSELECT_FIRE, Specials_MenuSelect },
+            MENU_CMD_END
+        },
+        {
+            { 12, -76, 24, 14 },
             { MENU_CMD_NAV, -1, -1, -1, -1 },
             { MENU_CMD_COLORS, 0xE },
             { MENU_CMD_TEXT_PTR, 0x0, _aSpecials },

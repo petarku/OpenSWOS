@@ -7,7 +7,7 @@
 
 PRESET COMPETITION's world list has a row under CLASSICS: **SPECIALS**. It opens a screen
 of special competitions: **CHALLENGE CUP** (clubs) and **NATIONAL CHALLENGE CUP** (national
-teams, section 1a), the same game with a different underdog:
+teams, section 1b), the same game with a different underdog:
 
     PRESET COMPETITION -> SPECIALS -> CHALLENGE CUP -> the ladder -> PLAY <round> -> PLAY MATCH
 
@@ -70,7 +70,41 @@ formation buttons can be pressed, and its players show their own ticks and cross
 team its big one, against the formation it had when VIEW OPPO was opened. `src/play_match_menu.c`
 (`OpponentFormationEditable`, `ScoreOpponent`); the player's own marks are left as they were.
 
-## 1a. NATIONAL CHALLENGE CUP
+## 1a. The bonus match: BEST XI (CHALLENGE CUP only)
+
+Win CHALLENGE CUP's final and a seventh row opens: **BONUS MATCH** against the **BEST XI**, a
+ghost team of the most expensive club player at every position of a 4-4-2 (about 4.5 stars --
+no real club reaches it), in Juventus's kit with Barcelona's as its second:
+
+| | starting eleven | reserves |
+|---|---|---|
+| GK | Schmeichel | Taffarel |
+| defence | Luisinho, Sammer, Hierro, Maldini | Gullit |
+| midfield | Kanchelskis, Savicevic, Juninho, Giggs | Effenberg, Anderton |
+| attack | Weah, Del Piero | Shearer |
+
+It is a **surprise**: until the final is won the ladder shows "BONUS MATCH: ???" with no stars,
+and only then is the team built -- a dozen team files to load, a wait on the Amiga that nobody
+should have at every start for a match most runs never reach. A player of it the database does
+not have means no bonus match (logged), and the cup simply ends won. Lose it and you are still
+champions; win it and you are LEGENDS. The NATIONAL cup has no bonus match.
+
+**Testing it:** a tester build (`SWOS_TEST_RULES`, every drop but `--release`) has a **SKIP ROUND
+(TESTER BUILD)** button under the ladder: the round counts as won, unplayed, and skipping the
+final reveals the bonus match. The Amiga makefile does not set `SWOS_TEST_RULES` by itself:
+`gnumake -f Makefile.amiga EXTRA_CFLAGS=-DSWOS_TEST_RULES=1` (as `build_dist.sh` does).
+`_specialsMenu` has 14 rows for it (`Menu_Specials`).
+
+**Ghost teams** are made by `scripts/ghost_teams.py --c src/ghost_teams_data.c`: by reference
+(each player's team file, team, player number and both names), never the players themselves,
+since the original game's data is not in this repository. `src/ghost_teams.c` builds one from
+the player's own database, checking every name, the players fresh (no cards, injuries, goals or
+form), shirts 1..16. One rule so far, best by position: the highest price, ties broken by the
+number of headline skills (in this database a player's price IS the sum of his seven skills).
+A ghost team is filed as number 200+ of the custom teams' file (72): a REAL file number, because
+screens look a team's country up by it (`_countriesTable`), and VIEW OPPO shows "(GHOST TEAM)".
+
+## 1b. NATIONAL CHALLENGE CUP
 
 **BERMUDA**, the weakest national team, the same way:
 
@@ -118,6 +152,7 @@ paper -- Once Lobos is the one the cup is built round because it is the one play
 | `src/challenge_cup.c` | The two cups (`k_cups`: title, underdog, its team file, round 1's star limit, the pools), the run (underdog + six opponents), the draw (its own generator, seeded from the clock at each draw), a round's match, the match hooks, and `_specialsMenu`'s screens (SPECIALS, the ladder). |
 | `src/challenge_cup_pool.c` | **Generated** (`scripts/team_stars.py --challenge-cup src/challenge_cup_pool.c`): each band's teams by team file, number and name, `g_challengeCupPools` (clubs) and `g_nationalCupPools`. The bands are `CHALLENGE_CUP_BANDS` / `NATIONAL_CUP_BANDS` in the script. |
 | `src/team_stars.c` | The rating (section 2). |
+| `src/ghost_teams.c`, `src/ghost_teams_data.c` | Building a ghost team from the database (`GhostTeams_Build`, `GhostTeams_IsGhost`); the BEST XI by reference, **generated** by `scripts/ghost_teams.py`. |
 | `src/formation_fit.c` | How well a formation suits a team, by the game's measure, on a copy, with the globals that measure writes put back: `FormationFit_Value` (the team value the big tick compares, plus each player's), `FormationFit_Sum` (finer, for choosing). Used by the cups and VIEW OPPO. |
 | `src/teams.c` | `SelectTeamsFinalMenu`: the SPECIALS row (a marker in `leaguesPtrTable`, as CLASSICS'); picking it calls `Specials_Request` and closes the chooser. |
 | `src/menus.c` | `PresetCompetitionMenu`: after the chooser, `Specials_Show` while a request is pending, then the chooser again. |

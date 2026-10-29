@@ -234,7 +234,11 @@ starting eleven's average squad-screen value stars); `scripts/team_stars.py` wri
 lists `docs/TEAM_STARS{,_CLUBS,_NATIONAL}.txt`. Cup opponents play their best-suited formations,
 a different one each round (`src/formation_fit.c`: the tactics ticks' measure, on a copy), and
 in any friendly VIEW OPPO lets the player set a computer side's formation, with its own ticks
-(`play_match_menu.c`).
+(`play_match_menu.c`). Win CHALLENGE CUP's final and a surprise BONUS MATCH opens against the
+BEST XI, a ghost team (`src/ghost_teams.c`; by reference in `src/ghost_teams_data.c`, GENERATED
+by `scripts/ghost_teams.py`; filed as 72:200+, a real file number, since screens index
+`_countriesTable` by it), built only then -- a dozen team files the Amiga need not load at every
+start.
 
 **UNIFORM and MY CUSTOM TEAM** (SDL only; docs/UNIFORM.md, docs/CUSTOM_TEAMS.md). The PLAY MATCH
 screen's UNIFORM button (entry 68, hidden on the Amiga) opens SWOS 2020's uniform selector

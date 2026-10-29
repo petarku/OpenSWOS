@@ -41,6 +41,7 @@
 #include "swos_io.h"
 #include "team_stars.h"
 #include "formation_fit.h"
+#include "ghost_teams.h"
 
 extern uint8_t  _specialsMenu[];
 extern uint8_t *_spriteGraphicsPtr;
@@ -63,7 +64,7 @@ extern void     ResetMenuViewState(void);
 
 enum {
     kNameBytes  = 17,
-    kRows       = 13,               /* _specialsMenu's entries */
+    kRows       = 14,               /* _specialsMenu's entries */
     kSeasonal   = 0xFFFE,           /* _pitchType: SEASONAL */
     kRandomPitch = 0xFFFF,
     kSeasonSep  = 7,
@@ -79,14 +80,15 @@ typedef struct CupDef {
     const ChallengeCupPool *pools;  /* rounds 2..6 */
     const char *about;              /* SPECIALS' line about it */
     const char *log;                /* the screen's name in the [menu] log */
+    const GhostTeam *bonus;         /* the bonus match after the final, or none */
 } CupDef;
 
 enum { CUP_CLUB, CUP_NATIONAL, kCups };
 static const CupDef k_cups[kCups] = {
     { "CHALLENGE CUP", "ONCE LOBOS", 51 /* EL SALVADOR */, 10, g_challengeCupPools,
-      "ONCE LOBOS AGAINST EVER STRONGER CLUBS", "specials/challengeCup" },
+      "ONCE LOBOS AGAINST EVER STRONGER CLUBS", "specials/challengeCup", &g_ghostBestXI },
     { "NATIONAL CHALLENGE CUP", "BERMUDA", 83 /* NORTH AMERICA */, 2, g_nationalCupPools,
-      "BERMUDA AGAINST EVER STRONGER NATIONS", "specials/nationalCup" },
+      "BERMUDA AGAINST EVER STRONGER NATIONS", "specials/nationalCup", 0 },
 };
 /* The game's twelve formations (TACTIC_DEFAULT .. TACTIC_DEFEND), by number; the six USER
  * slots are the player's own and are never given to an opponent. */
@@ -118,8 +120,15 @@ static const uint8_t k_roundFormations[3][kRoundFormations] = {
     { TACTIC_4_3_3, TACTIC_4_2_4, TACTIC_3_4_3, TACTIC_3_5_2, TACTIC_4_3_3, TACTIC_4_2_4 },
 };
 
-static const char *const k_roundNames[CHALLENGE_CUP_ROUNDS] = {
+/* The six rounds, then the BONUS MATCH after the final: a cup with a bonus team (CHALLENGE
+ * CUP's BEST XI, ghost_teams.c) offers it to the side that has won the cup. It is a surprise:
+ * the ladder shows "???" until the final is won, and only then is the team built -- a dozen
+ * team files to load, which on the Amiga is a wait nobody should have at every start for a
+ * match most runs never reach. */
+enum { BONUS = CHALLENGE_CUP_ROUNDS, kSlots = CHALLENGE_CUP_ROUNDS + 1 };
+static const char *const k_roundNames[kSlots] = {
     "FIRST ROUND", "SECOND ROUND", "LAST 16", "QUARTER-FINAL", "SEMI-FINAL", "FINAL",
+    "BONUS MATCH",
 };
 
 /* ---- the run ---- */
@@ -128,12 +137,15 @@ enum { RESULT_NONE, RESULT_WON, RESULT_LOST, RESULT_LEFT };
 
 static struct {
     int32_t    cup;                 /* k_cups */
+    int32_t    bonus;               /* this run has a bonus match */
+    int32_t    bonusBuilt;          /* ... and its team is built (once the final is won) */
     TeamFileEx underdog;
-    TeamFileEx opponent[CHALLENGE_CUP_ROUNDS];
-    int32_t    round;               /* the round to play next; CHALLENGE_CUP_ROUNDS = won */
+    TeamFileEx opponent[kSlots];
+    int32_t    round;               /* the round to play next; >= CHALLENGE_CUP_ROUNDS: cup won */
     int32_t    out;                 /* knocked out (in `round`) */
-    int8_t     result[CHALLENGE_CUP_ROUNDS];
-    uint16_t   goals[CHALLENGE_CUP_ROUNDS][2];  /* the underdog first */
+    int8_t     result[kSlots];
+    int8_t     skipped[kSlots];     /* won by SKIP ROUND (tester builds) */
+    uint16_t   goals[kSlots][2];    /* the underdog first */
 } s_run;
 
 /* The formations that suit each opponent best (choose_formations), for the log. */
@@ -352,6 +364,7 @@ static int32_t new_run(int32_t which)
         return 0;
     }
     choose_formations();
+    s_run.bonus = cup->bonus != 0;  /* built when the final is won (reveal_bonus) */
 #ifdef SWOS_SDL_BUILD
     fprintf(stderr, "[challenge-cup] %s, new draw:", cup->title);
     for (round = 0; round < CHALLENGE_CUP_ROUNDS; round++) {
@@ -380,6 +393,41 @@ static void restore_menus(void)
     ResetMenuViewState();
     PrepareMenuForFadeIn();
 }
+
+/* The final is won: build the bonus match's team (the surprise). One not in this database
+ * (logged) means no bonus match, and the cup ends won. */
+static void reveal_bonus(void)
+{
+    const GhostTeam *ghost = k_cups[s_run.cup].bonus;
+
+    if (!s_run.bonus || s_run.bonusBuilt)
+        return;
+    s_run.bonusBuilt = GhostTeams_Build(ghost, 0, &s_run.opponent[BONUS]);
+    s_run.bonus = s_run.bonusBuilt;
+    if (s_run.bonusBuilt)
+        s_run.opponent[BONUS].team.teamControls = TEAM_COMPUTER;
+#ifdef SWOS_SDL_BUILD
+    if (s_run.bonusBuilt)
+        fprintf(stderr, "[challenge-cup] bonus match: %s (%d)\n", ghost->name,
+                (int)TeamStars_HalfStars(&s_run.opponent[BONUS]));
+#endif
+}
+
+#ifdef SWOS_TEST_RULES
+/* SKIP ROUND, tester builds only (SWOS_TEST_RULES, never a release): the round counts as won,
+ * unplayed, so the later rounds and the bonus match -- its reveal too -- can be checked
+ * without playing the cup through. */
+static void skip_round(void)
+{
+    s_run.result[s_run.round] = RESULT_WON;
+    s_run.skipped[s_run.round] = 1;
+#ifdef SWOS_SDL_BUILD
+    fprintf(stderr, "[challenge-cup] %s skipped (tester build)\n", k_roundNames[s_run.round]);
+#endif
+    if (++s_run.round == BONUS)
+        reveal_bonus();
+}
+#endif
 
 /* The round's match, set up as the friendly's selection would set it up (ShowFriendlyMenu,
  * ChooseTeamsMenu) with the underdog as the player's team and the opponent the computer's. */
@@ -411,6 +459,8 @@ static void play_round(void)
         if (s_winner == 1) {
             s_run.result[round] = RESULT_WON;
             s_run.round++;
+            if (s_run.round == BONUS)
+                reveal_bonus();
         } else {                    /* lost, or left before the final whistle */
             s_run.result[round] = s_winner < 0 ? RESULT_LEFT : RESULT_LOST;
             s_run.out = 1;
@@ -461,10 +511,10 @@ int32_t ChallengeCup_InMatch(void)
 /* ---- the screens: _specialsMenu ---- */
 
 enum { SCREEN_SPECIALS, SCREEN_CUP };
-enum { ACT_NONE, ACT_EXIT, ACT_PLAY, ACT_NEW, ACT_CUP /* + k_cups index */ };
+enum { ACT_NONE, ACT_EXIT, ACT_PLAY, ACT_NEW, ACT_SKIP, ACT_CUP /* + k_cups index */ };
 enum {
     ROW_HEADER = 0, ROW_TEAM = 1, ROW_FIRST_ROUND = 2,          /* 2..7: the rounds */
-    ROW_STATUS = 8, ROW_PLAY = 9, ROW_NEXT = 10, ROW_EXIT = 11,
+    ROW_STATUS = 8, ROW_PLAY = 9, ROW_NEXT = 10, ROW_EXIT = 11, ROW_BONUS = 12, ROW_SKIP = 13,
     ROW_SPECIAL_FIRST = 2,          /* SPECIALS: each cup's button, its line under it */
     ROW_SPECIAL_RULES = 8,
 };
@@ -475,7 +525,7 @@ enum {                              /* menu palette (docs/LOCAL_WORKFLOW.md) */
 
 static int32_t s_screen, s_action, s_actions[kRows];
 static int32_t s_requested;
-static char    s_text[kRows][48];
+static char    s_text[kRows][64];
 
 static void row(int32_t n, int32_t y, const char *label, int32_t action, int32_t color)
 {
@@ -497,6 +547,8 @@ static const TeamFileEx *row_team(uint16_t ordinal)
         return &s_run.underdog;
     if (ordinal >= ROW_FIRST_ROUND && ordinal < ROW_FIRST_ROUND + CHALLENGE_CUP_ROUNDS)
         return &s_run.opponent[ordinal - ROW_FIRST_ROUND];
+    if (ordinal == ROW_BONUS && s_run.bonusBuilt)
+        return &s_run.opponent[BONUS];      /* no stars while it is a surprise */
     return 0;
 }
 
@@ -515,64 +567,79 @@ static void draw_row_stars(MenuEntry *e)
                        (int16_t)(e->y + (e->dwHeight - spr->nlines) / 2));
 }
 
+/* How round r went, for the status line: "WON 2-1", "1-1, WON ON PENALTIES", ... */
+static void round_result(int32_t r, char *buf, uint32_t cap)
+{
+    uint16_t g1 = s_run.goals[r][0], g2 = s_run.goals[r][1];
+
+    if (s_run.skipped[r])
+        swos_io_snprintf(buf, cap, "%s SKIPPED", k_roundNames[r]);
+    else if (s_run.result[r] == RESULT_LEFT)
+        swos_io_snprintf(buf, cap, "MATCH LEFT");
+    else if (g1 == g2)
+        swos_io_snprintf(buf, cap, "%u-%u, %s ON PENALTIES", (unsigned)g1, (unsigned)g2,
+                         s_run.result[r] == RESULT_WON ? "WON" : "LOST");
+    else
+        swos_io_snprintf(buf, cap, "%s %u-%u", s_run.result[r] == RESULT_WON ? "WON" : "LOST",
+                         (unsigned)g1, (unsigned)g2);
+}
+
 static void cup_screen(void)
 {
-    char buf[48], name[kNameBytes + 1];
-    int32_t i, done = s_run.round == CHALLENGE_CUP_ROUNDS;
+    char buf[64], how[40], name[kNameBytes + 1];
+    int32_t last = CHALLENGE_CUP_ROUNDS + s_run.bonus;          /* the rounds there are */
+    int32_t finished = s_run.out || s_run.round == last;
+    int32_t champions = s_run.round >= CHALLENGE_CUP_ROUNDS;
+    int32_t i;
 
     row(ROW_HEADER, 0, k_cups[s_run.cup].title, ACT_NONE, COL_HEADER);
     row(ROW_TEAM, 20, team_name(&s_run.underdog, name), ACT_NONE, COL_NONE);
     CalcMenuEntryAddress(ROW_TEAM)->afterDrawCb = draw_row_stars;
-    for (i = 0; i < CHALLENGE_CUP_ROUNDS; i++) {
+    for (i = 0; i < last; i++) {
+        int32_t n = i < CHALLENGE_CUP_ROUNDS ? ROW_FIRST_ROUND + i : ROW_BONUS;
         int32_t color = s_run.result[i] == RESULT_WON  ? COL_GREEN
                       : s_run.result[i] != RESULT_NONE ? COL_RED
                       : i == s_run.round && !s_run.out ? COL_ORANGE : COL_BLUE;
         swos_io_snprintf(buf, sizeof buf, "%s: %s", k_roundNames[i],
-                         team_name(&s_run.opponent[i], name));
-        row(ROW_FIRST_ROUND + i, 42 + 17 * i, buf, ACT_NONE, color);
-        CalcMenuEntryAddress((uint16_t)(ROW_FIRST_ROUND + i))->afterDrawCb = draw_row_stars;
+                         i == BONUS && !s_run.bonusBuilt ? "???"
+                                                         : team_name(&s_run.opponent[i], name));
+        row(n, 38 + 16 * i, buf, ACT_NONE, color);
+        CalcMenuEntryAddress((uint16_t)n)->afterDrawCb = draw_row_stars;
     }
 
-    if (done) {
-        swos_io_snprintf(buf, sizeof buf, "CHAMPIONS! WON THE FINAL %u-%u",
-                         (unsigned)s_run.goals[CHALLENGE_CUP_ROUNDS - 1][0],
-                         (unsigned)s_run.goals[CHALLENGE_CUP_ROUNDS - 1][1]);
-    } else if (s_run.out) {
-        int32_t r = s_run.round;
-        uint16_t g1 = s_run.goals[r][0], g2 = s_run.goals[r][1];
-        if (s_run.result[r] == RESULT_LEFT)
-            swos_io_snprintf(buf, sizeof buf, "MATCH LEFT: OUT IN THE %s", k_roundNames[r]);
-        else if (g1 == g2)
-            swos_io_snprintf(buf, sizeof buf, "%u-%u, LOST ON PENALTIES: OUT", (unsigned)g1,
-                             (unsigned)g2);
-        else
-            swos_io_snprintf(buf, sizeof buf, "LOST %u-%u: OUT IN THE %s", (unsigned)g1,
-                             (unsigned)g2, k_roundNames[r]);
-    } else if (s_run.round > 0) {
-        int32_t r = s_run.round - 1;
-        uint16_t g1 = s_run.goals[r][0], g2 = s_run.goals[r][1];
-        swos_io_snprintf(buf, sizeof buf, g1 == g2 ? "%u-%u, WON ON PENALTIES" : "WON %u-%u",
-                         (unsigned)g1, (unsigned)g2);
-    } else {
+    if (s_run.round > 0 || s_run.out)
+        round_result(s_run.out ? s_run.round : s_run.round - 1, how, sizeof how);
+    if (s_run.out && champions)                     /* lost the bonus match */
+        swos_io_snprintf(buf, sizeof buf, "CHAMPIONS! BONUS: %s", how);
+    else if (s_run.out)
+        swos_io_snprintf(buf, sizeof buf, "%s: OUT IN THE %s", how, k_roundNames[s_run.round]);
+    else if (s_run.round == BONUS + 1)
+        swos_io_snprintf(buf, sizeof buf, "LEGENDS! BONUS: %s", how);
+    else if (champions)
+        swos_io_snprintf(buf, sizeof buf, "CHAMPIONS! FINAL: %s", how);
+    else if (s_run.round > 0)
+        swos_io_snprintf(buf, sizeof buf, "%s", how);
+    else
         swos_io_snprintf(buf, sizeof buf, "WIN SIX TIES TO LIFT THE CUP");
-    }
-    row(ROW_STATUS, 145, buf, ACT_NONE, done ? COL_GREEN : s_run.out ? COL_RED : COL_NONE);
+    row(ROW_STATUS, 151, buf, ACT_NONE,
+        champions ? COL_GREEN : s_run.out ? COL_RED : COL_NONE);
     CalcMenuEntryAddress(ROW_STATUS)->dwHeight = 9;
-    if (!done && !s_run.out) {      /* how the next opponent lines up */
+
+    if (!finished) {                /* how the next opponent lines up */
         const TeamFileEx *next = &s_run.opponent[s_run.round];
         swos_io_snprintf(buf, sizeof buf, "NEXT: %s, PLAYING %s", team_name(next, name),
                          k_formationNames[next->team.tactics]);
-        row(ROW_NEXT, 156, buf, ACT_NONE, COL_NONE);
+        row(ROW_NEXT, 161, buf, ACT_NONE, COL_NONE);
         CalcMenuEntryAddress(ROW_NEXT)->dwHeight = 9;
-    }
-
-    if (done || s_run.out) {
-        row(ROW_PLAY, 168, "NEW DRAW", ACT_NEW, COL_GREEN);
-    } else {
         swos_io_snprintf(buf, sizeof buf, "PLAY %s", k_roundNames[s_run.round]);
-        row(ROW_PLAY, 168, buf, ACT_PLAY, COL_GREEN);
+        row(ROW_PLAY, 172, buf, ACT_PLAY, COL_GREEN);
+#ifdef SWOS_TEST_RULES
+        row(ROW_SKIP, 207, "SKIP ROUND (TESTER BUILD)", ACT_SKIP, COL_BLUE);
+#endif
+    } else {
+        row(ROW_PLAY, 172, "NEW DRAW", ACT_NEW, COL_GREEN);
     }
-    row(ROW_EXIT, 185, "EXIT", ACT_EXIT, COL_EXIT);
+    row(ROW_EXIT, 189, "EXIT", ACT_EXIT, COL_EXIT);
 }
 
 static void specials_screen(void)
@@ -663,6 +730,10 @@ int32_t Specials_Show(void)
             play_round();
         } else if (s_action == ACT_NEW) {
             new_run(s_run.cup);
+#ifdef SWOS_TEST_RULES
+        } else if (s_action == ACT_SKIP) {
+            skip_round();
+#endif
         } else {
             s_screen = SCREEN_SPECIALS; /* EXIT: the run is given up */
         }
