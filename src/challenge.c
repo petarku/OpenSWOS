@@ -923,6 +923,11 @@ int32_t Challenge_LoadState(void)
                 swos_io_free(mine);
             return 0;
         }
+        /* The hash of what was DECODED, before anything below changes it on purpose --
+         * these fan rows, and the VBlank interrupt stepping the clocks meanwhile. Taken
+         * after them, it differed from the file's whenever this run's crowd did, and so
+         * warned about positions that had loaded exactly. */
+        got = SimState_Hash(SIM_TIER_SIM);
         memcpy(_pitchDatBuffer + 42 * 4,   keepTop,    sizeof keepTop);
         memcpy(_pitchDatBuffer + 2142 * 4, keepBottom, sizeof keepBottom);
     }
@@ -985,10 +990,9 @@ int32_t Challenge_LoadState(void)
         swos_io_save((const uint8_t *)"RTRIP.BIN", d, sizeof d);
     }
 
-    /* Prove it end to end: the state this build now holds must hash to what the file says
+    /* Prove it end to end: the state this build decoded must hash to what the file says
      * it would. A mismatch means the bytes decoded into something else here, which is
      * worth a loud line even though the match is playable. */
-    got = SimState_Hash(SIM_TIER_SIM);
     {
         uint64_t want = ((uint64_t)BE_READ_U32(s_file + 16) << 32) | BE_READ_U32(s_file + 20);
         if (got != want)
