@@ -27,7 +27,14 @@ if git rev-parse --git-dir >/dev/null 2>&1; then
     DATE=$(git log -1 --format=%cd --date=short 2>/dev/null || date +%Y-%m-%d)
     # -dirty means "this is NOT that commit": the single most useful thing to
     # know when a drop behaves unlike the source you are reading.
-    if ! git diff --quiet HEAD -- src include Makefile Makefile.amiga scripts 2>/dev/null; then
+    #
+    # Cygwin's git builds on a checkout Git for Windows made, whose autocrlf comes from
+    # Git for Windows' OWN system gitconfig -- which Cygwin's git never reads. It then
+    # saw every CRLF file as modified and stamped a clean tree -dirty. Read the tree the
+    # way the checkout wrote it (harmless on an LF checkout: nothing to convert).
+    CRLF=
+    case "$(uname -s)" in CYGWIN*) CRLF="-c core.autocrlf=true" ;; esac
+    if ! git $CRLF diff --quiet HEAD -- src include Makefile Makefile.amiga scripts 2>/dev/null; then
         ID="$ID-dirty"
     fi
 else
