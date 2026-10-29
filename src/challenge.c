@@ -90,6 +90,7 @@ extern uint8_t  _newRandomSeedCopy, _viewRandomPhase;
 extern uint16_t _extraTimeState, _penaltiesState, _secondLeg, _playing2ndGame;
 extern uint16_t _team1GoalsFirstLeg, _team2GoalsFirstLeg;
 extern uint16_t _gameMaxSubstitutes;
+extern uint16_t _maxSubsPerTeam, _plgD3Param;
 
 /* ---- what the save key has to check, and what the header reports ---- */
 
@@ -144,14 +145,23 @@ static const ChalScalar s_scalars[] = {
      * after it (Challenge_ApplySetup is called twice) */
     S16(_extraTimeState), S16(_penaltiesState), S16(_secondLeg), S16(_playing2ndGame),
     S16(_team1GoalsFirstLeg), S16(_team2GoalsFirstLeg),
+    /* What the init was HANDED rather than what the menus hold: the substitutions a side
+     * may make and the competition's substitutesCount (injury and card history). A
+     * friendly passes _minSubstitutes and 0, but a competition passes its own, and a
+     * position saved from one came back with no substitutions at all. Added after the
+     * first files were written, so a file whose table ends before here still loads and
+     * keeps the friendly's values (LEGACY_SCALAR_COUNT). */
+    S16(_maxSubsPerTeam), S16(_plgD3Param),
 };
 
 #undef S16
 #undef S8
 
 #define SCALAR_COUNT ((int32_t)(sizeof s_scalars / sizeof s_scalars[0]))
-#define SETUP_BYTES  (4 + SCALAR_COUNT * 2 + 2 * (int32_t)sizeof(TeamFileEx) \
-                      + NUM_TACTICS * TACTIC_BYTES)
+#define LEGACY_SCALAR_COUNT 35
+#define SETUP_BYTES_FOR(n) (4 + (n) * 2 + 2 * (int32_t)sizeof(TeamFileEx) \
+                            + NUM_TACTICS * TACTIC_BYTES)
+#define SETUP_BYTES  SETUP_BYTES_FOR(SCALAR_COUNT)
 
 static uint8_t *tactic_slot(int32_t i)
 {
@@ -182,6 +192,22 @@ static uint16_t      s_menuScalars[64];
 
 /* ---- the setup block ---- */
 
+/* The team a side is PLAYING. A friendly plays _selectedTeams[0] and [1], but a
+ * competition plays the two its fixture names (diy_resolve_team) and a career match
+ * plays _careerTeam -- and _selectedTeams[0..1] are then just the first of the list, so
+ * a position saved from them came back with another team's bench. _gameTeam1/2 are what
+ * the init was handed, in every kind of match; outside one (the self-test) the
+ * selection is all there is. */
+extern TeamFile *_gameTeam1, *_gameTeam2;
+
+static const TeamFileEx *match_team(int32_t i)
+{
+    const TeamFile *t = i == 0 ? _gameTeam1 : _gameTeam2;
+    if (!_playGame)
+        return &_selectedTeams[i];
+    return (const TeamFileEx *)t;
+}
+
 static void setup_write(uint8_t *p)
 {
     int32_t i;
@@ -199,8 +225,9 @@ static void setup_write(uint8_t *p)
      * pointers, packed, size-asserted at 684, every PlayerFile field a single byte -- and
      * TeamFile's one multi-byte field written in wire order. */
     for (i = 0; i < 2; i++) {
-        memcpy(p, &_selectedTeams[i], sizeof(TeamFileEx));
-        BE_WRITE_U16(p + 2, (uint16_t)_selectedTeams[i].team.globalTeamNumber);
+        const TeamFileEx *t = match_team(i);
+        memcpy(p, t, sizeof(TeamFileEx));
+        BE_WRITE_U16(p + 2, (uint16_t)t->team.globalTeamNumber);
         p += sizeof(TeamFileEx);
     }
     for (i = 0; i < NUM_TACTICS; i++) {
@@ -212,21 +239,27 @@ static void setup_write(uint8_t *p)
 /* 0 if this block can be applied here. */
 static int32_t setup_check(const uint8_t *p, uint32_t len)
 {
-    if (len != (uint32_t)SETUP_BYTES)
+    uint16_t count;
+
+    if (len < 4)
         return 1;
     if (BE_READ_U16(p) != CHAL_VERSION)
         return 2;
-    if (BE_READ_U16(p + 2) != (uint16_t)SCALAR_COUNT)
+    count = BE_READ_U16(p + 2);
+    if (count != (uint16_t)SCALAR_COUNT && count != LEGACY_SCALAR_COUNT)
         return 3;
+    if (len != (uint32_t)SETUP_BYTES_FOR(count))
+        return 1;
     return 0;
 }
 
 static void setup_apply(const uint8_t *p)
 {
     int32_t i;
+    int32_t count = BE_READ_U16(p + 2);     /* checked by setup_check */
 
-    p += 4;     /* version, count -- checked by setup_check */
-    for (i = 0; i < SCALAR_COUNT; i++) {
+    p += 4;
+    for (i = 0; i < count; i++) {
         const ChalScalar *s = &s_scalars[i];
         uint16_t v = BE_READ_U16(p);
         if (s->width == 1) *(uint8_t *)s->addr  = (uint8_t)v;

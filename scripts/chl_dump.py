@@ -28,6 +28,7 @@ SCALARS = [
     "_randomSeed", "_currentSeasonShowing", "_newRandomSeedCopy", "_viewRandomPhase",
     "_extraTimeState", "_penaltiesState", "_secondLeg", "_playing2ndGame",
     "_team1GoalsFirstLeg", "_team2GoalsFirstLeg",
+    "_maxSubsPerTeam", "_plgD3Param",   # not in files written before 2026-10-29
 ]
 
 RULES = {0x01: "DOS_GAMEPLAY", 0x02: "DOS_VIEW", 0x04: "NO_CARDS"}
