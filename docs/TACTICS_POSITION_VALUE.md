@@ -607,3 +607,17 @@ It is still **not** wired to DOS gameplay (`[gameplay] style = dos` /
 `--dos-gameplay=on`): that is a gameplay decision
 (it changes squad-screen marks and player values in menus, not just in the
 match), not a data question any more.
+
+---
+
+## 10. For a computer team (OpenSWOS)
+
+`src/formation_fit.c` asks the same question of any team, on a copy, without disturbing the
+squad screen's arrays: `FormationFit_Value` (this document's team average, plus each player's
+value) and `FormationFit_Sum` (the eleven players' values summed: the average is that divided
+by 15 and rounded down, too coarse to tell most formations apart). A COMPUTER team is scored as
+the game scores one -- `GetPlayerPrice` skips its "how many of our men share this quadrant"
+count -- and its in-match skills are never scaled by the result (`AdjustPlayerSkills` holds it
+at 100%); the value still says where its players' skills are used well. The challenge cups use
+it to give opponents only formations that suit them, and VIEW OPPO to show a computer
+opponent's ticks and crosses when the player changes its formation (docs/CHALLENGE_CUP.md).
