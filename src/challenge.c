@@ -107,6 +107,7 @@ extern TeamGeneralInfo _topTeamData, _bottomTeamData;
 
 extern void InitAndPlayGame(TeamFileEx *team1, TeamFileEx *team2);
 extern void InitTeams(void);
+extern uint8_t _gameName[], _gameRound[];
 
 #define CHAL_MAGIC        0x53574348u   /* "SWCH" */
 #define CHAL_VERSION      1
@@ -161,7 +162,11 @@ static const ChalScalar s_scalars[] = {
 #define LEGACY_SCALAR_COUNT 35
 #define SETUP_BYTES_FOR(n) (4 + (n) * 2 + 2 * (int32_t)sizeof(TeamFileEx) \
                             + NUM_TACTICS * TACTIC_BYTES)
-#define SETUP_BYTES  SETUP_BYTES_FOR(SCALAR_COUNT)
+/* After the tactics: the match's title and round as the stadium screen shows them
+ * (_gameName, _gameRound -- "WORLD CUP", "GROUP B"), 40 bytes each as a highlight
+ * keeps them. A file from before carries none, and its length says so. */
+#define TITLE_BYTES  40
+#define SETUP_BYTES  (SETUP_BYTES_FOR(SCALAR_COUNT) + 2 * TITLE_BYTES)
 
 static uint8_t *tactic_slot(int32_t i)
 {
@@ -234,6 +239,29 @@ static void setup_write(uint8_t *p)
         memcpy(p, tactic_slot(i), TACTIC_BYTES);
         p += TACTIC_BYTES;
     }
+    memcpy(p, _gameName, TITLE_BYTES);          p += TITLE_BYTES;
+    memcpy(p, _gameRound, TITLE_BYTES);
+}
+
+/* The title the file carried, kept until InitAndPlayGame names the match: it names
+ * every match it starts FRIENDLY, and the stadium screen shows that before the state
+ * is loaded (Challenge_TakeTitle). */
+static uint8_t s_title[2][TITLE_BYTES];
+static int32_t s_hasTitle;
+
+static void title_apply(void)
+{
+    memcpy(_gameName, s_title[0], TITLE_BYTES);
+    memcpy(_gameRound, s_title[1], TITLE_BYTES);
+}
+
+void Challenge_TakeTitle(void)
+{
+    if (s_armed && s_hasTitle) {
+        title_apply();
+        CHAL_LOG("match named '%s' '%s'\n", (const char *)_gameName,
+                 (const char *)_gameRound);
+    }
 }
 
 /* 0 if this block can be applied here. */
@@ -248,15 +276,18 @@ static int32_t setup_check(const uint8_t *p, uint32_t len)
     count = BE_READ_U16(p + 2);
     if (count != (uint16_t)SCALAR_COUNT && count != LEGACY_SCALAR_COUNT)
         return 3;
-    if (len != (uint32_t)SETUP_BYTES_FOR(count))
+    if (len != (uint32_t)SETUP_BYTES_FOR(count)
+        && len != (uint32_t)SETUP_BYTES_FOR(count) + 2 * TITLE_BYTES)
         return 1;
     return 0;
 }
 
-static void setup_apply(const uint8_t *p)
+static void setup_apply(const uint8_t *p, uint32_t len)
 {
     int32_t i;
     int32_t count = BE_READ_U16(p + 2);     /* checked by setup_check */
+
+    s_hasTitle = len > (uint32_t)SETUP_BYTES_FOR(count);
 
     p += 4;
     for (i = 0; i < count; i++) {
@@ -274,6 +305,12 @@ static void setup_apply(const uint8_t *p)
     for (i = 0; i < NUM_TACTICS; i++) {
         memcpy(tactic_slot(i), p, TACTIC_BYTES);
         p += TACTIC_BYTES;
+    }
+    if (s_hasTitle) {
+        memcpy(s_title[0], p, TITLE_BYTES);
+        memcpy(s_title[1], p + TITLE_BYTES, TITLE_BYTES);
+        s_title[0][TITLE_BYTES - 1] = 0;
+        s_title[1][TITLE_BYTES - 1] = 0;
     }
     if (_numSelectedTeams < 2)
         _numSelectedTeams = 2;
@@ -639,6 +676,7 @@ static void forget(void)
     s_setupLen = s_stateLen = 0;
     s_armed = 0;
     s_stateLoaded = 0;
+    s_hasTitle = 0;
 }
 
 static char s_wanted[32];
@@ -821,7 +859,7 @@ void Challenge_ApplySetup(void)
 {
     if (!s_armed)
         return;
-    setup_apply(s_setup);
+    setup_apply(s_setup, s_setupLen);
 }
 
 int32_t Challenge_PitchOverride(uint16_t *out)
@@ -851,7 +889,7 @@ int32_t Challenge_LoadState(void)
 
     /* The init has just built a kick-off. Whatever of the setup it cleared on the way --
      * the cup rules, _isCareer -- goes back now. */
-    setup_apply(s_setup);
+    setup_apply(s_setup, s_setupLen);
 
     /* This display's own fields are kept: the match is the file's, but where the HUD sits
      * is placed for the screen in front of us (sim_state.c, SimState_RestoreLocal). */
@@ -1087,6 +1125,10 @@ int32_t Challenge_SelfTest(void)
     _selectedTeams[1].team.globalTeamNumber = 0x5678;
     memset(tactic_slot(0), 0xA5, TACTIC_BYTES);
     memset(tactic_slot(NUM_TACTICS - 1), 0x5A, TACTIC_BYTES);
+    memset(_gameName, 0, TITLE_BYTES);
+    memset(_gameRound, 0, TITLE_BYTES);
+    memcpy(_gameName, "ROUNDTRIP CUP", 13);
+    memcpy(_gameRound, "SEMI-FINAL 2ND LEG", 18);
 
     setup_write(buf);
     memcpy(saved, buf, (uint32_t)SETUP_BYTES);
@@ -1103,12 +1145,16 @@ int32_t Challenge_SelfTest(void)
     memset(&_selectedTeams[1], 0xEE, sizeof(TeamFileEx));
     for (i = 0; i < NUM_TACTICS; i++)
         memset(tactic_slot(i), 0xEE, TACTIC_BYTES);
+    memset(_gameName, 0xEE, TITLE_BYTES);
+    memset(_gameRound, 0xEE, TITLE_BYTES);
 
     if (setup_check(buf, (uint32_t)SETUP_BYTES) != 0) {
         printf("  FAIL its own block does not check out\n");
         failed = 1;
     }
-    setup_apply(buf);
+    setup_apply(buf, (uint32_t)SETUP_BYTES);
+    if (s_hasTitle)
+        title_apply();      /* what Challenge_TakeTitle does once InitAndPlayGame has run */
 
     /* Writing it again must produce the same bytes: anything the reader dropped shows up
      * here, because the global it left alone now holds 0xEE. */
@@ -1120,11 +1166,11 @@ int32_t Challenge_SelfTest(void)
         if (off >= 4 && off < 4 + (uint32_t)SCALAR_COUNT * 2)
             printf(" -- scalar %s", s_scalars[(off - 4) / 2].name);
         else if (off >= 4 + (uint32_t)SCALAR_COUNT * 2)
-            printf(" -- in the teams or the tactics");
+            printf(" -- in the teams, the tactics or the title");
         printf("\n");
         failed = 1;
     } else {
-        printf("  ok   every scalar, both teams and all %d tactics came back\n",
+        printf("  ok   every scalar, both teams, all %d tactics and the title came back\n",
                (int)NUM_TACTICS);
     }
 

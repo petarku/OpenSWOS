@@ -114,6 +114,11 @@ const ChallengeInfo *Challenge_ArmedInfo(void);
  * keep what it had). */
 void    Challenge_ApplySetup(void);
 
+/* Name the match as the position's file does -- "WORLD CUP" and its round, not the
+ * FRIENDLY that InitAndPlayGame names every match it starts. Called by it, after; a file
+ * from before the title was kept leaves its FRIENDLY alone. */
+void    Challenge_TakeTitle(void);
+
 /* Set up and play the armed position: the whole match, from the globals to
  * InitAndPlayGame. Returns when the match is over. */
 void    Challenge_Play(void);
