@@ -1003,6 +1003,8 @@ void InitAndPlayGame(TeamFileEx *team1, TeamFileEx *team2) {
                    _gameName);
     }
     _gameRound = 0;
+    /* A saved position plays on under the name its match had (a cup's, a league's). */
+    Challenge_TakeTitle();
 
     /* Set game parameters */
     _gamePitchTypeOrSeason = _pitchTypeOrSeason;
