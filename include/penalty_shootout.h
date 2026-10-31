@@ -53,6 +53,12 @@ void PenaltyShootout_MatchTick(void);
  * the one-shot is re-armed and a replayed shootout is a shootout again. */
 void PenaltyShootout_MatchRestarted(void);
 
+/* OPTIONS -> GK CONTROL: DEFAULT preserves the contextual behaviour below;
+ * AI always delegates to the computer; MANUAL stands on neutral at all penalties.
+ * Session setting, shared by the menu's string table and the match. */
+enum { KEEPER_CONTROL_DEFAULT, KEEPER_CONTROL_AI, KEEPER_CONTROL_MANUAL };
+extern uint16_t g_keeperControl;
+
 /* MANUAL KEEPER. At ANY penalty — the training shootout, a drawn cup tie's
  * shootout, an in-match penalty kick — the DEFENDING side's keeper belongs to
  * its player: hold LEFT to jump left, LEFT+DOWN to dive left low (RIGHT

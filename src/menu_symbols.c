@@ -41,6 +41,7 @@ extern void ChangeAutoReplays(void);
 extern void ChangeAutoSaveHighlights(void);
 extern void ChangeGameLength(void);
 extern void ChangeGameplayStyle(void);
+extern void ChangeKeeperControl(void);
 extern void ChangeMenuMusic(void);
 extern void ChangeNationality(void);
 extern void ChangePitchStyle(void);
@@ -510,6 +511,7 @@ extern char _aImportTactics[];
 extern char _aJobOffer[];
 extern char _aJobOffers[];
 extern char _aJobOffersBeing[];
+extern char _aKeeperControl[];
 extern char _aL[];
 extern char _aLeadingCompeti[];
 extern char _aLge[];
@@ -695,6 +697,7 @@ extern char* _flipStrTable[];
 extern char* _friendlyPitchTypeTable[];
 extern char* _gameLengthStrTable[];
 extern char* _gameplayStyleStrTable[];
+extern char* _keeperControlStrTable[];
 extern char _managerNameBuffer[];
 extern char _managerSexBuffer[];
 extern char _managerSurnameBuffer[];
@@ -752,6 +755,7 @@ const MenuSymbol _menuSymbols[] = {
     { "ChangeAutoSaveHighlights", (void*)ChangeAutoSaveHighlights, SYM_FUNC },
     { "ChangeGameLength", (void*)ChangeGameLength, SYM_FUNC },
     { "ChangeGameplayStyle", (void*)ChangeGameplayStyle, SYM_FUNC },
+    { "ChangeKeeperControl", (void*)ChangeKeeperControl, SYM_FUNC },
     { "ChangeMenuMusic", (void*)ChangeMenuMusic, SYM_FUNC },
     { "ChangeNationality", (void*)ChangeNationality, SYM_FUNC },
     { "ChangePitchStyle", (void*)ChangePitchStyle, SYM_FUNC },
@@ -1218,6 +1222,7 @@ const MenuSymbol _menuSymbols[] = {
     { "_aJobOffer", (void*)_aJobOffer, SYM_STRING },
     { "_aJobOffers", (void*)_aJobOffers, SYM_STRING },
     { "_aJobOffersBeing", (void*)_aJobOffersBeing, SYM_STRING },
+    { "_aKeeperControl", (void*)_aKeeperControl, SYM_STRING },
     { "_aL", (void*)_aL, SYM_STRING },
     { "_aLeadingCompeti", (void*)_aLeadingCompeti, SYM_STRING },
     { "_aLge", (void*)_aLge, SYM_STRING },
@@ -1403,6 +1408,7 @@ const MenuSymbol _menuSymbols[] = {
     { "_friendlyPitchTypeTable", (void*)_friendlyPitchTypeTable, SYM_TABLE },
     { "_gameLengthStrTable", (void*)_gameLengthStrTable, SYM_TABLE },
     { "_gameplayStyleStrTable", (void*)_gameplayStyleStrTable, SYM_TABLE },
+    { "_keeperControlStrTable", (void*)_keeperControlStrTable, SYM_TABLE },
     { "_managerNameBuffer", (void*)_managerNameBuffer, SYM_BUFFER },
     { "_managerSexBuffer", (void*)_managerSexBuffer, SYM_BUFFER },
     { "_managerSurnameBuffer", (void*)_managerSurnameBuffer, SYM_BUFFER },

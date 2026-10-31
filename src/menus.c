@@ -2020,8 +2020,9 @@ void OptionsMenuBeforeDraw(void)
     _showPrereleaseCounter = 0;
     /* One row, two meanings: CONTROLS (entries 15/16) opens a JSON menu about the
      * keyboard's keys, which only SDL runs; PITCHES (17/18) picks the AGA Amiga's
-     * pitch set. Each target shows its own and steps GAMEPLAY (14) and EXIT (19) to
-     * it; the OCS Amiga has neither, and steps over the row. */
+     * pitch set. Each target shows its own and steps GAMEPLAY (14) and GK CONTROL
+     * (22) to it; the OCS Amiga has neither, and steps over the row. EXIT (19)
+     * links up to GK CONTROL (22) in the JSON on every target. */
 #ifdef SWOS_SDL_BUILD
     _menuEntries[17].isInvisible = 1;
     _menuEntries[18].isInvisible = 1;
@@ -2030,12 +2031,12 @@ void OptionsMenuBeforeDraw(void)
     _menuEntries[16].isInvisible = 1;
 #ifdef AGA
     _menuEntries[14].downEntry = 18;
-    _menuEntries[19].upEntry = 18;
+    _menuEntries[22].upEntry = 18;
 #else
     _menuEntries[17].isInvisible = 1;
     _menuEntries[18].isInvisible = 1;
-    _menuEntries[14].downEntry = 19;
-    _menuEntries[19].upEntry = 14;
+    _menuEntries[14].downEntry = 22;
+    _menuEntries[22].upEntry = 14;
 #endif
 #endif
 }
@@ -2047,6 +2048,15 @@ void ChangePitchStyle(MenuEntry *entry)
 {
     extern uint16_t _pitchStyleOption;
     _pitchStyleOption ^= 1;
+    CallDrawMenuItem(entry);
+}
+
+/* Penalty keeper rule; DEFAULT preserves the original contextual behaviour. */
+__attribute__((used, externally_visible))
+void ChangeKeeperControl(MenuEntry *entry)
+{
+    extern uint16_t g_keeperControl;
+    g_keeperControl = (uint16_t)((g_keeperControl + 1) % 3);
     CallDrawMenuItem(entry);
 }
 

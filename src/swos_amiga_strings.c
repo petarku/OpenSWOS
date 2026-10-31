@@ -512,6 +512,10 @@ char _aRedefineKeys[] = "REDEFINE KEYS";
 /* OPTIONS -> PITCHES: DOS / 2020, which pitches the AGA Amiga draws (pitch.c). */
 char _aPitches[] = "PITCHES";
 char _a2020Style[] = "2020";
+char _aKeeperControl[] = "GK CONTROL";
+char _aKeeperDefault[] = "DEFAULT";
+char _aKeeperAI[] = "AI";
+char _aKeeperManual[] = "MANUAL";
 char _aGoals[] = "GOALS";
 char _aForm[] = "FORM";
 char _aLge[] = "LGE";

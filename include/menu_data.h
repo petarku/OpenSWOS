@@ -1136,6 +1136,8 @@ typedef struct Menu_Options
   MenuCmd_Invisible versionText_invisible;
   MenuCmd_TextPtr versionText_text;
   MenuCommand versionText_end;
+  MenuEntry_Byte_Colors_TextPtr labelKeeperControl;
+  MenuEntry_Byte_Nav_Colors_StringTable_OnSelect keeperControl;
   MenuMark markEndMenu;
 } Menu_Options;
 #pragma pack(pop)
