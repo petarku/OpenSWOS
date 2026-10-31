@@ -516,6 +516,10 @@ char _a2020Style[] = "2020";
 /* OPTIONS -> CPU CARDS: the computer side booked and sent off like a human one.
  * Mirrors [gameplay] cpu_cards in SWOS.ini (tackle_foul.c); values reuse _aOff/_aOn. */
 char _aCpuCards[] = "CPU CARDS";
+char _aKeeperControl[] = "GK CONTROL";
+char _aKeeperDefault[] = "DEFAULT";
+char _aKeeperAI[] = "AI";
+char _aKeeperManual[] = "MANUAL";
 char _aGoals[] = "GOALS";
 char _aForm[] = "FORM";
 char _aLge[] = "LGE";

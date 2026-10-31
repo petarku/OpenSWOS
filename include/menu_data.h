@@ -1141,6 +1141,8 @@ typedef struct Menu_Options
    * so every existing ordinal (the easter egg's 14, EXIT's 19) stays put. */
   MenuEntry_Byte_Colors_TextPtr labelCpuCards;
   MenuEntry_Byte_Nav_Colors_StringTable_OnSelect cpuCards;
+  MenuEntry_Byte_Colors_TextPtr labelKeeperControl;
+  MenuEntry_Byte_Nav_Colors_StringTable_OnSelect keeperControl;
   MenuMark markEndMenu;
 } Menu_Options;
 #pragma pack(pop)

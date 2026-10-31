@@ -2030,7 +2030,7 @@ void OptionsMenuBeforeDraw(void)
      * keyboard's keys, which only SDL runs; PITCHES (17/18) picks the AGA Amiga's
      * pitch set. Each target shows its own and steps GAMEPLAY (14) and CPU CARDS
      * (22) to it; the OCS Amiga has neither, and steps over the row. EXIT (19)
-     * links up to 22 in the JSON, which is right on every target. */
+     * links up to GK CONTROL (24) in the JSON on every target. */
 #ifdef SWOS_SDL_BUILD
     _menuEntries[17].isInvisible = 1;
     _menuEntries[18].isInvisible = 1;
@@ -2056,6 +2056,15 @@ void ChangePitchStyle(MenuEntry *entry)
 {
     extern uint16_t _pitchStyleOption;
     _pitchStyleOption ^= 1;
+    CallDrawMenuItem(entry);
+}
+
+/* Penalty keeper rule; DEFAULT preserves the original contextual behaviour. */
+__attribute__((used, externally_visible))
+void ChangeKeeperControl(MenuEntry *entry)
+{
+    extern uint16_t g_keeperControl;
+    g_keeperControl = (uint16_t)((g_keeperControl + 1) % 3);
     CallDrawMenuItem(entry);
 }
 

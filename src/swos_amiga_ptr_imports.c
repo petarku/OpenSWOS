@@ -906,6 +906,15 @@ struct __attribute__((packed)) {
 extern uint16_t _cpuCardsOption;
 ON_OFF_TABLE(_cpuCardsStrTable, (&_cpuCardsOption));
 
+extern uint16_t g_keeperControl;
+extern char _aKeeperDefault[], _aKeeperAI[], _aKeeperManual[];
+struct __attribute__((packed)) {
+    void *indexPtr; uint16_t base; void *entries[3];
+} _keeperControlStrTable = {
+    (&g_keeperControl), 0,
+    { (void *)_aKeeperDefault, (void *)_aKeeperAI, (void *)_aKeeperManual }
+};
+
 #undef ON_OFF_TABLE
 #undef MONTHS
 /* ---- DIY Tournament string tables (SWOS2.s lines 75323..75554) ----
