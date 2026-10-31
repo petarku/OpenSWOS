@@ -10,6 +10,8 @@
 #include "endian_helpers.h"  /* PACK_BE_U16 -- a team's number from its header */
 
 int32_t g_penaltyShootoutMode;
+/* OPTIONS -> GK CONTROL, kept for the current session on both targets. */
+uint16_t g_keeperControl = KEEPER_CONTROL_DEFAULT;
 
 extern uint16_t _playingPenalties;
 extern uint16_t _penalty;
@@ -146,6 +148,8 @@ void PenaltyShootout_MatchRestarted(void)
  * leaves the keeper standing. */
 int16_t ManualKeeper_DiveInput(TeamGeneralInfo *team)
 {
+    if (g_keeperControl == KEEPER_CONTROL_AI)
+        return -1;
     if (team->playerNumber == 0)
         return -1;                      /* a CPU-run side keeps the AI keeper */
     if (_playingPenalties) {
@@ -176,7 +180,7 @@ int16_t ManualKeeper_DiveInput(TeamGeneralInfo *team)
          * ever, so a player who never touches the stick keeps the keeper the
          * game always had, and only a held dive direction overrides the dice
          * (asked for after the first live build, 2026-10-26). */
-        return s_shootoutMatch ? 0 : -1;
+        return (s_shootoutMatch || g_keeperControl == KEEPER_CONTROL_MANUAL) ? 0 : -1;
     }
 }
 

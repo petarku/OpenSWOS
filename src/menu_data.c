@@ -516,6 +516,9 @@ extern char _aMemoFromTheClu[];
 extern char _aMenuMusic[];
 extern char _aGameplay[];
 extern char _aWorldOption[];
+extern char _aKeeperControl[];
+extern char* _keeperControlStrTable[];
+extern void ChangeKeeperControl(void);
 extern char _aControls[];
 extern char _aRedefineKeys[];
 extern char _aPitches[];
@@ -2934,7 +2937,7 @@ Menu_Options _optionsMenu = {
     },
     {
         { -102, 148, -116, 11 },
-        { MENU_CMD_NAV, -1, -1, 14, 22 },
+        { MENU_CMD_NAV, -1, -1, 14, 24 },
         { MENU_CMD_COLORS, 0xD },
         { MENU_CMD_TEXT_PTR, 0x0, _aRedefineKeys },
         { MENU_CMD_ONSELECT_FIRE, ShowControlsMenu },
@@ -2948,7 +2951,7 @@ Menu_Options _optionsMenu = {
     },
     {
         { -102, 148, -116, 11 },
-        { MENU_CMD_NAV, -1, -1, 14, 19 },
+        { MENU_CMD_NAV, -1, -1, 14, 24 },
         { MENU_CMD_COLORS, 0xD },
         { MENU_CMD_STRING_TABLE, 0x0, _pitchStyleStrTable },
         { MENU_CMD_ONSELECT_FIRE, ChangePitchStyle },
@@ -2966,17 +2969,31 @@ Menu_Options _optionsMenu = {
     { MENU_CMD_TEXT_PTR, 0x0, _aSwosVersion152 },
     MENU_CMD_END,
     {
-        { 10, 160, -116, 11 },
+        { 10, 172, -116, 11 },
         { MENU_CMD_COLORS, 0x9 },
         { MENU_CMD_TEXT_PTR, 0x0, _aWorldOption },
         MENU_CMD_END
     },
     {
-        { -102, 160, -116, 11 },
-        { MENU_CMD_NAV, -1, -1, 16, 19 },
+        { -102, 172, -116, 11 },
+        { MENU_CMD_NAV, -1, -1, 24, 19 },
         { MENU_CMD_COLORS, 0xD },
         { MENU_CMD_STRING_TABLE, 0x0, _worldStrTable },
         { MENU_CMD_ONSELECT_FIRE, ChangeWorld },
+        MENU_CMD_END
+    },
+    {
+        { 10, 160, -116, 11 },
+        { MENU_CMD_COLORS, 0x9 },
+        { MENU_CMD_TEXT_PTR, 0x0, _aKeeperControl },
+        MENU_CMD_END
+    },
+    {
+        { -102, 160, -116, 11 },
+        { MENU_CMD_NAV, -1, -1, 16, 22 },
+        { MENU_CMD_COLORS, 0xD },
+        { MENU_CMD_STRING_TABLE, 0x0, _keeperControlStrTable },
+        { MENU_CMD_ONSELECT_FIRE, ChangeKeeperControl },
         MENU_CMD_END
     },
     MENU_MARK_END_MENU

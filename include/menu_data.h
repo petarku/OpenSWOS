@@ -1141,6 +1141,8 @@ typedef struct Menu_Options
    * last so no entry's number moves (entries 21, 22). */
   MenuEntry_Byte_Colors_TextPtr labelWorld;
   MenuEntry_Byte_Nav_Colors_StringTable_OnSelect world;
+  MenuEntry_Byte_Colors_TextPtr labelKeeperControl;
+  MenuEntry_Byte_Nav_Colors_StringTable_OnSelect keeperControl;
   MenuMark markEndMenu;
 } Menu_Options;
 #pragma pack(pop)

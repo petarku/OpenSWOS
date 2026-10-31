@@ -2077,32 +2077,35 @@ void OptionsMenuBeforeDraw(void)
     _showPrereleaseCounter = 0;
     /* One row, two meanings: CONTROLS (entries 15/16) opens a JSON menu about the
      * keyboard's keys, which only SDL runs; PITCHES (17/18) picks the AGA Amiga's
-     * pitch set. Each target shows its own and steps GAMEPLAY (14) and EXIT (19) to
-     * it; the OCS Amiga has neither, and steps over the row. */
+     * pitch set. Each target shows its own and steps GAMEPLAY (14) and PENALTY KEEPER
+     * (24, y 160) to it; the OCS Amiga has neither, and steps over the row. Below the
+     * keeper, WORLD (22, y 172, SDL only) and then EXIT (19). */
 #ifdef SWOS_SDL_BUILD
     _menuEntries[17].isInvisible = 1;
     _menuEntries[18].isInvisible = 1;
 #if !SWOS_WORLDS
-    /* (no worlds in this build: no WORLD row; CONTROLS and EXIT step to each other) */
+    /* (no worlds in this build: no WORLD row; the keeper and EXIT step to each other) */
     _menuEntries[21].isInvisible = 1;
     _menuEntries[22].isInvisible = 1;
-    _menuEntries[16].downEntry = 19;
-    _menuEntries[19].upEntry = 16;
+    _menuEntries[24].downEntry = 19;
+    _menuEntries[19].upEntry = 24;
 #endif
 #else
     /* WORLD (21/22) is SDL only: the Amiga's world is its drawer's (OpenSWOS Setup). */
     _menuEntries[21].isInvisible = 1;
     _menuEntries[22].isInvisible = 1;
+    _menuEntries[24].downEntry = 19;
+    _menuEntries[19].upEntry = 24;
     _menuEntries[15].isInvisible = 1;
     _menuEntries[16].isInvisible = 1;
 #ifdef AGA
     _menuEntries[14].downEntry = 18;
-    _menuEntries[19].upEntry = 18;
+    _menuEntries[24].upEntry = 18;
 #else
     _menuEntries[17].isInvisible = 1;
     _menuEntries[18].isInvisible = 1;
-    _menuEntries[14].downEntry = 19;
-    _menuEntries[19].upEntry = 14;
+    _menuEntries[14].downEntry = 24;
+    _menuEntries[24].upEntry = 14;
 #endif
 #endif
 }
@@ -2158,6 +2161,15 @@ void ChangeWorld(MenuEntry *entry)
 #else
     (void)entry;
 #endif
+}
+
+/* Penalty keeper rule; DEFAULT preserves the original contextual behaviour. */
+__attribute__((used, externally_visible))
+void ChangeKeeperControl(MenuEntry *entry)
+{
+    extern uint16_t g_keeperControl;
+    g_keeperControl = (uint16_t)((g_keeperControl + 1) % 3);
+    CallDrawMenuItem(entry);
 }
 
 /* OPTIONS -> CONTROLS: the player's own keys and the press latch (src/controls_menu.c). */

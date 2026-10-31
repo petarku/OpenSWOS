@@ -441,7 +441,7 @@
      "left": -1,
      "right": -1,
      "up": 14,
-     "down": 22
+     "down": 24
     },
     {
      "op": "colors",
@@ -494,7 +494,7 @@
      "left": -1,
      "right": -1,
      "up": 14,
-     "down": 19
+     "down": 24
     },
     {
      "op": "colors",
@@ -573,7 +573,7 @@
    "kind": "entry",
    "coords": {
     "x": 10,
-    "y": 160,
+    "y": 172,
     "w": -116,
     "h": 11
    },
@@ -594,7 +594,7 @@
    "kind": "entry",
    "coords": {
     "x": -102,
-    "y": 160,
+    "y": 172,
     "w": -116,
     "h": 11
    },
@@ -603,7 +603,7 @@
      "op": "nav",
      "left": -1,
      "right": -1,
-     "up": 16,
+     "up": 24,
      "down": 19
     },
     {
@@ -619,6 +619,59 @@
     {
      "op": "onselect_fire",
      "func": "ChangeWorld"
+    }
+   ]
+  },
+  {
+   "kind": "entry",
+   "coords": {
+    "x": 10,
+    "y": 160,
+    "w": -116,
+    "h": 11
+   },
+   "commands": [
+    {
+     "op": "colors",
+     "frame_color": 0,
+     "background_color": 9
+    },
+    {
+     "op": "text",
+     "flags": "0x0",
+     "str": "_aKeeperControl"
+    }
+   ]
+  },
+  {
+   "kind": "entry",
+   "coords": {
+    "x": -102,
+    "y": 160,
+    "w": -116,
+    "h": 11
+   },
+   "commands": [
+    {
+     "op": "nav",
+     "left": -1,
+     "right": -1,
+     "up": 16,
+     "down": 22
+    },
+    {
+     "op": "colors",
+     "frame_color": 0,
+     "background_color": 13
+    },
+    {
+     "op": "string_table",
+     "flags": "0x0",
+     "table": "_keeperControlStrTable"
+    },
+    {
+     "op": "onselect_fire",
+     "func": "ChangeKeeperControl"
     }
    ]
   }

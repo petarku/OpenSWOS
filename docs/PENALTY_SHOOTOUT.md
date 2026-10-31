@@ -70,6 +70,21 @@ the ceremony it replaces was never load-bearing.
 
 ## The manual keeper
 
+OPTIONS -> GK CONTROL selects the penalty-save rule on Amiga and SDL:
+
+- **DEFAULT** (initial setting): preserves the behaviour described below. A
+  held dive direction takes control; otherwise normal matches use the AI and
+  the training shootout keeper stands.
+- **AI**: the computer handles penalty saves, including the training shootout.
+- **MANUAL**: the human defender chooses the dive at every penalty. With no
+  dive direction held, the keeper stands; there is no AI fallback.
+
+This setting lasts for the current application session and resets to DEFAULT
+on restart. CPU teams and open-play keeping are unaffected.
+
+The decision can be checked with Cygwin GCC:
+`gcc -Iinclude tests/keeper_control_test.c src/penalty_shootout.c -o build/keeper_control_test && build/keeper_control_test`.
+
 When the other side is shooting, **your keeper is yours**:
 
 | held | he does |

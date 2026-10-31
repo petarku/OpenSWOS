@@ -925,6 +925,16 @@ struct __attribute__((packed)) {
     { (void *)_aDosStyle, (void *)_a2020Style }
 };
 
+
+extern uint16_t g_keeperControl;
+extern char _aKeeperDefault[], _aKeeperAI[], _aKeeperManual[];
+struct __attribute__((packed)) {
+    void *indexPtr; uint16_t base; void *entries[3];
+} _keeperControlStrTable = {
+    (&g_keeperControl), 0,
+    { (void *)_aKeeperDefault, (void *)_aKeeperAI, (void *)_aKeeperManual }
+};
+
 /* OPTIONS -> WORLD: 96/97 / 2026-27, indexed by _worldOption (world.c): the world
  * SWOS.ini names, which the game plays from its next start (menus.c ChangeWorld). */
 extern char _aWorld9697[], _aWorld2627[];
