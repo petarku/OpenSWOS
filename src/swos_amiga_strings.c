@@ -68,6 +68,21 @@ char _aPractice[] = "PRACTICE";
 char _aPenaltyShootout[] = "PENALTY SHOOTOUT";
 char _aPlayShootout[]  = "PLAY SHOOTOUT";
 char _aStartShootout[] = "START SHOOTOUT";
+/* PENALTY SHOOTOUT's start screen (_shootoutStartMenu, src/penalty_shootout_menu.c).
+ * NATIONAL reuses _aNational, CHOOSE TEAMS _aChooseTeams, COMPUTER _aComputer. */
+char _aFreeSelection[]     = "FREE SELECTION";
+char _aRandomSelection[]   = "RANDOM SELECTION";
+char _aAllRandom[]         = "ALL RANDOM";
+char _aShootoutEurope[]    = "EUROPE";
+char _aShootoutAfrica[]    = "AFRICA";
+char _aShootoutNAmerica[]  = "N. AMERICA";
+char _aShootoutAsia[]      = "ASIA";
+char _aShootoutOriginal[]  = "ORIGINAL";
+char _aShootoutSAmerica[]  = "S. AMERICA";
+char _aShootoutOceania[]   = "OCEANIA";
+char _aShootoutCustom[]    = "CUSTOM";
+char _aGoalkeeperControl[] = "GOALKEEPER CONTROL";
+char _aShootoutPlayer[]    = "PLAYER";
 char _aDataEurocupTmd[] = "data/eurocup.tmd";
 char _aDataEurocwcTmd[] = "data/eurocwc.tmd";
 char _aDataTeamNnn[] = "data/team.nnn";

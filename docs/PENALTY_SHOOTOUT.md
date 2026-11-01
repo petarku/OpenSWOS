@@ -16,47 +16,33 @@ Main menu → **PRACTICE** (the left column's second row, under EDIT) →
 button became on 2026-10-26, when this mode joined it; both modes sit in it,
 built like the EDIT submenu (docs/MENUS.md §12).
 
-From there it is the friendly flow — the settings screen and team selection —
-**with one screen swapped out: where a friendly would show the PLAY MATCH
-screen, the drill shows the SHOOTING ORDER screen** (below, since 2026-10-26).
-Tactics, squad swaps, VIEW OPPO and substitutes mean nothing to a match that
-is only penalties, so none of that is offered; the one choice is who shoots
-when. Any selection a friendly can start, a shootout can — both sides shoot,
-so human v human and human v computer both make sense and nothing extra is
-gated (contrast SHOOTING PRACTICE, which needs exactly one computer side).
-The screens say so as you go: the headers read PENALTY SHOOTOUT, the
-selection's confirm button PLAY SHOOTOUT, the start button START SHOOTOUT,
-and the match is named PENALTY SHOOTOUT on the scoreboard and in a saved
-highlight.
+From there it is the friendly flow: the start screen (below), team selection,
+then the ordinary PLAY MATCH screen. Any selection a friendly can start, a
+shootout can: both sides shoot, so human v human and human v computer both make
+sense and nothing extra is gated (contrast SHOOTING PRACTICE, which needs exactly
+one computer side). The screens say so as you go: the headers read PENALTY
+SHOOTOUT, the selection's confirm button PLAY SHOOTOUT, the start button START
+SHOOTOUT, and the match is named PENALTY SHOOTOUT on the scoreboard and in a
+saved highlight.
 
-## The shooting order
+## The shooting order (2026-11-01)
 
-The SHOOTING ORDER screen (`_shootoutOrderMenu`) lists the side's **ten
-outfield players as the shooting queue**: positions 1–5, the best-of-five
-takers, sit a gap above 6–10, who only shoot if it goes to sudden death (the
-queue cycles past ten). **Click a player and then another and they trade
-places**; clicking the same player twice puts him back down. The rows are the
-squad list's own (number, fitness, name, position, skills, value — the
-ViewSquad renderer), the picked-up row shown in its highlight style. START
-SHOOTOUT starts the match, EXIT abandons it, and in human v human each player
-orders their own queue in turn, exactly as each would have had a PLAY MATCH
-screen.
+The PLAY MATCH screen numbers the ten outfield rows of the eleven with their
+place in the shooting order, left of each row, as SWOS 2020 does
+(`DrawPlayerEntries`, `src/play_match_menu.c`):
 
-The default queue is the engine's own order — `NextPenalty` walks
-`spritesTable[10..1]`, the most attacking outfield slot first — so an
-untouched screen changes nothing, and a CPU side (which never sees the
-screen) shoots as it always has. **The goalkeeper never shoots**: the
-engine's shooter pick has always excluded slot 0, and the drill keeps that
-rather than teach the goalie update to take a kick.
+- The last row is 1 and the row under the keeper is 10, because the engine
+  takes the kicks from the bottom of the eleven up (`NextPenalty` walks
+  `spritesTable[10..1]`). Past ten the queue cycles.
+- The number belongs to the ROW. Swapping players is how the order changes,
+  and a substitute swapped into the eleven becomes a taker.
+- **The goalkeeper never shoots**: the engine's shooter pick has always left
+  out slot 0, and his row has no number.
 
-The order is menu state (`g_shootoutOrder`), reset to the default each time
-the mode is entered and **latched at kick-off beside the mode flag**
-(`PenaltyShootout_BeginMatch`, validated as a permutation on the way in). In
-the match, `NextPenalty` asks `PenaltyShootout_NextShooterSlot` before its
-own countdown and writes the answer through the same sim variable
-(`_teamXPenaltyShooterIndex`), so the sprite pick and everything downstream
-are untouched; every match that is not the drill gets -1 and picks the stock
-way, so cup shootouts, netplay and the rigs see nothing new.
+Until 2026-11-01 the mode replaced the PLAY MATCH screen with a SHOOTING ORDER
+screen of its own (`_shootoutOrderMenu`: the ten takers as a queue, reordered
+by clicking two of them). SWOS 2020's way replaced it, and that screen and its
+queue were deleted.
 
 **START SHOOTOUT goes straight to the first penalty.** No walk-on, no
 kick-off: the mode's per-frame hook calls `StartPenalties` on the match's
@@ -84,6 +70,33 @@ on restart. CPU teams and open-play keeping are unaffected.
 
 The decision can be checked with Cygwin GCC:
 `gcc -include include/swos_platform.h -Iinclude tests/keeper_control_test.c src/penalty_shootout.c -o build/keeper_control_test && build/keeper_control_test`.
+
+### The start screen (2026-11-01)
+
+PENALTY SHOOTOUT opens SWOS 2020's start screen, `_shootoutStartMenu`
+(`src/penalty_shootout_menu.c`), where the friendly's own screen would be. The
+`ShowFriendlyMenu` swap keeps all the friendly flow's bookkeeping around it.
+
+- **CHOOSE TEAMS** (FREE SELECTION) is the friendly's own team selection.
+- **RANDOM SELECTION** draws two teams of a group (`ShootoutRandomTeams`):
+  - the first is the player's side (PLAYER-COACH), the second the computer's;
+  - both are then played as CHOOSE TEAMS plays a pair, so the PLAY MATCH
+    screen still comes first.
+  - A club group draws a random country of the continent, then a random club of
+    it. The continents are the team-selection screen's own country lists
+    (`_europeTable` ... `_oceaniaTable`).
+  - NATIONAL is the national files 80-85, and ALL RANDOM is every club and
+    national file.
+  - ORIGINAL is SWOS's ORIGINAL CUSTOM TEAMS (`TEAM.072`) and CUSTOM its EDITED
+    CUSTOM TEAMS (`CUSTOMS.EDT`), the CHOOSE TEAMS screen's split. Both exist on
+    both targets.
+  - The draw has its own generator, seeded from the clock at each press, as the
+    challenge cups' does.
+- **GOALKEEPER CONTROL** sets `g_shootoutKeeperComputer`, latched at kick-off:
+  - PLAYER: a human side's keeper guesses with the stick.
+  - COMPUTER: the computer guesses for that keeper too, and no arrow is drawn.
+  - It applies to this mode only; OPTIONS → GK CONTROL (below) is for every
+    other penalty.
 
 ### In the drill a kick is a guess: five places (2026-11-01)
 
@@ -127,6 +140,51 @@ and the keeper's guess decides it: **same place = save, any other = goal**.
   - Nothing is drawn for the middle.
 - **Replays and rollback.** None of this is in the replay or rollback state:
   the drill is offline training and keeps no recording.
+
+### The shootout screen (2026-11-01)
+
+While the kicks are taken the drill shows SWOS 2020's screen
+(`src/penalty_shootout_hud.c`) and none of the match's own HUD.
+
+**What it shows:**
+- **Scoreboard** along the foot: both teams, the shootout score, and the last
+  five kicks each (✓ scored, ✗ missed, `*` being taken, `-` not yet; past five
+  the columns scroll).
+- **Takers list** on the left (SDL only): the shooting side's ten takers in
+  order, the one at the spot highlighted.
+- **Controller labels** (SDL only): CPU or PLAYER n beside the goal and the spot.
+- **The taker's name** in the corner (Amiga only), through the game's own
+  name display (`PlaceCurrentPlayerName`, `src/game_hud.c`), unless OPTIONS
+  has that display off.
+
+**What it hides** (only while `PenaltyShootout_HudActive`):
+- the clock (`UpdateTime`) and the result board (`ShowResult` sends every
+  request to its hide step), both in `src/game_state.c`;
+- the name display, the numbers over the controlled players and the marker
+  (`PenaltyShootout_HideMatchHud`, before `DrawSprites`).
+
+The result after the match shows as ever.
+
+**How it is drawn.** Each piece is a canvas: an 8-bit picture the file paints
+itself, reading the font and face sprites pixel by pixel. It is repainted only
+when what it shows changes, converted to sprite planes in chip RAM on the
+Amiga, and drawn as one sprite a frame with `DrawSpriteClipped`, which queues
+its undraw. Each canvas is sized to its content.
+
+**The Amiga budget** (five FS-UAE rounds with the user, 2026-11-01). On the
+8-plane AGA pitch every pixel of a bob's rectangle, see-through ones included,
+is blitted plane by plane twice a frame: drawn, then undrawn.
+- The first version drew grid tiles, bars and every glyph straight onto the
+  pitch each frame: about a thousand blits a frame, far too slow.
+- The canvases were better, but the takers list alone was more than half the
+  area. The Amiga drops it, and the labels too, by the user's call.
+- The Amiga shows the screen only while a kick is set up (`ST_PENALTIES`),
+  and repaints only then. A repaint is CPU work that costs an A1200 several
+  frames, and a result arrives mid-dive (the save) or in the celebration,
+  which showed as a slow keeper.
+- The shootout's first frame runs `MoveCamera`'s easing to the end
+  (`PenaltyShootout_MatchTick`), so the camera starts at the penalty goal
+  instead of scrolling there from the kick-off over all 22 players.
 
 ### Outside the drill: the manual keeper
 
@@ -172,11 +230,10 @@ player.
 
 | piece | where |
 |---|---|
-| the mode flag, the latch, the first-frame jump, the keeper input, the shooting order + its screen's handlers | `src/penalty_shootout.c` |
+| the mode flag, the latch, the first-frame jump, the keeper input, the five places, the arrow | `src/penalty_shootout.c` |
 | the PRACTICE submenu (data) | `bin/data_json/menus/practiceMenu.json`, `_practiceMenu` in `src/menu_data.c` |
-| the SHOOTING ORDER screen (data) | `bin/data_json/menus/shootoutOrderMenu.json`, `_shootoutOrderMenu` in `src/menu_data.c` (the ViewSquad shape, docs/MENUS.md §12) |
-| where it replaces the PLAY MATCH screen | `ShowPlayMatchMenu` (`src/play_match_menu.c`) |
-| where the match reads the order | the shooter pick in `NextPenalty` (`src/goalkeeper.c`) |
+| the start screen (data) | `bin/data_json/menus/shootoutStartMenu.json`, `_shootoutStartMenu` in `src/menu_data.c`; handlers in `src/penalty_shootout_menu.c` |
+| the shooting-order numbers | `DrawPlayerEntries` (`src/play_match_menu.c`) |
 | the submenu's opener | `PracticeMenuSelected` (`src/menus.c`) |
 | the flow it borrows | `FriendlyFlow` → `Friendly` → `ShowFriendlyMenu` (`src/menus.c`) |
 | the words SHOOTOUT replaces FRIENDLY with | `FriendlyMenuInit`, `ChooseTeamsMenu` (`src/menus.c`), `SetGameStartButtonText` (`src/play_match_menu.c`), `InitAndPlayGame` (`src/game_init.c`) |

@@ -26,6 +26,10 @@
 #endif
 #include "shooting_practice.h"  /* g_shootingPracticeMode -- the START PRACTICE label */
 #include "penalty_shootout.h"   /* g_penaltyShootoutMode -- the START SHOOTOUT label */
+#include "text_render.h"        /* PENALTY SHOOTOUT: the shooting-order numbers */
+
+extern void *_charTables[];
+#define SHOOTOUT_ORDER_COLOR 2  /* menu text colour index: white */
 
 /* Prevent GCC from converting byte loops to memcpy/memset (no libc) */
 #pragma GCC optimize("no-tree-loop-distribute-patterns")
@@ -1390,6 +1394,22 @@ void DrawPlayerEntries(MenuEntry *a5) {
     }
 
     DrawMultipleItems(6, &_menuEntries[31]);
+
+    /* PENALTY SHOOTOUT: each outfield row's place in the shooting order,
+     * left of the row, as SWOS 2020 shows it. The engine takes the kicks from
+     * the bottom of the eleven up (NextPenalty walks spritesTable 10..1), so
+     * the last row is 1 and the row under the keeper 10. The number belongs to
+     * the ROW, so swapping players reorders the takers and a substitute
+     * swapped in becomes one. */
+    if (g_penaltyShootoutMode && !d5 && d7 >= 1 && d7 <= 10) {
+        uint8_t num[3];
+        int16_t order = (int16_t)(11 - d7);
+        num[0] = (uint8_t)(order >= 10 ? '1' : '0' + order);
+        num[1] = (uint8_t)(order >= 10 ? '0' : 0);
+        num[2] = 0;
+        DrawMenuTextRightAligned((uint16_t)(bgE->x - 3), (uint16_t)(a5->y + 1),
+                                 SHOOTOUT_ORDER_COLOR, num, (uint8_t *)_charTables[0]);
+    }
 }
 
 /* ================================================================
@@ -1522,18 +1542,9 @@ int16_t ShowPlayMatchMenu(int16_t controlFlags, int16_t _maxSubstitutes,
             (TeamFileEx *)_playMatchTeam1Ptr);
     }
 
-    /* PENALTY SHOOTOUT: the match is only penalties, so tactics, squad swaps
-     * and substitutes — this screen's whole business — mean nothing to it.
-     * Each human side gets the SHOOTING ORDER screen instead (the queue of
-     * ten takers, src/penalty_shootout.c), which keeps this function's
-     * contract: START returns the pad that pressed it, EXIT raises
-     * _exitGameFlag. */
-    if (g_penaltyShootoutMode) {
-        extern uint8_t _shootoutOrderMenu[];
-        ShowMenu(_shootoutOrderMenu);
-        return (int16_t)_playerNumThatStarted;
-    }
-
+    /* PENALTY SHOOTOUT plays from this screen too, as SWOS 2020's does: the
+     * eleven's rows carry their shooting order (DrawPlayerEntries), and
+     * swapping players is how the order is changed. */
     ShowMenu(_playMatchMenu);
     return (int16_t)_playerNumThatStarted;
 }
