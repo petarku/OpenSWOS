@@ -3,6 +3,7 @@
 #include "menu_system.h"
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 
 uint16_t _playingPenalties, _penalty;
 Sprite *_penaltyShooterSprite;
@@ -23,8 +24,130 @@ void BuildTransferPlayerMenuEntry(void *item, uint8_t *player, uint16_t y,
                                  int16_t idx, uint16_t style, uint8_t *extra)
 { assert(0); }
 
+/* ---- the drill's FIVE PLACES: engine services, recorded not run ---- */
+TeamGeneralInfo _topTeamData, _bottomTeamData;
+Sprite _ballSprite;
+int16_t _gameState;
+Sprite *_lastPlayerPlayed;
+static int s_claims, s_dives, s_lowDives, s_catches;
+static uint16_t s_rand;
+uint16_t Rand(void) { return s_rand++; }
+void PlayMissGoalSample(void) {}
+void ResetBothTeamSpinTimers(void) {}
+void GoalkeeperJumping(int16_t d0, int16_t v, int16_t d3, Sprite *k, Sprite *b,
+                       TeamGeneralInfo *t)
+{ k->playerState = PL_GOALIE_DIVING_HIGH; s_dives++; }
+void GoalkeeperForceDiveAnim(Sprite *k, TeamGeneralInfo *t, int16_t low)
+{ if (low) { k->playerState = PL_GOALIE_DIVING_LOW; s_lowDives++; } }
+void GoalkeeperCaughtTheBall(Sprite *k, TeamGeneralInfo *t)
+{ k->playerState = PL_GOALIE_CATCHING_BALL; s_catches++; }
+void GoalkeeperClaimedTheBall(Sprite *k, Sprite *b, TeamGeneralInfo *t)
+{ s_claims++; }
+/* the keeper's arrow (drawing only; not exercised here) */
+uint8_t *_spriteGraphicsPtr;
+int16_t _foulYCoordinate;
+FixedPoint _cameraX, _cameraY;
+int _screen_width = 336;
+int16_t Render_CameraX(void) { return 0; }
+int16_t Render_CameraY(void) { return 0; }
+void DrawSpriteClipped(SpriteGraphics *g, int16_t x, int16_t y) { assert(0); }
+
+/* One drill kick, frame by frame as the game runs it: UpdateBall's script,
+ * then the goalie update. Returns 1 saved, 0 in the net (crossed the line
+ * inside the posts under the bar, CheckIfBallOutOfPlay's window). */
+static int playKick(int shooterDir, int keeperDir, int humanShooter, int humanKeeper)
+{
+    static Sprite keeper;
+    static Sprite *keeperTable[11];
+    int frame, crossed = 0;
+
+    memset(&keeper, 0, sizeof keeper);
+    keeper.playerState = PL_NORMAL;
+    keeper.x.s.i = 336; keeper.y.s.i = 133;
+    keeperTable[0] = &keeper;
+    _topTeamData.spritesTable = keeperTable;
+    _topTeamData.playerNumber = humanKeeper;
+    _topTeamData.direction = keeperDir;
+    _bottomTeamData.playerNumber = humanShooter;
+    _bottomTeamData.direction = shooterDir;
+    memset(&_ballSprite, 0, sizeof _ballSprite);
+    _ballSprite.x.s.i = 336; _ballSprite.y.s.i = 187;   /* NextPenalty's spot */
+    s_claims = 0;
+
+    _gameState = ST_PENALTIES;
+    PenaltyShootout_ShotStruck(0, &_bottomTeamData);
+    assert(PenaltyShootout_BallScripted());
+    _gameState = ST_GAME_IN_PROGRESS;
+    for (frame = 0; frame < 40 && PenaltyShootout_BallScripted(); frame++) {
+        PenaltyShootout_ScriptBall(&_ballSprite);
+        if (s_claims)
+            return 1;
+        if (_ballSprite.y.s.i < 129) {
+            int x = _ballSprite.x.s.i - 1;
+            assert(x >= 302 && x <= 366 && _ballSprite.z.s.i <= 15);
+            crossed = 1;
+        }
+        if (keeper.playerState == PL_NORMAL)
+            PenaltyShootout_Keeper(&keeper, &_ballSprite, &_topTeamData);
+    }
+    assert(!PenaltyShootout_BallScripted());
+    assert(crossed);
+    return 0;
+}
+
+/* The five places: DOWN+side is that side, UP / DOWN / nothing the middle. */
+static int placeOf(int dir)
+{
+    switch (dir) {
+    case 7: return 7;
+    case 6: case 5: return 6;
+    case 1: return 1;
+    case 2: case 3: return 2;
+    default: return 8;
+    }
+}
+
+static void testFivePlaces(void)
+{
+    int s, k, saves = 0, n;
+    _playingPenalties = 1;
+    g_penaltyShootoutMode = 1;
+    PenaltyShootout_BeginMatch();
+
+    /* Human v human: every stick against every stick. */
+    for (s = -1; s < 8; s++)
+        for (k = -1; k < 8; k++)
+            assert(playKick(s, k, 1, 1) == (placeOf(s) == placeOf(k)));
+
+    /* The keeper's dive follows his place: UP+side a high dive, the side
+     * (with or without DOWN) a low one, the middle stands. */
+    s_dives = s_lowDives = s_catches = 0;
+    playKick(2, 7, 1, 1);  assert(s_dives == 1 && s_lowDives == 0);
+    playKick(2, 6, 1, 1);  assert(s_dives == 2 && s_lowDives == 1);
+    playKick(2, 5, 1, 1);  assert(s_dives == 3 && s_lowDives == 2);
+    playKick(2, 0, 1, 1);  assert(s_dives == 3 && s_catches == 0);
+    playKick(2, -1, 1, 1); assert(s_dives == 3 && s_catches == 0);
+
+    /* Computer taker: always on target (playKick asserts it), and a keeper
+     * who guesses saves about one in five. */
+    for (k = -1; k < 8; k++)
+        for (n = 0; n < 64; n++)
+            saves += playKick(0, k, 0, 1);
+    assert(saves > 9 * 64 / 10 && saves < 9 * 64 * 2 / 5);
+
+    /* Outside the drill nothing is scripted. */
+    g_penaltyShootoutMode = 0;
+    PenaltyShootout_BeginMatch();
+    _gameState = ST_PENALTIES;
+    PenaltyShootout_ShotStruck(0, &_bottomTeamData);
+    assert(!PenaltyShootout_BallScripted());
+    _playingPenalties = 0;
+    puts("five places: every shot against every guess, dives, CPU taker passed");
+}
+
 int main(void)
 {
+    testFivePlaces();
     TeamGeneralInfo defender = {0}, attacker = {0};
     Sprite shooter = {0};
     int mode, training, shootout, direction;

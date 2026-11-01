@@ -83,27 +83,73 @@ This setting lasts for the current application session and resets to DEFAULT
 on restart. CPU teams and open-play keeping are unaffected.
 
 The decision can be checked with Cygwin GCC:
-`gcc -Iinclude tests/keeper_control_test.c src/penalty_shootout.c -o build/keeper_control_test && build/keeper_control_test`.
+`gcc -include include/swos_platform.h -Iinclude tests/keeper_control_test.c src/penalty_shootout.c -o build/keeper_control_test && build/keeper_control_test`.
 
-When the other side is shooting, **your keeper is yours**:
+### In the drill a kick is a guess: five places (2026-11-01)
+
+In PENALTY SHOOTOUT (the drill only, not a cup tie's shootout) physics plays
+no part in a kick. Every kick is **on target**, going to one of **five places**,
+and the keeper's guess decides it: **same place = save, any other = goal**.
+
+| place | taker aims with / keeper guesses with |
+|---|---|
+| high left | UP + LEFT |
+| left (low) | LEFT or DOWN + LEFT |
+| the middle | nothing, UP or DOWN |
+| right (low) | RIGHT or DOWN + RIGHT |
+| high right | UP + RIGHT |
+
+- **Takers.** A human taker aims with the stick at the moment he strikes. A
+  computer taker picks one of the five at random. Both kick sites
+  (`PlayerKickingBall`, `DoPass` in `src/update_players.c`) call
+  `PenaltyShootout_ShotStruck`.
+- **The ball** then flies a scripted straight line to the place in 16 frames
+  (`PenaltyShootout_ScriptBall`, called from `UpdateBall`). On the last frame it
+  goes back to physics just behind the line, so the engine's own goal check
+  scores it.
+- **The keeper** commits when the ball is within 20 px (`PenaltyShootout_Keeper`):
+  - a human keeper takes the stick held at that moment;
+  - a computer keeper picks a place at random.
+  - The sides dive (high, or low with `GoalkeeperForceDiveAnim`); the middle
+    stands.
+  - While the ball is scripted, the goalie update's own catch, claim and
+    deflect checks stand aside (`PenaltyShootout_BallScripted`).
+- **The odds.** A random guess saves one kick in five, by design: the first
+  version had eight places (three heights per side) and play-testing found it
+  nearly unsaveable.
+- **The arrow.** A human keeper facing a computer taker sees an arrow on the
+  goal pointing the held place, until the ball is struck
+  (`PenaltyShootout_DrawKeeperArrow`, after `DrawSprites` in `src/game_loop.c`).
+  - It is red with an orange edge, built at start-up as 13x13 sprites from two
+    drawings, and drawn with `DrawSpriteClipped`.
+  - On the Amiga the planes and masks are `SWOS_CHIP_BSS`, and the blit queue
+    undraws it.
+  - Nothing is drawn for the middle.
+- **Replays and rollback.** None of this is in the replay or rollback state:
+  the drill is offline training and keeps no recording.
+
+### Outside the drill: the manual keeper
+
+At every other penalty a human defends, the keeper is yours (below). Since
+2026-11-01 a held dive starts only once the ball is close
+(`ManualKeeperDiveDue`, `src/goalkeeper.c`: from 20 px out to 10 px past him),
+where before it started at the strike and was always too early or too late.
 
 | held | he does |
 |---|---|
 | LEFT | full-stretch jump left |
 | LEFT + DOWN | low dive left |
 | RIGHT / RIGHT + DOWN | mirrored |
-| nothing | stands — and still catches a shot hit straight at him |
+| nothing | the AI keeper (DEFAULT), or stands (MANUAL) |
 
-Hold the direction before the kick to commit the dive the instant the ball is
-struck, or flick it late as the ball travels. The reward for guessing the
-side is that the dive is **immediate and at full dive speed** — the AI keeper
-during penalties rolls dice on side, speed *and* timing (it deliberately
-dives the wrong way about one attempt in four). The risk is that the height
-is yours too — a low dive under a rising shot, or a jump over a daisy-cutter,
-reaches nothing — and no guess means no dive.
+The reward for guessing the side is that the dive is **at full dive speed**.
+The AI keeper during penalties rolls dice on side, speed *and* timing, and
+deliberately dives the wrong way about one attempt in four. The risk is that
+the height is yours too: a low dive under a rising shot, or a jump over a
+daisy-cutter, reaches nothing.
 
-A CPU-run side keeps the AI keeper, so shooting against the computer is
-unchanged. In human v human the defending player gets the keeper each round.
+A CPU-run side keeps the AI keeper. In human v human the defending player gets
+the keeper each round.
 
 **Since 2026-10-26 the manual keeper is not the mode's alone: every penalty a
 human DEFENDS works this way**, in any match on either target — an in-match
@@ -138,6 +184,7 @@ player.
 | the engine's shootout (untouched) | `StartPenalties` (`src/match_setup.c`), `NextPenalty` (`src/goalkeeper.c`) |
 | manual keeper: the ask | the `shot_at_goal` gate in the goalie update (`src/update_players.c`) |
 | manual keeper: the dive | `GoalkeeperJumping` + `GoalkeeperForceDiveAnim` (`src/goalkeeper.c`) |
+| the drill's five places: kick, flight, keeper, arrow | `PenaltyShootout_ShotStruck` / `_ScriptBall` / `_Keeper` / `_DrawKeeperArrow` (`src/penalty_shootout.c`); hooks in `src/update_players.c`, `UpdateBall` (`src/ball_physics.c`), `GameLoop` (`src/game_loop.c`) |
 
 **The mode reuses the friendly flow whole**, for the reasons argued in
 docs/SHOOTING_PRACTICE.md (RNG seed, gameType save/restore, the pristine
