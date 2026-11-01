@@ -1420,52 +1420,27 @@ typedef struct Menu_ShootingPracticeSetup
 } Menu_ShootingPracticeSetup;
 #pragma pack(pop)
 
-/* OpenSWOS addition — PENALTY SHOOTOUT's SHOOTING ORDER screen, shown by
- * ShowPlayMatchMenu in place of the PLAY MATCH screen while the mode is on
- * (bin/data_json/menus/shootoutOrderMenu.json, src/penalty_shootout.c): the
- * ten outfield players as the shooting queue (the first five are the
- * best-of-five takers), reordered by clicking two players to trade places.
- * The ViewSquad shape, cut down: a row template whose afterDraw renders
- * through the same 12-entry BuildTransferPlayerMenuEntry bank. */
+/* OpenSWOS addition — PENALTY SHOOTOUT's start screen, SWOS 2020's layout,
+ * shown by ShowFriendlyMenu in place of the friendly's own while the mode is
+ * on (bin/data_json/menus/shootoutStartMenu.json,
+ * src/penalty_shootout_menu.c): CHOOSE TEAMS, ALL RANDOM and nine group
+ * buttons, GOALKEEPER CONTROL with its PLAYER/COMPUTER string-table button,
+ * EXIT. The three captions are entries without nav or handler. */
 #pragma pack(push, 1)
-typedef struct Menu_ShootoutOrder
+typedef struct Menu_ShootoutStart
 {
   MenuHeader hdr;
   MenuMark markByteCoords;
-  MenuEntry_Byte_Colors_TextPtr entry0;                  /* PENALTY SHOOTOUT header */
-  MenuEntry_Byte_Colors_TextPtr entry1;                  /* team name (bound at init) */
-  MenuEntry_Byte_Nav_Colors_TextPtr_OnSelect entry2;     /* START SHOOTOUT */
-  MenuEntry_Byte_Nav_Colors_TextPtr_OnSelect entry3;     /* EXIT */
-  MenuMark_StartMenu menu1Start;
-  MenuMark template1_markStart;
-  MenuCoords8 template1_rc;
-  MenuCmd_Colors template1_colors;
-  MenuCmd_BeforeDraw template1_afterDraw;
-  MenuCmd_OnSelect template1_onSelect;
-  MenuCommand template1_end;
-  MenuMark markWideCoords;
-  MenuEntry_Wide_NavOnly entries4_13[10];                /* the queue, 5 + 5 */
-  MenuMark markInitEntry;
-  MenuMark_StartMenu menu2Start;
-  MenuMark markWideCoords2;
-  MenuCoords16 entry14_rc;                               /* the bank: ViewSquad's 12 */
-  MenuCmd_Colors entry14_colors;
-  MenuCommand entry14_end;
-  MenuMark markByteCoords2;
-  MenuEntry_Byte_NumberOnly entry15;
-  MenuEntry_Byte_SpriteFgOnly entry16;
-  MenuEntry_Byte_TextPtrOnly entry17;
-  MenuEntry_Byte_TextNoPtrOnly entry18;
-  MenuEntry_Byte_TextPtrOnly entry19;
-  MenuEntry_Byte_TextNoPtrOnly entry20;
-  MenuEntry_Byte_SpriteFgOnly entries21_23[3];
-  MenuEntry_Byte_TextNoPtrOnly entry24;
-  MenuMark markWideCoords3;
-  MenuCoords16 entry25_rc;
-  MenuCmd_TextPtr entry25_text;
-  MenuCommand entry25_end;
+  MenuEntry_Byte_Colors_TextPtr entry0;                     /* PENALTY SHOOTOUT header */
+  MenuEntry_Byte_Colors_TextPtr entry1;                     /* FREE SELECTION */
+  MenuEntry_Byte_Nav_Colors_TextPtr_OnSelect entry2;        /* CHOOSE TEAMS */
+  MenuEntry_Byte_Colors_TextPtr entry3;                     /* RANDOM SELECTION */
+  MenuEntry_Byte_Nav_Colors_TextPtr_OnSelect entries4_13[10]; /* ALL RANDOM + 9 groups */
+  MenuEntry_Byte_Colors_TextPtr entry14;                    /* GOALKEEPER CONTROL */
+  MenuEntry_Byte_Nav_Colors_StringTable_OnSelect entry15;   /* PLAYER / COMPUTER */
+  MenuEntry_Byte_Nav_Colors_TextPtr_OnSelect entry16;       /* EXIT */
   MenuMark markEndMenu;
-} Menu_ShootoutOrder;
+} Menu_ShootoutStart;
 #pragma pack(pop)
 
 /* 206 - Menu 21: chooseTeamsMenu (0xBE = 190 bytes) */
@@ -3645,7 +3620,7 @@ extern Menu_SWOSMainMenu _swosMainMenu;
 extern Menu_EditMenu _editMenu;
 extern Menu_PracticeMenu _practiceMenu;
 extern Menu_ShootingPracticeSetup _shootingPracticeSetupMenu;
-extern Menu_ShootoutOrder _shootoutOrderMenu;
+extern Menu_ShootoutStart _shootoutStartMenu;
 extern Menu_Offers _offersMenu;
 extern Menu_PlayerTransfer _playerTransferMenu;
 extern Menu_ThirdPartyOffer _thirdPartyOfferMenu;

@@ -846,12 +846,16 @@ GameFrameResult GameLoop_Frame(void)
     RASTER(RASTER_CROWD);
     DrawAnimatedPatterns();   /* also ticks _showFansCounter / goal-celebration state */
     RASTER(RASTER_SPRITES);
+    /* PENALTY SHOOTOUT: the match's own HUD stands down for the drill's. */
+    { extern void PenaltyShootout_HideMatchHud(void); PenaltyShootout_HideMatchHud(); }
     DrawSprites();
 #ifdef SWOS_SDL_BUILD
     { extern void ReplayRec_CaptureSprites(void); ReplayRec_CaptureSprites(); }
 #endif
     /* PENALTY SHOOTOUT: the human keeper's held place, on the goal. */
     { extern void PenaltyShootout_DrawKeeperArrow(void); PenaltyShootout_DrawKeeperArrow(); }
+    /* ... and its screen while the kicks are taken (penalty_shootout_hud.c). */
+    { extern void PenaltyShootout_DrawHud(void); PenaltyShootout_DrawHud(); }
     RASTER(RASTER_HUD);
     DrawBenchAndSubsMenu();
     BenchCheckControls();

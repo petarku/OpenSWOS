@@ -544,7 +544,7 @@ extern uint8_t _optionsMenu[];               extern uint8_t _playMatchMenu[];   
 extern uint8_t _playerTransferMenu[];        extern uint8_t _practiceMenu[];              extern uint8_t _selectFilesMenu[];
 extern uint8_t _selectNationalTeamMenu[];
 extern uint8_t _selectTeamsForTacticsMenu[]; extern uint8_t _selectTeamsMenu[];           extern uint8_t _shootingPracticeSetupMenu[];
-extern uint8_t _shootoutOrderMenu[];         extern uint8_t _showPlayerMarketMenu[];
+extern uint8_t _shootoutStartMenu[];         extern uint8_t _showPlayerMarketMenu[];
 extern uint8_t _squadMenu[];                 extern uint8_t _stadiumMenu[];               extern uint8_t _swosMainMenu[];
 extern uint8_t _thirdPartyOfferMenu[];       extern uint8_t _topGoalScorersMenu[];        extern uint8_t _transferMarketMenu[];
 extern uint8_t _viewCompetitionsMenu[];      extern uint8_t _viewSquadMenu[];
@@ -599,7 +599,7 @@ static const struct { const char *name; uint8_t *menu; } s_staticMenus[] = {
     { "selectTeamsForTacticsMenu", _selectTeamsForTacticsMenu },
     { "selectTeamsMenu", _selectTeamsMenu },
     { "shootingPracticeSetupMenu", _shootingPracticeSetupMenu },   /* OpenSWOS: SHOOTING PRACTICE's setup screen */
-    { "shootoutOrderMenu", _shootoutOrderMenu },   /* OpenSWOS: PENALTY SHOOTOUT's shooting-order screen */
+    { "shootoutStartMenu", _shootoutStartMenu },   /* OpenSWOS: PENALTY SHOOTOUT's start screen */
     { "showPlayerMarketMenu", _showPlayerMarketMenu },
     { "squadMenu", _squadMenu },
     { "stadiumMenu", _stadiumMenu },

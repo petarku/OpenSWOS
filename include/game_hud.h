@@ -11,5 +11,8 @@
 void UpdateControlledPlayerNumbers(void);
 void MarkPlayer(void);
 void SetCurrentPlayerName(void);
+/* Its placement of player's name sprite in the configured corner, on its own
+ * (PENALTY SHOOTOUT names its taker there on the Amiga). */
+void PlaceCurrentPlayerName(Sprite *spr, Sprite *player, TeamGeneralInfo *team);
 
 #endif

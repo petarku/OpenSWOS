@@ -903,6 +903,17 @@ struct __attribute__((packed)) {
     { (void *)_aPracticeAttackUp, (void *)_aPracticeAttackDown }
 };
 
+/* PENALTY SHOOTOUT start screen's GOALKEEPER CONTROL button: PLAYER / COMPUTER,
+ * indexed by g_shootoutKeeperComputer (penalty_shootout_menu.c). */
+extern char _aShootoutPlayer[], _aComputer[];
+extern uint16_t g_shootoutKeeperComputer;
+struct __attribute__((packed)) {
+    void *indexPtr; uint16_t base; void *entries[2];
+} _shootoutKeeperStrTable = {
+    (&g_shootoutKeeperComputer), 0,
+    { (void *)_aShootoutPlayer, (void *)_aComputer }
+};
+
 /* OPTIONS -> GAMEPLAY: AMIGA / DOS / XBOX, indexed by _gameplayStyleOption
  * (dos_gameplay.c, GAMEPLAY_*; the Amiga build never reaches XBOX). Same shape as
  * the ON/OFF tables above; spelled out because the entries are not _aOff/_aOn. */
