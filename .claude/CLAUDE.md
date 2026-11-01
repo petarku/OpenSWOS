@@ -180,10 +180,16 @@ made a standalone mode impossible to build on top of it.
 **PENALTY SHOOTOUT** (`src/penalty_shootout.c`) is the same shape -- a friendly with
 `g_penaltyShootoutMode` set, latched at kick-off, any selection a friendly allows -- whose match is
 the engine's own cup shootout from its FIRST frame: a shared game-loop tick calls `StartPenalties`
-at minute 0, no walk-on, no kickoff. The defending side's keeper is its player's: held direction =
-dive that way (+DOWN = low), nothing = stand, asked at the goalie update's `shot_at_goal` gate
-BEFORE any AI dice (`ManualKeeper_DiveInput`; CPU sides and the shooting side's own keeper
-stay AI). Since 2026-10-26 that manual keeper is NOT the mode's alone: it holds at EVERY penalty a
+at minute 0, no walk-on, no kickoff. In the drill a kick is a pure GUESS (2026-11-01): every shot
+on target to one of FIVE places (high left, left, middle, right, high right), aimed by a human
+taker's stick or picked at random by the computer, flown on a script, and saved only if the
+keeper's stick (or the computer's random pick) names the same place -- physics plays no part, and
+a human keeper facing the computer sees an arrow on the goal for his held place until the strike
+(`PenaltyShootout_ShotStruck/_ScriptBall/_Keeper/_DrawKeeperArrow`; docs/PENALTY_SHOOTOUT.md).
+Outside the drill the defending side's keeper is its player's: held direction = dive that way
+(+DOWN = low), asked at the goalie update's `shot_at_goal` gate BEFORE any AI dice
+(`ManualKeeper_DiveInput`, timed by `ManualKeeperDiveDue`; CPU sides and the shooting side's own
+keeper stay AI). Since 2026-10-26 that manual keeper is NOT the mode's alone: it holds at EVERY penalty a
 human defends — in-match kicks (`_penalty`) and cup shootouts (`_playingPenalties`), the engine's
 own penalty-save window — in any match, offline or online (held direction is ordinary synced
 input). Outside the drill a NEUTRAL stick falls back to the AI keeper (nothing = stand is the

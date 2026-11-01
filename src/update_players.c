@@ -426,6 +426,11 @@ not_in_penalty:
 
         UpdatePlayerShotChanceTable(player, team);
 
+        /* The drill's kick in flight: the keeper commits to a place and the
+         * guess decides it (penalty_shootout.h, EIGHT PLACES). */
+        if (PenaltyShootout_Keeper(player, ball, team))
+            goto clamp_keeper_y_min;
+
         if (_goalkeeperSkipFlag)
             goto return_last_player_block;
 
@@ -714,6 +719,10 @@ not_in_penalty:
          * checks below still apply, so he holds what comes straight at him. */
         {
             int16_t manual = ManualKeeper_DiveInput(team);
+            /* A held guess waits, standing, until the ball arrives
+             * (ManualKeeperDiveDue): thrown at the strike it landed early. */
+            if (manual > 0 && !ManualKeeperDiveDue(player, ball, team))
+                manual = 0;
             if (manual == 0) {
                 player->destX = player->x.s.i;
                 player->destY = player->y.s.i;
@@ -867,6 +876,8 @@ not_in_penalty:
         goto return_last_player_block;
 
     goalie_can_catch_checks:
+        if (PenaltyShootout_BallScripted())
+            goto clamp_keeper_y_min;        /* the drill's guess decides */
         if (team == _lastTeamPlayed) {
             if (!_playerHadBall)
                 goto cannot_catch_exit;
@@ -1007,6 +1018,8 @@ not_in_penalty:
         if (team->goalkeeperDivingLeft) /* offset 82 — SPRITE_FULLDIRECTION on team */
             goto finalize;
         /* goalie_deflect_chance_gate */
+        if (PenaltyShootout_BallScripted())
+            goto finalize;                  /* the drill's guess decides */
         if (!team->plVeryCloseToBall)
             goto finalize;
         {
@@ -1105,6 +1118,9 @@ not_in_penalty:
                 goto finalize;
             if (team->field_46)
                 goto finalize;
+
+            if (PenaltyShootout_BallScripted())
+                goto finalize;              /* the drill's guess decides */
 
             /* ball_vert_motion_gate */
             if (team == &_bottomTeamData) {
@@ -1565,6 +1581,8 @@ not_in_penalty:
             _playerHadBall = 0;
             ball->z.s.i = 0;
             DoPass(player, team);
+            if (_playingPenalties)          /* the drill's EIGHT PLACES */
+                PenaltyShootout_ShotStruck(player, team);
             team->lastHeadingTacklingPlayer = player;
 
             if (_gameStatePl != ST_GAME_IN_PROGRESS) {
@@ -1617,6 +1635,8 @@ not_in_penalty:
             _penalty = 0;
             _playerHadBall = 0;
             PlayerKickingBall(player, team);
+            if (_playingPenalties)          /* the drill's EIGHT PLACES */
+                PenaltyShootout_ShotStruck(player, team);
             team->lastHeadingTacklingPlayer = player;
 
             if (_gameStatePl != ST_GAME_IN_PROGRESS) {

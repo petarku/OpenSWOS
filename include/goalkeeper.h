@@ -18,5 +18,6 @@ void    __attribute__((used, externally_visible)) GoalkeeperJumping(int16_t dive
 /* PENALTY SHOOTOUT's manual keeper: re-pick the high/low dive pair from the
  * player's input after GoalkeeperJumping chose it from the ball's height. */
 void    GoalkeeperForceDiveAnim(Sprite *keeper, TeamGeneralInfo *team, int16_t low);
+int16_t ManualKeeperDiveDue(Sprite *keeper, Sprite *ball, TeamGeneralInfo *team);
 
 #endif

@@ -78,6 +78,33 @@ extern uint16_t g_keeperControl;
  * direction (2=E, 3=SE, 5=SW, 6=W). */
 int16_t ManualKeeper_DiveInput(TeamGeneralInfo *team);
 
+/* FIVE PLACES — how a kick is decided IN THE DRILL
+ * (penalty_shootout.c, docs/PENALTY_SHOOTOUT.md). Every kick goes, always on
+ * target, to one of five places: high left, left, the middle, right, high
+ * right. A computer taker picks one; a human aims with the stick as he
+ * strikes (UP+LEFT, LEFT or DOWN+LEFT, nothing / UP / DOWN, RIGHT or
+ * DOWN+RIGHT, UP+RIGHT). The keeper commits to a place the same way when the
+ * ball reaches him; the same place is a save, any other a goal. Physics plays
+ * no part.
+ *
+ *   ShotStruck   — the kick sites (update_players.c), after the engine's own
+ *                  kick: picks the place and takes the ball over.
+ *   ScriptBall   — UpdateBall: flies the ball there; 1 = it moved the ball.
+ *   Keeper       — the goalie update: the defending keeper while it flies;
+ *                  1 = handled this frame.
+ *   BallScripted — non-zero while it flies: the keeper's own catch, claim
+ *                  and deflect checks stand aside (the guess decides). */
+void    PenaltyShootout_ShotStruck(Sprite *shooter, TeamGeneralInfo *team);
+int16_t PenaltyShootout_ScriptBall(Sprite *ball);
+int16_t PenaltyShootout_Keeper(Sprite *keeper, Sprite *ball, TeamGeneralInfo *team);
+int16_t PenaltyShootout_BallScripted(void);
+void    PenaltyShootout_ShotReset(void);   /* BeginMatch / MatchRestarted */
+
+/* The arrow on the goal showing a human keeper's held place while he waits
+ * for a computer taker (gone once the ball is struck). Called after
+ * DrawSprites each frame (game_loop.c); a no-op outside the drill. */
+void    PenaltyShootout_DrawKeeperArrow(void);
+
 /* THE SHOOTING ORDER. In this mode the PLAY MATCH screen is replaced by the
  * SHOOTING ORDER screen (_shootoutOrderMenu; ShowPlayMatchMenu makes the
  * swap): tactics, squad swaps and substitutes mean nothing to a match that is
