@@ -7,6 +7,7 @@
 #include "ball_physics.h"
 #include "dos_sound.h"
 #include "math68k.h"       /* CalculateDeltaXAndY: uint16_t, 0xFFFF = no movement */
+#include "penalty_shootout.h"  /* the drill's scripted kick (EIGHT PLACES) */
 
 /* Sprite image constants */
 #define SPR_BALL_SHADOW             1069
@@ -591,6 +592,12 @@ has_picture:
     int32_t savedY = ball->y.raw;
     int32_t savedZ = ball->z.raw;
 
+    /* PENALTY SHOOTOUT's kick in flight: the drill places the ball itself
+     * (penalty_shootout.h, EIGHT PLACES) — no friction, gravity or spin. The
+     * goal mouth, post and goal-line checks below still run on it. */
+    if (PenaltyShootout_ScriptBall(ball))
+        goto scripted_ball_moved;
+
     /* ---- Calculate movement direction ---- */
     {
         int16_t destX = ball->destX;
@@ -722,6 +729,7 @@ has_picture:
     after_z:
         ball->deltaZ.raw = (int32_t)dz;
     }
+scripted_ball_moved:
 
     /* ---- Out-of-play boundary checks when game not in progress ---- */
     if (_gameStatePl != ST_GAME_IN_PROGRESS) {

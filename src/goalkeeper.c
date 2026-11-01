@@ -643,6 +643,32 @@ GoalkeeperJumping(int16_t diveDir, int16_t speedVariant, int16_t destDir,
  * this re-picks the state + animation pair from the player's choice —
  * the same selection, keyed on the input instead of _ballNotHighZ.
  * ================================================================== */
+/* ==================================================================
+ * ManualKeeperDiveDue — OpenSWOS, WHEN the manual keeper's guess goes
+ *
+ * The goalie update reaches its save gate on every frame of a shot's
+ * flight, the first one included, so a dive thrown the moment a held
+ * direction was seen went off AT THE STRIKE: the keeper was down and
+ * sliding before the ball had travelled, and a player who waited to react
+ * had only the few frames of a penalty's flight (Amiga test, 2026-11-01:
+ * "you guess the side but always go late or early"). The guess is now
+ * held until the ball is as close as the AI keeper's own penalty dive
+ * lets it come: ShouldGoalkeeperDive's penalty branch, at its FAR
+ * distance (the AI rolls far or near; no Rand here, so the manual path
+ * draws nothing from the generator), and the same "just in front"
+ * allowance. So the stick can be held from the run-up and the dive still
+ * lands on the ball's arrival.
+ * ================================================================== */
+int16_t ManualKeeperDiveDue(Sprite *keeper, Sprite *ball, TeamGeneralInfo *team)
+{
+    int16_t dy = ball->y.s.i - keeper->y.s.i;
+    if (team != &_topTeamData)
+        dy = -dy;
+    if (dy < -10)
+        return 0;
+    return (int16_t)(dy <= _kKeeperPenaltySaveDistanceFar);
+}
+
 void GoalkeeperForceDiveAnim(Sprite *keeper, TeamGeneralInfo *team, int16_t low)
 {
     if (low) {

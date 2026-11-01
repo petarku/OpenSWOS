@@ -850,6 +850,8 @@ GameFrameResult GameLoop_Frame(void)
 #ifdef SWOS_SDL_BUILD
     { extern void ReplayRec_CaptureSprites(void); ReplayRec_CaptureSprites(); }
 #endif
+    /* PENALTY SHOOTOUT: the human keeper's held place, on the goal. */
+    { extern void PenaltyShootout_DrawKeeperArrow(void); PenaltyShootout_DrawKeeperArrow(); }
     RASTER(RASTER_HUD);
     DrawBenchAndSubsMenu();
     BenchCheckControls();
