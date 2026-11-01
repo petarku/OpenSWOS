@@ -13,9 +13,9 @@
  *
  * It is the PRACTICE submenu's PENALTY SHOOTOUT button (the main menu's
  * PRACTICE row, beside SHOOTING PRACTICE) and nothing else: press it and you
- * are in the friendly's own flow -- its settings screen, its team selection,
- * then the SHOOTING ORDER screen in place of the PLAY MATCH screen (below) --
- * with the match itself being the shootout.
+ * are in the friendly's own flow -- its own start screen (below), team
+ * selection, the PLAY MATCH screen with the shooting order on it -- with the
+ * match itself being the shootout.
  * Any selection a friendly can start, a shootout can: both sides shoot, so
  * human v human and human v computer both make sense and nothing extra is
  * gated (contrast SHOOTING PRACTICE, which needs exactly one computer side).
@@ -100,30 +100,37 @@ int16_t PenaltyShootout_Keeper(Sprite *keeper, Sprite *ball, TeamGeneralInfo *te
 int16_t PenaltyShootout_BallScripted(void);
 void    PenaltyShootout_ShotReset(void);   /* BeginMatch / MatchRestarted */
 
+/* THE START SCREEN (_shootoutStartMenu, src/penalty_shootout_menu.c), shown
+ * by ShowFriendlyMenu in place of the friendly's own while the mode is on:
+ * CHOOSE TEAMS, or a RANDOM SELECTION of two teams of a group (the player's
+ * side first, the computer's second), and GOALKEEPER CONTROL. That last is
+ * g_shootoutKeeperComputer: 0 = PLAYER (a human side's keeper guesses with the
+ * stick), 1 = COMPUTER (the computer guesses for him; no arrow). Latched at
+ * kick-off by PenaltyShootout_BeginMatch; the index of
+ * _shootoutKeeperStrTable (swos_amiga_ptr_imports.c). */
+extern uint16_t g_shootoutKeeperComputer;
+struct MenuEntry;
+void ShootoutStartMenuInit(void);
+void ShootoutRandomTeams(struct MenuEntry *entry);
+void ShootoutKeeperControl(struct MenuEntry *entry);
+
 /* The arrow on the goal showing a human keeper's held place while he waits
  * for a computer taker (gone once the ball is struck). Called after
  * DrawSprites each frame (game_loop.c); a no-op outside the drill. */
 void    PenaltyShootout_DrawKeeperArrow(void);
 
-/* THE SHOOTING ORDER. In this mode the PLAY MATCH screen is replaced by the
- * SHOOTING ORDER screen (_shootoutOrderMenu; ShowPlayMatchMenu makes the
- * swap): tactics, squad swaps and substitutes mean nothing to a match that is
- * only penalties, so the one choice the screen offers is who shoots when —
- * the ten outfield players as a queue, the first five being the best-of-five
- * takers, reordered by clicking one player and then another to trade their
- * places. The keeper never shoots: the engine's own shooter pick walks
- * spritesTable[10..1] and index 0 is the goalkeeper (NextPenalty).
- *
- * g_shootoutOrder[side] is that queue at menu time: lineup slots 1..10 in
- * shooting order, side 0 = the first selected team (in-game teamNumber 1).
- * Reset to the engine's own order (slot 10 first, 1 last) each time the mode
- * is entered, latched per match by PenaltyShootout_BeginMatch like the mode
- * flag itself. */
-extern uint8_t g_shootoutOrder[2][10];
+/* THE SHOOTOUT SCREEN (src/penalty_shootout_hud.c), SWOS 2020's: the shooting
+ * side's ten takers on the left (current one highlighted), the kick-by-kick
+ * board along the bottom (the last five kicks; a tick scored, a cross
+ * missed, * to come, - not yet), and who controls each side. Drawn after the
+ * sprites each frame (game_loop.c) on darkened grid tiles, whose own undraw
+ * clears it on the Amiga; a no-op outside the drill.
+ * TakeKickSaved: 1 once after the drill's keeper saved (shotSaved). */
+void    PenaltyShootout_DrawHud(void);
+int16_t PenaltyShootout_TakeKickSaved(void);
+int16_t PenaltyShootout_HudActive(void);
 
-/* The latched queue, asked by NextPenalty (goalkeeper.c) in place of its
- * decrement-and-wrap pick: the spritesTable slot (1..10) of the side's
- * shooter for its (attempts+1)th kick, cycling back to the queue's head past
- * ten. -1 when this match is not the drill — the caller then picks the stock
- * way, so cup shootouts and netplay see nothing new. */
-int16_t PenaltyShootout_NextShooterSlot(int16_t teamNumber, int16_t attempts);
+/* THE SHOOTING ORDER is the engine's own: NextPenalty walks spritesTable
+ * 10..1, so the eleven's last row shoots first and the keeper (index 0) never
+ * does. The PLAY MATCH screen numbers the rows that way in this mode
+ * (play_match_menu.c DrawPlayerEntries); swapping players changes it. */

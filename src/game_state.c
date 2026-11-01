@@ -5,6 +5,7 @@
  */
 #include "game_state.h"
 #include "shooting_practice.h"
+#include "penalty_shootout.h"   /* PenaltyShootout_HudActive: the drill hides the clock */
 #include "game_types.h"
 #include "endian_helpers.h"
 #include "display.h"    /* _screen_width, WIDE_MARGIN — center the in-match HUD in widescreen */
@@ -404,6 +405,13 @@ void ShowResult(void)
     if (_resultTimer == 0)
         return;
 
+    /* PENALTY SHOOTOUT shows its own board instead (penalty_shootout_hud.c):
+     * every request for this one goes straight to the hide step below. Once
+     * the shootout is over its screen is off, so the result after the game
+     * shows as ever. */
+    if (PenaltyShootout_HudActive() && _resultTimer > 0)
+        _resultTimer = -1;
+
     /* resultTimer < 0 -> jump to hide phase */
     if (_resultTimer < 0)
         goto hide_result;
@@ -801,8 +809,15 @@ void UpdateTime(void)
     /* timeVar is always 31000 here -> convert to 150 */
     _timeVar = 150;
 
-    /* Make time sprite visible if not already */
-    if (_currentTimeSprite.visible == 0)
+    /* Make time sprite visible if not already -- except under PENALTY
+     * SHOOTOUT's own screen (penalty_shootout_hud.c), which shows instead. The
+     * clock runs on as ever; only its sprite leaves the display list. */
+    if (PenaltyShootout_HudActive()) {
+        if (_currentTimeSprite.visible) {
+            _currentTimeSprite.visible = 0;
+            InitDisplaySprites();
+        }
+    } else if (_currentTimeSprite.visible == 0)
     {
         _currentTimeSprite.visible = 1;
         InitDisplaySprites();

@@ -2664,6 +2664,7 @@ extern uint16_t _diySelected;
 extern uint8_t _diyCompetitionMenu[];
 extern uint8_t _editMenu[];        /* OpenSWOS: the EDIT submenu (menu_data.c) */
 extern uint8_t _practiceMenu[];    /* OpenSWOS: the PRACTICE submenu (menu_data.c) */
+extern uint8_t _shootoutStartMenu[]; /* OpenSWOS: PENALTY SHOOTOUT's start screen */
 extern uint8_t _highlightsMenu[];
 extern uint8_t _optionsMenu[];
 extern uint8_t _diskMenu[];
@@ -2817,7 +2818,10 @@ void ShowFriendlyMenu(void)
     _minSubstitutes = 2;
     _maxSubstitutes = 5;
     _friendlyOk = 0;
-    ShowMenu(_friendlyGameMenu);
+    /* PENALTY SHOOTOUT has a start screen of its own, SWOS 2020's: CHOOSE TEAMS,
+     * RANDOM SELECTION by group, GOALKEEPER CONTROL (penalty_shootout_menu.c).
+     * Everything around it here is the friendly's, unchanged. */
+    ShowMenu(g_penaltyShootoutMode ? _shootoutStartMenu : _friendlyGameMenu);
     _inFriendlyMenu = 0;
 }
 

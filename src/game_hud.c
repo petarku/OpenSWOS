@@ -159,6 +159,77 @@ void MarkPlayer(void)
     }
 }
 
+/* The name sprite of player a2 (team a1) placed in the configured corner --
+ * SetCurrentPlayerName's own placement, a function since 2026-11-01 so that
+ * PENALTY SHOOTOUT can name its taker there on the Amiga
+ * (penalty_shootout_hud.c), where the takers list is too dear to draw. */
+void PlaceCurrentPlayerName(Sprite *spr, Sprite *a2, TeamGeneralInfo *a1)
+{
+    int16_t d0, d1, d2;
+
+    /* Look up player name sprite index and width */
+    d0 = a2->playerOrdinal - 1;
+
+    d2 = (int16_t)(int8_t)_plNamesLengthTableCopy[d0];
+    d1 = (int16_t)(int8_t)_plOrdinalsTable[d0];
+    d1 += SPR_TEAM1_PLAYER_NAMES_START;
+
+    /* Check if this is the bottom team */
+    if (a1->inGameTeamPtr != &_topTeamInGame) {
+        d2 = (int16_t)(int8_t)_plNamesLengthTableCopy[d0 + 16];
+        d1 = (int16_t)(int8_t)_plOrdinalsTable[d0 + 16];
+        d1 += SPR_TEAM2_PLAYER_NAMES_START;
+    }
+
+    d2 = (int16_t)(int8_t)(uint8_t)d2;     /* sign-extend from byte */
+    spr->imageIndex = d1;
+    /* Widescreen: anchor the controlled-player name to the HUD box — the display
+     * width, capped at 16:9 (see HUD_WIDTH in display.h). The per-corner offsets
+     * below are insets from that box's edges: +10/+20 from the left,
+     * HUD_WIDTH-10 from the right. HUD_MARGIN folds to 0 on Amiga. */
+    spr->x.s.i      = Render_CameraX() + HUD_MARGIN;
+    spr->y.s.i      = Render_CameraY() + 8000;
+    spr->z.s.i      = 8000;
+
+    /* The two releases put this indicator in measurably different places, and
+     * the reason is the screen: the Amiga's is 336x272, the DOS one's 320x200.
+     * Both bottom corners sit 21 rows off the bottom edge (272-21 = 251,
+     * 200-21 = 179) and both right corners 10 columns off the right edge
+     * (336-10 = 326, 320-10 = 310, which HUD_WIDTH-10 already gives). The TOP
+     * offsets are not a screen-size difference at all -- the DOS name is flush
+     * with the top where the Amiga's is 14 rows down, and 12 columns in rather
+     * than 20 -- so they are listed out rather than derived.
+     *
+     * SWOS2.s loc_10B2B6 against swos.asm SetCurrentPlayerName
+     * @@set_picture_index. Kept as literals per mode. The DOS view simulates 320x200;
+     * with widescreen on its picture is 272 lines, and the bottom corners follow the
+     * bottom edge down by RENDER_EXTRA_Y (display.h) -- 0 in every other view. */
+    switch (_currentPlayerIndicatorPosition) {
+    case 1:
+        /* Bottom-left */
+        spr->x.s.i += 10;
+        spr->y.s.i += (_gDosView ? 179 : 251) + RENDER_EXTRA_Y;   /* bottom-anchored */
+        return;
+    case 2:
+        /* Bottom-right */
+        spr->x.s.i += HUD_WIDTH - 10;
+        spr->x.s.i -= d2;
+        spr->y.s.i += (_gDosView ? 179 : 251) + RENDER_EXTRA_Y;   /* bottom-anchored */
+        return;
+    case 3:
+        /* Top-right */
+        spr->x.s.i += HUD_WIDTH - 10;
+        spr->x.s.i -= d2;
+        spr->y.s.i += _gDosView ? 8 : 14;
+        return;
+    default:
+        /* Top-left (position == 4 or any other) */
+        spr->x.s.i += _gDosView ? 12 : 20;
+        spr->y.s.i += _gDosView ? 0 : 14;
+        return;
+    }
+}
+
 /* ================================================================
  * SetCurrentPlayerName  (SWOS2.s line 12727)
  *
@@ -254,67 +325,8 @@ check_timer:
     _nobodysBallTimer--;
 
 position_name:
-    /* Look up player name sprite index and width */
-    d0 = a2->playerOrdinal - 1;
-
-    d2 = (int16_t)(int8_t)_plNamesLengthTableCopy[d0];
-    d1 = (int16_t)(int8_t)_plOrdinalsTable[d0];
-    d1 += SPR_TEAM1_PLAYER_NAMES_START;
-
-    /* Check if this is the bottom team */
-    if (a1->inGameTeamPtr != &_topTeamInGame) {
-        d2 = (int16_t)(int8_t)_plNamesLengthTableCopy[d0 + 16];
-        d1 = (int16_t)(int8_t)_plOrdinalsTable[d0 + 16];
-        d1 += SPR_TEAM2_PLAYER_NAMES_START;
-    }
-
-    d2 = (int16_t)(int8_t)(uint8_t)d2;     /* sign-extend from byte */
-    spr->imageIndex = d1;
-    /* Widescreen: anchor the controlled-player name to the HUD box — the display
-     * width, capped at 16:9 (see HUD_WIDTH in display.h). The per-corner offsets
-     * below are insets from that box's edges: +10/+20 from the left,
-     * HUD_WIDTH-10 from the right. HUD_MARGIN folds to 0 on Amiga. */
-    spr->x.s.i      = Render_CameraX() + HUD_MARGIN;
-    spr->y.s.i      = Render_CameraY() + 8000;
-    spr->z.s.i      = 8000;
-
-    /* The two releases put this indicator in measurably different places, and
-     * the reason is the screen: the Amiga's is 336x272, the DOS one's 320x200.
-     * Both bottom corners sit 21 rows off the bottom edge (272-21 = 251,
-     * 200-21 = 179) and both right corners 10 columns off the right edge
-     * (336-10 = 326, 320-10 = 310, which HUD_WIDTH-10 already gives). The TOP
-     * offsets are not a screen-size difference at all -- the DOS name is flush
-     * with the top where the Amiga's is 14 rows down, and 12 columns in rather
-     * than 20 -- so they are listed out rather than derived.
-     *
-     * SWOS2.s loc_10B2B6 against swos.asm SetCurrentPlayerName
-     * @@set_picture_index. Kept as literals per mode. The DOS view simulates 320x200;
-     * with widescreen on its picture is 272 lines, and the bottom corners follow the
-     * bottom edge down by RENDER_EXTRA_Y (display.h) -- 0 in every other view. */
-    switch (_currentPlayerIndicatorPosition) {
-    case 1:
-        /* Bottom-left */
-        spr->x.s.i += 10;
-        spr->y.s.i += (_gDosView ? 179 : 251) + RENDER_EXTRA_Y;   /* bottom-anchored */
-        return;
-    case 2:
-        /* Bottom-right */
-        spr->x.s.i += HUD_WIDTH - 10;
-        spr->x.s.i -= d2;
-        spr->y.s.i += (_gDosView ? 179 : 251) + RENDER_EXTRA_Y;   /* bottom-anchored */
-        return;
-    case 3:
-        /* Top-right */
-        spr->x.s.i += HUD_WIDTH - 10;
-        spr->x.s.i -= d2;
-        spr->y.s.i += _gDosView ? 8 : 14;
-        return;
-    default:
-        /* Top-left (position == 4 or any other) */
-        spr->x.s.i += _gDosView ? 12 : 20;
-        spr->y.s.i += _gDosView ? 0 : 14;
-        return;
-    }
+    PlaceCurrentPlayerName(spr, a2, a1);
+    return;
 
 set_delay_and_hide:
     _nobodysBallLastFrame = 1;

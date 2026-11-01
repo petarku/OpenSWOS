@@ -8,21 +8,9 @@
 uint16_t _playingPenalties, _penalty;
 Sprite *_penaltyShooterSprite;
 TeamGeneralInfo *_lastTeamPlayed;
-MenuEntry _menuEntries[32];
-uint16_t _player1ClearFlag, _player2ClearFlag, _playMatchControlFlags;
-uint16_t _isFirstPlayerChoosingTeam, _playerNumThatStarted, _exitGameFlag;
-uint8_t _pl1Fire, _pl2Fire;
-TeamFileEx *_playMatchTeam1Ptr;
 void FriendlyFlow(void) { assert(0); }
 void StartPenalties(void) { assert(0); }
-void DrawMenu(void) { assert(0); }
-void SetExitMenuFlag(void) { assert(0); }
-void DrawMultipleItems(uint16_t count, MenuEntry *entry) { assert(0); }
-uint8_t *GetPlayerAtIndex(uint16_t team, uint16_t ordinal)
-{ assert(0); return 0; }
-void BuildTransferPlayerMenuEntry(void *item, uint8_t *player, uint16_t y,
-                                 int16_t idx, uint16_t style, uint8_t *extra)
-{ assert(0); }
+void MoveCamera(void) { assert(0); }
 
 /* ---- the drill's FIVE PLACES: engine services, recorded not run ---- */
 TeamGeneralInfo _topTeamData, _bottomTeamData;
@@ -43,6 +31,7 @@ void GoalkeeperCaughtTheBall(Sprite *k, TeamGeneralInfo *t)
 { k->playerState = PL_GOALIE_CATCHING_BALL; s_catches++; }
 void GoalkeeperClaimedTheBall(Sprite *k, Sprite *b, TeamGeneralInfo *t)
 { s_claims++; }
+uint16_t g_shootoutKeeperComputer;   /* the start screen's GOALKEEPER CONTROL */
 /* the keeper's arrow (drawing only; not exercised here) */
 uint8_t *_spriteGraphicsPtr;
 int16_t _foulYCoordinate;
@@ -134,6 +123,19 @@ static void testFivePlaces(void)
         for (n = 0; n < 64; n++)
             saves += playKick(0, k, 0, 1);
     assert(saves > 9 * 64 / 10 && saves < 9 * 64 * 2 / 5);
+
+    /* GOALKEEPER CONTROL = COMPUTER: the human keeper's stick no longer
+     * decides. He holds the shot's own place every time, and still saves only
+     * about one in five (the computer guesses for him). Latched at kick-off. */
+    g_shootoutKeeperComputer = 1;
+    PenaltyShootout_BeginMatch();
+    saves = 0;
+    for (n = 0; n < 9 * 64; n++)
+        saves += playKick(7, 7, 1, 1);
+    assert(saves > 9 * 64 / 10 && saves < 9 * 64 * 2 / 5);
+    g_shootoutKeeperComputer = 0;
+    PenaltyShootout_BeginMatch();
+    assert(playKick(7, 7, 1, 1) == 1);
 
     /* Outside the drill nothing is scripted. */
     g_penaltyShootoutMode = 0;

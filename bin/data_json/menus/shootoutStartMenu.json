@@ -1,0 +1,514 @@
+{
+  "name": "_shootoutStartMenu",
+  "comment": "OpenSWOS's PENALTY SHOOTOUT start screen, SWOS 2020's layout (src/penalty_shootout_menu.c). Shown by ShowFriendlyMenu in place of the friendly's own screen while g_penaltyShootoutMode is on. CHOOSE TEAMS is the friendly's ChooseTeamsMenu; ALL RANDOM and the nine group buttons (ordinals 4..13, read by ShootoutRandomTeams) draw two teams of the group, the player's side first and the computer's second, then play them as CHOOSE TEAMS would (the PLAY MATCH screen comes next). GOALKEEPER CONTROL PLAYER/COMPUTER draws through _shootoutKeeperStrTable (g_shootoutKeeperComputer). No handler may call CommonMenuExit (docs/MENUS.md section 12). Both targets: a classic packed menu, so the m68k build gets it from the baked src/menu_data.c.",
+  "onInit": "ShootoutStartMenuInit",
+  "onReturn": "ShootoutStartMenuInit",
+  "onDraw": null,
+  "defaultEntry": 2,
+  "items": [
+    {
+      "kind": "coords_mode",
+      "wide": false
+    },
+    {
+      "kind": "entry",
+      "coords": {
+        "x": 57,
+        "y": 0,
+        "w": -66,
+        "h": 15
+      },
+      "commands": [
+        {
+          "op": "colors",
+          "frame_color": 1,
+          "background_color": 7
+        },
+        {
+          "op": "text",
+          "flags": "0x0",
+          "str": "_aPenaltyShootout"
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "coords": {
+        "x": 92,
+        "y": 24,
+        "w": 120,
+        "h": 9
+      },
+      "commands": [
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 0
+        },
+        {
+          "op": "text",
+          "flags": "0x0",
+          "str": "_aFreeSelection"
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "coords": {
+        "x": 92,
+        "y": 35,
+        "w": 120,
+        "h": 15
+      },
+      "commands": [
+        {
+          "op": "nav",
+          "left": -1,
+          "right": -1,
+          "up": -1,
+          "down": 4
+        },
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 14
+        },
+        {
+          "op": "text",
+          "flags": "0x0",
+          "str": "_aChooseTeams"
+        },
+        {
+          "op": "onselect_fire",
+          "func": "ChooseTeamsMenu"
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "coords": {
+        "x": 92,
+        "y": 58,
+        "w": 120,
+        "h": 9
+      },
+      "commands": [
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 0
+        },
+        {
+          "op": "text",
+          "flags": "0x0",
+          "str": "_aRandomSelection"
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "coords": {
+        "x": 107,
+        "y": 69,
+        "w": 90,
+        "h": 15
+      },
+      "commands": [
+        {
+          "op": "nav",
+          "left": -1,
+          "right": -1,
+          "up": 2,
+          "down": 6
+        },
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 14
+        },
+        {
+          "op": "text",
+          "flags": "0x0",
+          "str": "_aAllRandom"
+        },
+        {
+          "op": "onselect_fire",
+          "func": "ShootoutRandomTeams"
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "coords": {
+        "x": 14,
+        "y": 89,
+        "w": 90,
+        "h": 15
+      },
+      "commands": [
+        {
+          "op": "nav",
+          "left": -1,
+          "right": 6,
+          "up": 4,
+          "down": 8
+        },
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 14
+        },
+        {
+          "op": "text",
+          "flags": "0x0",
+          "str": "_aShootoutEurope"
+        },
+        {
+          "op": "onselect_fire",
+          "func": "ShootoutRandomTeams"
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "coords": {
+        "x": 107,
+        "y": 89,
+        "w": 90,
+        "h": 15
+      },
+      "commands": [
+        {
+          "op": "nav",
+          "left": 5,
+          "right": 7,
+          "up": 4,
+          "down": 9
+        },
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 14
+        },
+        {
+          "op": "text",
+          "flags": "0x0",
+          "str": "_aShootoutAfrica"
+        },
+        {
+          "op": "onselect_fire",
+          "func": "ShootoutRandomTeams"
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "coords": {
+        "x": -56,
+        "y": 89,
+        "w": 90,
+        "h": 15
+      },
+      "commands": [
+        {
+          "op": "nav",
+          "left": 6,
+          "right": -1,
+          "up": 4,
+          "down": 10
+        },
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 14
+        },
+        {
+          "op": "text",
+          "flags": "0x0",
+          "str": "_aNational"
+        },
+        {
+          "op": "onselect_fire",
+          "func": "ShootoutRandomTeams"
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "coords": {
+        "x": 14,
+        "y": 107,
+        "w": 90,
+        "h": 15
+      },
+      "commands": [
+        {
+          "op": "nav",
+          "left": -1,
+          "right": 9,
+          "up": 5,
+          "down": 11
+        },
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 14
+        },
+        {
+          "op": "text",
+          "flags": "0x0",
+          "str": "_aShootoutNAmerica"
+        },
+        {
+          "op": "onselect_fire",
+          "func": "ShootoutRandomTeams"
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "coords": {
+        "x": 107,
+        "y": 107,
+        "w": 90,
+        "h": 15
+      },
+      "commands": [
+        {
+          "op": "nav",
+          "left": 8,
+          "right": 10,
+          "up": 6,
+          "down": 12
+        },
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 14
+        },
+        {
+          "op": "text",
+          "flags": "0x0",
+          "str": "_aShootoutAsia"
+        },
+        {
+          "op": "onselect_fire",
+          "func": "ShootoutRandomTeams"
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "coords": {
+        "x": -56,
+        "y": 107,
+        "w": 90,
+        "h": 15
+      },
+      "commands": [
+        {
+          "op": "nav",
+          "left": 9,
+          "right": -1,
+          "up": 7,
+          "down": 13
+        },
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 14
+        },
+        {
+          "op": "text",
+          "flags": "0x0",
+          "str": "_aShootoutOriginal"
+        },
+        {
+          "op": "onselect_fire",
+          "func": "ShootoutRandomTeams"
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "coords": {
+        "x": 14,
+        "y": 125,
+        "w": 90,
+        "h": 15
+      },
+      "commands": [
+        {
+          "op": "nav",
+          "left": -1,
+          "right": 12,
+          "up": 8,
+          "down": 15
+        },
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 14
+        },
+        {
+          "op": "text",
+          "flags": "0x0",
+          "str": "_aShootoutSAmerica"
+        },
+        {
+          "op": "onselect_fire",
+          "func": "ShootoutRandomTeams"
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "coords": {
+        "x": 107,
+        "y": 125,
+        "w": 90,
+        "h": 15
+      },
+      "commands": [
+        {
+          "op": "nav",
+          "left": 11,
+          "right": 13,
+          "up": 9,
+          "down": 15
+        },
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 14
+        },
+        {
+          "op": "text",
+          "flags": "0x0",
+          "str": "_aShootoutOceania"
+        },
+        {
+          "op": "onselect_fire",
+          "func": "ShootoutRandomTeams"
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "coords": {
+        "x": -56,
+        "y": 125,
+        "w": 90,
+        "h": 15
+      },
+      "commands": [
+        {
+          "op": "nav",
+          "left": 12,
+          "right": -1,
+          "up": 10,
+          "down": 15
+        },
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 14
+        },
+        {
+          "op": "text",
+          "flags": "0x0",
+          "str": "_aShootoutCustom"
+        },
+        {
+          "op": "onselect_fire",
+          "func": "ShootoutRandomTeams"
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "coords": {
+        "x": 33,
+        "y": -106,
+        "w": -120,
+        "h": 15
+      },
+      "commands": [
+        {
+          "op": "colors",
+          "frame_color": 1,
+          "background_color": 7
+        },
+        {
+          "op": "text",
+          "flags": "0x0",
+          "str": "_aGoalkeeperControl"
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "coords": {
+        "x": -81,
+        "y": -106,
+        "w": 96,
+        "h": 15
+      },
+      "commands": [
+        {
+          "op": "nav",
+          "left": -1,
+          "right": -1,
+          "up": 12,
+          "down": 16
+        },
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 13
+        },
+        {
+          "op": "string_table",
+          "flags": "0x0",
+          "table": "_shootoutKeeperStrTable"
+        },
+        {
+          "op": "onselect_fire",
+          "func": "ShootoutKeeperControl"
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "coords": {
+        "x": 112,
+        "y": -81,
+        "w": 80,
+        "h": 15
+      },
+      "commands": [
+        {
+          "op": "nav",
+          "left": -1,
+          "right": -1,
+          "up": 15,
+          "down": -1
+        },
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 12
+        },
+        {
+          "op": "text",
+          "flags": "0x0",
+          "str": "_aExit"
+        },
+        {
+          "op": "onselect_fire",
+          "func": "SetExitMenuFlag"
+        }
+      ]
+    }
+  ]
+}
