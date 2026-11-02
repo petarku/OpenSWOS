@@ -242,5 +242,4 @@ Both reproduce on every run of `-Route challenge` (2026-10-23, build 3304748-dir
 ## Related
 
 - `scripts/run_amiga_fsuae.ps1` — plain "run it under FS-UAE", no driving.
-- `docs/LOCAL_WORKFLOW.md` — building both targets on this machine.
 - `docs/UI_DRIVER.md` — the SDL harness, which has a log to navigate by.

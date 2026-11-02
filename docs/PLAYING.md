@@ -20,7 +20,6 @@ The keys and gamepad buttons, and the arcade (coin-op) mode. New to OpenSWOS? St
 | Move         | Arrow keys         | D-pad / left stick   |
 | Kick / shoot / pass / tackle | Right Ctrl / Space / Left Ctrl / Enter | A or B |
 | Pause / unpause | `P`             | **+ / Start**        |
-| Save a challenge position | `C` (one human side vs computer) | — |
 | Statistics   | `S`                | **− / Back**         |
 | Instant replay | `R`              | **Y**                |
 | Replay after the match | `H`      | **X**                |
@@ -80,11 +79,10 @@ and drop it next to the binary — it'll be picked up at startup.
 `SWOS.log` lists every detected joystick and whether SDL has a mapping for
 it.
 
-## Saved challenges
+## Challenges
 
-Press **C** during a match against the computer to save the position. Choose
-**CHALLENGES** on the main menu to resume a save or try the bundled **SAMPLE**.
-See [CHALLENGE.md](CHALLENGE.md) for file locations, compatibility and limitations.
+Choose **CHALLENGES** on the main menu for the challenge collection: six matches
+to rescue, rated 1-5 stars. See [CHALLENGE_COLLECTION.md](CHALLENGE_COLLECTION.md).
 
 ## Arcade mode
 
