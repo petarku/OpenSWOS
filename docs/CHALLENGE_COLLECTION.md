@@ -41,10 +41,6 @@ counters. Completing the collection displays **ALL CHALLENGES COMPLETED**.
 | 4 | Against the Clock | Juventus | AC Milan | Trail 0-2 at 80; Juventus kickoff |
 | 5 | Derby Miracle | Partizan | Red Star | Trail 0-3 at 67; Partizan corner |
 
-**CHALLENGES > SAVED POSITIONS** retains the personal `.CHL` file picker and the
-bundled sample. Pressing **C** during an eligible match saves a position there.
-Personal saved positions do not award collection completion.
-
 ## Saving and restarting
 
 Successful completion saves automatically at the final whistle. Progress loads
@@ -70,7 +66,7 @@ Retry successfully before closing the game to retain that new completion.
 
 ## Assets and regeneration
 
-The starting positions are bundled separately from personal saves and progress:
+The starting positions are bundled separately from progress:
 
 - SDL: `bin/data/CCS01.DAT` through `CCS06.DAT`.
 - Amiga: `bin/data/CCA01.DAT` through `CCA06.DAT`.
@@ -81,20 +77,10 @@ captures because their simulation registry layouts differ. Target-specific
 packages include only their own collection. Collection attempts use standard
 Amiga gameplay/view and normal cards rules; SDL preferences are restored on exit.
 
-After building the target on this Windows machine:
+The positions were made by the challenge generator, which is not in this build
+(offline-modes); the specs above are kept so they can be remade where it is.
 
-```powershell
-scripts/challenge_collection_sdl.ps1
-scripts/challenge_collection_amiga.ps1
-```
-
-The wrappers use the existing generators in isolated sessions, leaving player
-games and saves untouched. The machine prepares and saves each position, then
-closes its generation session. Subsequently load the finished collection in the
-normal game to play directly at the requested minute.
-
-See [LOCAL_WORKFLOW.md](LOCAL_WORKFLOW.md) for build requirements and
-[CHALLENGE.md](CHALLENGE.md) for the underlying saved-position format.
+See [CHALLENGE.md](CHALLENGE.md) for the underlying position format.
 
 ## Implementation
 
