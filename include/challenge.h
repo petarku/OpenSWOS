@@ -2,14 +2,15 @@
  * challenge.h -- SAVE STATE: a match position written to a file, and played on from
  * there later. See docs/CHALLENGE_WIP.md and docs/AMIGA_DEBUGGING.md.
  *
- * Press the save key mid-match and the position -- the ball, every player, the clock,
- * the score, the scorers, the bookings, the substitutes left, the crowd -- goes to a
- * `.CHL` file in the save folder. Load it and the match carries on from exactly there,
- * with the same two teams and the same rules. A position handed to somebody else is a
- * CHALLENGE: 3-2 down with ten minutes left, see if you can rescue it.
+ * A `.CHL` position -- the ball, every player, the clock, the score, the scorers, the
+ * bookings, the substitutes left, the crowd -- and the match carries on from exactly
+ * there, with the same two teams and the same rules. A position handed to somebody else
+ * is a CHALLENGE: 3-2 down with ten minutes left, see if you can rescue it.
  *
- * Both targets, provided the registry layout and rules match. The bundled samples
- * are separate for Amiga and SDL; their current sprite identity lists differ.
+ * This build (offline-modes) only PLAYS positions: the six of the challenge collection,
+ * bundled in data/ (docs/CHALLENGE_COLLECTION.md). Saving one mid-match, the SAVED
+ * POSITIONS list and the generator that made the collection's files are not in it.
+ * Separate files for Amiga and SDL; their current sprite identity lists differ.
  *
  *   the STATE    SimState_SavePortable (src/sim_state.c), the SIM tier: everything the
  *                match reads, in the PORTABLE encoding -- typed fields big-endian, every
@@ -59,50 +60,13 @@ typedef struct {
     char     build[33];     /* the build stamp that wrote it */
 } ChallengeInfo;
 
-/* ---- saving ---- */
-
-/* Whether a position can be taken right now: a match under way, one human side against
- * the computer, and not in the middle of something that is not a position (the
- * substitutes menu, a replay, after the final whistle). */
-int32_t Challenge_CanSave(void);
-
-/* Write the position to the next free CHALnn.CHL in the save folder. 0 on success. Safe
- * to call unconditionally -- it asks Challenge_CanSave first. */
-int32_t Challenge_SaveNow(void);
-
-/* The same save under a caller-chosen name in the save folder (NULL or "" picks the
- * next free CHALnn.CHL), without the key path's hold-off and on-pitch notice. The
- * challenge generator's writer (src/challenge_gen.c). */
-int32_t Challenge_SaveAs(const uint8_t *name);
-
-/* Make the bundled target-specific sample available as SAMPLE.CHL in save/.
- * Existing saves are never overwritten. Called before opening CHALLENGES. */
-void Challenge_EnsureSample(void);
-
-/* Frames to keep showing "STATE SAVED" for; the match draws it while this is non-zero
- * and ticks it down itself. */
-#ifdef CHAL_AUTOPROBE
-/* TEMPORARY diagnostic (-DCHAL_AUTOPROBE): probe the state from inside any running match
- * and write the result to CHALDBG.BIN. See src/challenge.c. */
-void Challenge_AutoProbe(void);
-#endif
+/* ---- saving ----
+ * None in this build: it plays only the bundled challenge collection. */
 
 void    Challenge_DumpPitch(void);   /* TEMPORARY diagnostic */
-int32_t Challenge_NoticeFrames(void);
-void    Challenge_TickNotice(void);
-const char *Challenge_NoticeText(void);
 
 /* ---- loading ---- */
 
-/* Remember a file to play, by name, without reading it yet: the command line is parsed
- * before the save folder is known, and a file read then would look in the wrong place.
- * Challenge_Requested() is what the boot path checks. */
-void        Challenge_Request(const char *name);
-const char *Challenge_Requested(void);
-
-/* Read and check a file, and keep it for the match about to start. 0 on success; on
- * anything else nothing is armed and the reason has been logged. */
-int32_t Challenge_Arm(const uint8_t *name);
 /* Load a packaged position from data/, leaving user saves untouched. */
 int32_t Challenge_ArmBundled(const char *path);
 int32_t Challenge_Armed(void);
