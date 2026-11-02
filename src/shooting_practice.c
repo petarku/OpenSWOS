@@ -6,20 +6,20 @@
 /* shooting_practice.c — SHOOTING PRACTICE training mode. See shooting_practice.h. */
 
 #include "shooting_practice.h"
-#include "menu_system.h"     /* MenuEntry, CallDrawMenuItem -- the DEFENDERS toggle */
-#include "ball_physics.h"    /* GetPlayerPointerFromShirtNumber -- who is a defender */
+#include "ball_physics.h"    /* GetPlayerPointerFromShirtNumber -- which line a player is on */
 
 int32_t g_shootingPracticeMode;
 
-/* The setup screen's DEFENDERS and MIDFIELD rows (menu_data.c
- * _shootingPracticeSetupMenu, ordinals 1 and 2). uint16_t because
- * MENU_CMD_STRING_TABLE reads 2 bytes at the table's indexPtr
- * (_practiceDefendersStrTable / _practiceMidfieldStrTable,
- * swos_amiga_ptr_imports.c). 0 = OFF, the drill as it has always been: that
- * line is stripped. DEFENDERS on keeps the computer's back line (RB, LB, D);
- * MIDFIELD on keeps its middle (M, LW, RW). Attackers are always stripped. */
-uint16_t g_shootingPracticeDefenders;
-uint16_t g_shootingPracticeMidfield;
+/* The start screen's choices (src/shooting_practice_menu.c). The lines: 1 = that
+ * side keeps its players of that line, 0 = they are taken off. The player's own
+ * side has all three by default, the computer's none -- the drill as it always
+ * was: shoot past a lone keeper. */
+uint16_t g_practicePlayerDefense  = 1;
+uint16_t g_practicePlayerMidfield = 1;
+uint16_t g_practicePlayerAttack   = 1;
+uint16_t g_practiceCpuDefense;
+uint16_t g_practiceCpuMidfield;
+uint16_t g_practiceCpuAttack;
 /* 0 = attack up (default), 1 = attack down. */
 uint16_t g_shootingPracticeAttackDown;
 
@@ -31,98 +31,32 @@ extern TeamGeneralInfo _topTeamData;
 extern TeamGeneralInfo _bottomTeamData;
 
 /* The friendly flow this mode borrows whole (src/menus.c) — FriendlyFlow, not
- * FriendlyMenu: this handler runs under the 4-entry PRACTICE submenu since
- * 2026-10-26, where FriendlyMenu's closing CommonMenuExit would write through
- * main-menu entries that are not there (docs/MENUS.md §12). The submenu's
- * opener, PracticeMenuSelected, makes that call once, after it closes. */
+ * FriendlyMenu: this handler runs under the 4-entry PRACTICE submenu, where
+ * FriendlyMenu's closing CommonMenuExit would write through main-menu entries
+ * that are not there (docs/MENUS.md §12). The submenu's opener,
+ * PracticeMenuSelected, makes that call once, after it closes. */
 extern void FriendlyFlow(void);
 
 /* teams.c's names for TeamFile.teamControls, which has no shared header. */
 #define TEAM_NOT_SELECTED 0
 #define TEAM_COMPUTER     1
 
-/* ---- The setup screen (menu_data.c _shootingPracticeSetupMenu) -----------
- * SHOOTING PRACTICE on the PRACTICE submenu no longer starts the drill
- * directly: since 2026-10-26 it opens a small setup screen first -- the
- * DEFENDERS OFF/ON toggle, CONTINUE, EXIT -- so the drill's options have a
- * home that is not a stateful button buried in the match flow (the exact trap
- * the old PLAY MATCH toggle was, docs/SHOOTING_PRACTICE.md bug 3). */
-
-extern uint8_t _shootingPracticeSetupMenu[];
-extern MenuEntry _menuEntries[];
-
-/* Runtime ordinals of the toggle rows on the setup screen: entry 0 is the
- * title, 1 and 2 the toggles (menu_data.c). */
-#define SETUP_DEFENDERS_ORDINAL 1
-#define SETUP_MIDFIELD_ORDINAL  2
-
-/* Green (COLOR_GREEN, the ordinary button colour) when OFF, yellow
- * (COLOR_YELLOW) when ON -- the "this one is chosen" colouring. Re-applied by
- * the menu's onInit/onReturn because every ShowMenu re-unpacks the packed
- * bytes, whose baked colour is the OFF green. */
-static void setToggleRowColor(MenuEntry *e, uint16_t on)
-{
-    uint16_t color = on ? 0xF /* COLOR_YELLOW */
-                        : 0xE /* COLOR_GREEN */;
-    e->bgColor = (uint16_t)((e->bgColor & 0xFFF0) | color);
-}
-
-/* The PRACTICE submenu's SHOOTING PRACTICE button: open the setup screen. */
-__attribute__((used, externally_visible))
-void ShootingPracticeMenu(void)
-{
-    ShowMenu(_shootingPracticeSetupMenu);
-}
-
-/* The setup menu's onInit AND onReturn (menu header, like _offersMenu): the
- * toggles' colours must survive both a fresh open and the return from the
- * friendly flow, each of which re-unpacks the menu. */
-__attribute__((used, externally_visible))
-void ShootingPracticeSetupInit(void)
-{
-    setToggleRowColor(&_menuEntries[SETUP_DEFENDERS_ORDINAL], g_shootingPracticeDefenders);
-    setToggleRowColor(&_menuEntries[SETUP_MIDFIELD_ORDINAL],  g_shootingPracticeMidfield);
-}
-
-/* The toggle rows: flip, recolour, redraw. The text follows on its own --
- * each row draws through its string table, indexed by its flag. */
-__attribute__((used, externally_visible))
-void ChangePracticeDefenders(MenuEntry *entry)
-{
-    g_shootingPracticeDefenders ^= 1;
-    setToggleRowColor(entry, g_shootingPracticeDefenders);
-    CallDrawMenuItem(entry);
-}
-
-__attribute__((used, externally_visible))
-void ChangePracticeMidfield(MenuEntry *entry)
-{
-    g_shootingPracticeMidfield ^= 1;
-    setToggleRowColor(entry, g_shootingPracticeMidfield);
-    CallDrawMenuItem(entry);
-}
-
-__attribute__((used, externally_visible))
-void ChangePracticeDirection(MenuEntry *entry)
-{
-    g_shootingPracticeAttackDown ^= 1;
-    CallDrawMenuItem(entry);
-}
-
-/* CONTINUE -- what the SHOOTING PRACTICE button itself used to be.
+/* The PRACTICE submenu's SHOOTING PRACTICE button.
  *
  * The whole mode is "a friendly, with the flag set". FriendlyFlow seeds the
  * RNG, saves and restores gameType around the flow and invalidates the team
  * cache so the country lists reload pristine (ShowFriendlyMenu, menus.c, where
  * that last one is a deliberate fix over an original SWOS bug) -- all of which
  * this mode needs exactly as a friendly does, so it reuses them rather than
- * repeating them. The screens it puts up read g_shootingPracticeMode to say
- * PRACTICE where they would say FRIENDLY.
+ * repeating them. ShowFriendlyMenu puts up this mode's own start screen
+ * (_shootingPracticeSetupMenu, SWOS 2020's TEAM TRAINING layout, since
+ * 2026-11-02) in place of the friendly's, and the screens after it read
+ * g_shootingPracticeMode to say PRACTICE where they would say FRIENDLY.
  *
  * Clearing on the way out is what makes the flag safe: every path back to the
- * setup screen, including an abort, returns through here. */
+ * submenu, including an abort, returns through here. */
 __attribute__((used, externally_visible))
-void ShootingPracticeContinue(void)
+void ShootingPracticeMenu(void)
 {
     g_shootingPracticeMode = 1;
     FriendlyFlow();
@@ -157,11 +91,15 @@ int16_t ShootingPractice_SelectionOk(void)
  * what the match plays by is decided once, at kick-off. */
 static int16_t s_cpuTeamNum;
 
-/* Latched beside it: whether THIS match keeps the computer's back line and/or
- * its midfield (the setup screen's toggles at the moment of kick-off). */
-static int16_t s_keepDefenders;
-static int16_t s_keepMidfield;
+/* Latched beside it: which lines each side keeps in THIS match (the start
+ * screen's switches at the moment of kick-off), and the direction. */
+static int16_t s_humanLines;     /* LINE_* bits */
+static int16_t s_cpuLines;
 static int16_t s_attackDown;
+
+#define LINE_DEFENSE  1
+#define LINE_MIDFIELD 2
+#define LINE_ATTACK   4
 
 static int16_t cpuTeamNum(void)
 {
@@ -171,8 +109,8 @@ static int16_t cpuTeamNum(void)
 void ShootingPractice_BeginMatch(void)
 {
     s_cpuTeamNum = 0;
-    s_keepDefenders = 0;
-    s_keepMidfield = 0;
+    s_humanLines = 0;
+    s_cpuLines = 0;
     s_attackDown = 0;
     if (!g_shootingPracticeMode)
         return;
@@ -183,8 +121,17 @@ void ShootingPractice_BeginMatch(void)
         s_cpuTeamNum = 1;
     else if (_team2Computer && !_team1Computer)
         s_cpuTeamNum = 2;
-    s_keepDefenders = (g_shootingPracticeDefenders != 0);
-    s_keepMidfield  = (g_shootingPracticeMidfield != 0);
+    s_humanLines = (int16_t)((g_practicePlayerDefense  ? LINE_DEFENSE  : 0) |
+                             (g_practicePlayerMidfield ? LINE_MIDFIELD : 0) |
+                             (g_practicePlayerAttack   ? LINE_ATTACK   : 0));
+    s_cpuLines   = (int16_t)((g_practiceCpuDefense  ? LINE_DEFENSE  : 0) |
+                             (g_practiceCpuMidfield ? LINE_MIDFIELD : 0) |
+                             (g_practiceCpuAttack   ? LINE_ATTACK   : 0));
+    /* The start screen never lets both sides down to their keepers; should it
+     * ever happen, the player keeps their whole side rather than nobody being
+     * able to kick off. */
+    if (!s_humanLines && !s_cpuLines)
+        s_humanLines = LINE_DEFENSE | LINE_MIDFIELD | LINE_ATTACK;
     s_attackDown = (g_shootingPracticeAttackDown != 0);
 }
 
@@ -202,36 +149,44 @@ int16_t ShootingPractice_ForcedTopTeamNum(void)
 
 int16_t ShootingPractice_ForcedKickoffTeamNum(void)
 {
-    int16_t cpu = cpuTeamNum();
-    return cpu ? (int16_t)(3 - cpu) : 0;
-}
-
-void ShootingPractice_StripCpuOutfieldPlayers(void)
-{
+    /* The side with outfield players takes every kickoff -- a keeper alone
+     * cannot. That is the player's, unless the player has taken all their lines
+     * off: then only their keeper defends the goal and the computer kicks off every
+     * time, after its own goals too. */
     int16_t cpu = cpuTeamNum();
     if (!cpu)
-        return;
+        return 0;
+    return s_humanLines ? (int16_t)(3 - cpu) : cpu;
+}
 
-    TeamGeneralInfo *cpuTeam = (_topTeamData.teamNumber == cpu) ? &_topTeamData : &_bottomTeamData;
-    Sprite * const *sprites = cpuTeam->spritesTable;
+static int16_t lineOf(int8_t pos)
+{
+    switch (pos) {
+    case POS_RIGHT_BACK: case POS_LEFT_BACK: case POS_DEFENDER:
+        return LINE_DEFENSE;
+    case POS_MIDFIELDER: case POS_LEFT_WING: case POS_RIGHT_WING:
+        return LINE_MIDFIELD;
+    case POS_ATTACKER:
+        return LINE_ATTACK;
+    default:
+        return 0;
+    }
+}
+
+static void stripTeam(TeamGeneralInfo *team, int16_t keepLines)
+{
+    Sprite * const *sprites = team->spritesTable;
+    int16_t i;
 
     /* index 0 is the goalkeeper (goalkeeper.c: "first sprite = goalkeeper") —
-     * leave it alone. 1..10 are the ten outfield players. The setup screen's
-     * toggles keep whole lines: with DEFENDERS on a player whose position is
-     * RB, LB or D (PlayerInfo.position, via the sprite's playerOrdinal) is not
-     * stripped, with MIDFIELD on neither is M, LW or RW — so what stays
-     * follows the CPU team's actual line-up. Attackers always go. */
-    int16_t i;
+     * always stays. 1..10 are the ten outfield players: one whose position
+     * (PlayerInfo.position, via the sprite's playerOrdinal) is on a line the
+     * side keeps stays, so what stays follows the team's actual line-up. */
     for (i = 1; i <= 10; i++) {
         Sprite *pl = sprites[i];
-        if (s_keepDefenders || s_keepMidfield) {
-            PlayerInfo *pi = GetPlayerPointerFromShirtNumber(pl, cpuTeam);
-            int8_t pos = pi->position;
-            if (s_keepDefenders &&
-                (pos == POS_RIGHT_BACK || pos == POS_LEFT_BACK || pos == POS_DEFENDER))
-                continue;
-            if (s_keepMidfield &&
-                (pos == POS_MIDFIELDER || pos == POS_LEFT_WING || pos == POS_RIGHT_WING))
+        if (keepLines) {
+            PlayerInfo *pi = GetPlayerPointerFromShirtNumber(pl, team);
+            if (lineOf(pi->position) & keepLines)
                 continue;
         }
         pl->sentAway = 1;
@@ -240,4 +195,19 @@ void ShootingPractice_StripCpuOutfieldPlayers(void)
         pl->x.s.i    = -20;
         pl->y.s.i    = 449;
     }
+}
+
+void ShootingPractice_StripOutfieldPlayers(void)
+{
+    int16_t cpu = cpuTeamNum();
+    TeamGeneralInfo *cpuTeam, *humanTeam;
+    if (!cpu)
+        return;
+
+    cpuTeam   = (_topTeamData.teamNumber == cpu) ? &_topTeamData : &_bottomTeamData;
+    humanTeam = (cpuTeam == &_topTeamData) ? &_bottomTeamData : &_topTeamData;
+    if (s_cpuLines != (LINE_DEFENSE | LINE_MIDFIELD | LINE_ATTACK))
+        stripTeam(cpuTeam, s_cpuLines);
+    if (s_humanLines != (LINE_DEFENSE | LINE_MIDFIELD | LINE_ATTACK))
+        stripTeam(humanTeam, s_humanLines);
 }

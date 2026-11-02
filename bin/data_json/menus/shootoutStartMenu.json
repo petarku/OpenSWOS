@@ -80,7 +80,7 @@
         },
         {
           "op": "onselect_fire",
-          "func": "ChooseTeamsMenu"
+          "func": "TrainingChooseTeamsMenu"
         }
       ]
     },

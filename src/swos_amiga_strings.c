@@ -48,14 +48,26 @@ char _aUniform[]      = "UNIFORM";
 char _aShootingPractice[] = "SHOOTING PRACTICE";
 char _aPlayPractice[]  = "PLAY PRACTICE";
 char _aStartPractice[] = "START PRACTICE";
-/* The setup screen's DEFENDERS and MIDFIELD rows (_practiceDefendersStrTable /
- * _practiceMidfieldStrTable, indexed by their flags -- swos_amiga_ptr_imports.c). */
-char _aDefendersOff[] = "DEFENDERS OFF";
-char _aDefendersOn[]  = "DEFENDERS ON";
-char _aMidfieldOff[]  = "MIDFIELD OFF";
-char _aMidfieldOn[]   = "MIDFIELD ON";
-char _aPracticeAttackUp[] = "ATTACK UP";
-char _aPracticeAttackDown[] = "ATTACK DOWN";
+/* Its start screen (shooting_practice_menu.c, SWOS 2020's TEAM TRAINING layout):
+ * the row labels, the column heads, ATTACK GOAL's and CPU SKILL's values
+ * (_practiceDirectionStrTable / _practiceCpuSkillStrTable,
+ * swos_amiga_ptr_imports.c) and RANDOM TEAM. ATTACK, CHOOSE TEAM, ON and OFF
+ * are the game's own strings; PLAYER and PITCH TYPE are too, but const, which
+ * the menu symbol registry does not declare. */
+char _aAttackGoal[] = "ATTACK GOAL";
+char _aPracticePlayer[] = "PLAYER";
+char _aPracticePitchType[] = "PITCH TYPE";
+char _aCpuSkill[] = "CPU SKILL";
+char _aPracticeCpu[] = "CPU";
+char _aPracticeDefense[] = "DEFENSE";
+char _aPracticeMidfield[] = "MIDFIELD";
+char _aRandomTeam[] = "RANDOM TEAM";
+char _aPracticeAttackUp[] = "UP";
+char _aPracticeAttackDown[] = "DOWN";
+char _aSkillBeginner[] = "BEGINNER";
+char _aSkillAmateur[] = "AMATEUR";
+char _aSkillProfessional[] = "PROFESSIONAL";
+char _aSkillWorldClass[] = "WORLD CLASS";
 /* Shown where "SELECT N MORE TEAMS" would be: the two teams are picked, but the
  * drill needs one of them to be the computer and the other not. */
 char _aSelect1CpuTeam[] = "SELECT 1 COMPUTER TEAM";

@@ -428,7 +428,7 @@ void InitPlayersBeforeEnteringPitch(void)
      * ST_STARTING_GAME branch), so this is the one place that needs to
      * re-apply the strip -- and it runs again every time teams walk back
      * out (second half), which is exactly when it needs to. */
-    ShootingPractice_StripCpuOutfieldPlayers();
+    ShootingPractice_StripOutfieldPlayers();
 }
 
 /* ================================================================

@@ -1400,22 +1400,37 @@ typedef struct Menu_PracticeMenu
 } Menu_PracticeMenu;
 #pragma pack(pop)
 
-/* OpenSWOS addition — the SHOOTING PRACTICE setup screen, from the PRACTICE
- * submenu's SHOOTING PRACTICE button: the DEFENDERS and MIDFIELD OFF/ON
- * toggles, ATTACK UP/DOWN, CONTINUE, EXIT
- * (bin/data_json/menus/shootingPracticeSetupMenu.json, src/shooting_practice.c).
- * The first three buttons are string-table rows. */
+/* OpenSWOS addition — SHOOTING PRACTICE's start screen, SWOS 2020's TEAM
+ * TRAINING layout, shown by ShowFriendlyMenu in place of the friendly's own
+ * while the mode is on (bin/data_json/menus/shootingPracticeSetupMenu.json,
+ * src/shooting_practice_menu.c). Labels and column heads are entries without
+ * nav or handler; every value is a string-table button. */
 #pragma pack(push, 1)
 typedef struct Menu_ShootingPracticeSetup
 {
   MenuHeader hdr;
   MenuMark markByteCoords;
   MenuEntry_Byte_Colors_TextPtr entry0;                     /* SHOOTING PRACTICE header */
-  MenuEntry_Byte_Nav_Colors_StringTable_OnSelect entry1;    /* DEFENDERS OFF/ON */
-  MenuEntry_Byte_Nav_Colors_StringTable_OnSelect entry2;    /* MIDFIELD OFF/ON */
-  MenuEntry_Byte_Nav_Colors_StringTable_OnSelect entry3;    /* ATTACK UP/DOWN */
-  MenuEntry_Byte_Nav_Colors_TextPtr_OnSelect entry4;        /* CONTINUE */
-  MenuEntry_Byte_Nav_Colors_TextPtr_OnSelect entry5;        /* EXIT */
+  MenuEntry_Byte_Colors_TextPtr entry1;                     /* ATTACK GOAL */
+  MenuEntry_Byte_Nav_Colors_StringTable_OnSelect entry2;    /* UP / DOWN */
+  MenuEntry_Byte_Colors_TextPtr entry3;                     /* CPU SKILL */
+  MenuEntry_Byte_Nav_Colors_StringTable_OnSelect entry4;    /* RANDOM .. WORLD CLASS */
+  MenuEntry_Byte_Colors_TextPtr entry5;                     /* PLAYER */
+  MenuEntry_Byte_Colors_TextPtr entry6;                     /* CPU */
+  MenuEntry_Byte_Colors_TextPtr entry7;                     /* DEFENSE */
+  MenuEntry_Byte_Nav_Colors_StringTable_OnSelect entry8;    /*   player ON/OFF */
+  MenuEntry_Byte_Nav_Colors_StringTable_OnSelect entry9;    /*   cpu ON/OFF */
+  MenuEntry_Byte_Colors_TextPtr entry10;                    /* MIDFIELD */
+  MenuEntry_Byte_Nav_Colors_StringTable_OnSelect entry11;
+  MenuEntry_Byte_Nav_Colors_StringTable_OnSelect entry12;
+  MenuEntry_Byte_Colors_TextPtr entry13;                    /* ATTACK */
+  MenuEntry_Byte_Nav_Colors_StringTable_OnSelect entry14;
+  MenuEntry_Byte_Nav_Colors_StringTable_OnSelect entry15;
+  MenuEntry_Byte_Colors_TextPtr entry16;                    /* PITCH TYPE */
+  MenuEntry_Byte_Nav_Colors_StringTable_OnSelect entry17;   /* the friendly's pitch types */
+  MenuEntry_Byte_Nav_Colors_TextPtr_OnSelect entry18;       /* CHOOSE TEAM */
+  MenuEntry_Byte_Nav_Colors_TextPtr_OnSelect entry19;       /* RANDOM TEAM */
+  MenuEntry_Byte_Nav_Colors_TextPtr_OnSelect entry20;       /* EXIT */
   MenuMark markEndMenu;
 } Menu_ShootingPracticeSetup;
 #pragma pack(pop)
