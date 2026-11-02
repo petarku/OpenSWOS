@@ -30,31 +30,29 @@
 #pragma once
 #include "game_types.h"
 
-/* Non-zero while CONTINUE runs the practice flow from its setup screen.
- * Owned by ShootingPracticeContinue alone -- no menu redraw
- * clears it, which is the whole point of the rewrite. While it is set the
- * friendly's screens say PRACTICE instead of FRIENDLY and refuse to start until
- * exactly one side is the computer. */
+/* Non-zero while ShootingPracticeMenu runs the practice flow. Owned by it
+ * alone -- no menu redraw clears it. While it is set ShowFriendlyMenu shows the
+ * mode's start screen instead of the friendly's, and the screens after it say
+ * PRACTICE instead of FRIENDLY and refuse to start until exactly one side is
+ * the computer. */
 extern int32_t g_shootingPracticeMode;
 
-/* The setup screen's toggles: DEFENDERS (1 = the computer keeps its RB, LB and
- * D players) and MIDFIELD (1 = it keeps its M, LW and RW players too); 0 = OFF,
- * that line is stripped as always. uint16_t because each menu row draws through
- * a MENU_CMD_STRING_TABLE whose index read is 2 bytes
- * (_practiceDefendersStrTable / _practiceMidfieldStrTable). Menu state: the
- * match latches them at kick-off (ShootingPractice_BeginMatch), like the mode
- * itself. */
-extern uint16_t g_shootingPracticeDefenders;
-extern uint16_t g_shootingPracticeMidfield;
-/* Direction of the human side: 0 = UP, 1 = DOWN. Latched at match start. */
+/* The start screen's DEFENSE / MIDFIELD / ATTACK switches, one column per
+ * side (src/shooting_practice_menu.c): 1 = the side keeps its players of that
+ * line (RB/LB/D, M/LW/RW, A), 0 = they are taken off. uint16_t because each
+ * button draws through a MENU_CMD_STRING_TABLE whose index read is 2 bytes.
+ * Defaults: the player all ON, the computer all OFF. Menu state: the match
+ * latches them at kick-off (ShootingPractice_BeginMatch). */
+extern uint16_t g_practicePlayerDefense, g_practicePlayerMidfield, g_practicePlayerAttack;
+extern uint16_t g_practiceCpuDefense, g_practiceCpuMidfield, g_practiceCpuAttack;
+/* ATTACK GOAL: the player's side attacks 0 = UP, 1 = DOWN. Latched at kick-off. */
 extern uint16_t g_shootingPracticeAttackDown;
+/* CPU SKILL: 0 RANDOM (default, any strength), 1 BEGINNER .. 4 WORLD CLASS -- how strong a team RANDOM TEAM
+ * draws for the computer (shooting_practice_menu.c). CHOOSE TEAM ignores it. */
+extern uint16_t g_shootingPracticeCpuSkill;
 
-/* The PRACTICE submenu's SHOOTING PRACTICE button: open the setup screen
- * (DEFENDERS / MIDFIELD / ATTACK UP-DOWN / CONTINUE / EXIT).
- * CONTINUE is ShootingPracticeContinue:
- * set the mode, run the friendly flow, clear it again. Both are bound by name
- * through the menu data (menu_data.c _shootingPracticeSetupMenu), along with
- * ShootingPracticeSetupInit and ChangePracticeDefenders. */
+/* The PRACTICE submenu's SHOOTING PRACTICE button: set the mode, run the
+ * friendly flow (whose first screen is the start screen), clear it again. */
 void ShootingPracticeMenu(void);
 
 /* 1 when the teams picked so far could start a drill -- exactly one computer
@@ -79,15 +77,17 @@ int16_t ShootingPractice_IsActive(void);
 int16_t ShootingPractice_ForcedTopTeamNum(void);
 
 /* 0 = no change; else the team number (1 or 2) that must kick off instead of
- * whatever the coin toss picked, because the other side only has a goalkeeper
- * left to send to the centre circle. Applies to EVERY kickoff: match start,
+ * whatever the coin toss picked: the player's side, unless the player took all
+ * their lines off -- then the computer's, because a lone goalkeeper cannot take a
+ * kickoff. Applies to EVERY kickoff: match start,
  * half time, extra time, and the restart after a goal. */
 int16_t ShootingPractice_ForcedKickoffTeamNum(void);
 
-/* Marks the computer side's ten outfield players sentAway (the same flag a
- * red card sets — src/tackle_foul.c SendPlayerAway) and parks them off-pitch,
- * without the disciplinary side effects (no card, no booking stat, no SENT
- * OFF banner) since nothing happened in the match. A no-op unless the mode
- * is on and exactly one side is the computer. Called every time both teams
- * walk out (match start, second half) so the strip survives half-time. */
-void ShootingPractice_StripCpuOutfieldPlayers(void);
+/* Takes off the lines each side does not keep: marks those outfield players
+ * sentAway (the same flag a red card sets — src/tackle_foul.c SendPlayerAway)
+ * and parks them off-pitch, without the disciplinary side effects (no card, no
+ * booking stat, no SENT OFF banner) since nothing happened in the match. The
+ * keepers always stay. A no-op unless the mode is on and exactly one side is the
+ * computer. Called every time both teams walk out (match start, second half) so
+ * the strip survives half-time. */
+void ShootingPractice_StripOutfieldPlayers(void);
