@@ -57,7 +57,7 @@
 #include "kit_art.h"            /* --kit-art */
 #include "custom_team.h"        /* --custom-team-selftest */
 #include "diy_import_dos.h"     /* --convert-diy */
-#include "challenge.h"          /* --challenge, --challenge-selftest */
+#include "challenge.h"          /* --challenge-selftest */
 #include "dos_sound.h"          /* --sound-style, --dos-sound-selftest */
 #include "dos_music.h"          /* --music, --dos-music-selftest */
 #include "pitch_map.h"          /* --pitch-maps */
@@ -302,8 +302,6 @@ static void print_usage(const char *argv0)
         "                            and every table names one. Exits.\n"
         "  --convert-diy=<in>,<out>  Rewrite a PC/SWOS 2020 .DIY as this game's JSON\n"
         "                            .DIY, which the Amiga loads. Exits.\n"
-        "  --challenge=<file>        Play on from a saved position: a .CHL in the save\n"
-        "                            folder, written in a match by the 'C' key.\n"
         "  --challenge-selftest      Round-trip a saved position's setup and state in\n"
         "                            this process. Exits.\n"
         "  --custom-team-selftest    Check every database team against the custom team\n"
@@ -780,31 +778,6 @@ int main(int argc, char **argv)
                 return 1;
             }
             { extern volatile uint8_t _skipLoaderIntro; _skipLoaderIntro = 1; }
-        } else if ((v = match_kv(a, "challenge")) != NULL) {
-            /* Play on from a saved position: the name of a .CHL in the save folder
-             * (src/challenge.c). Only remembered here -- the save folder is not known
-             * until later, so a read now would look in the wrong place. */
-            Challenge_Request(v);
-            { extern volatile uint8_t _skipLoaderIntro; _skipLoaderIntro = 1; }
-        } else if ((v = match_kv(a, "challenge-gen")) != NULL) {
-            /* Construct a .CHL from a spec instead of capturing it live
-             * (src/challenge_gen.c, docs/CHALLENGE.md "Generating challenges"). The spec
-             * is read now: it is the user's path, and the process chdirs later. */
-            extern int32_t ChallengeGen_Request(const char *path);
-            if (ChallengeGen_Request(v) != 0)
-                return 1;
-            { extern volatile uint8_t _skipLoaderIntro; _skipLoaderIntro = 1; }
-            /* Headless and turbo, as --team-audit is: a batch run that writes one file
-             * has no business opening a window or pacing itself to a wall clock. */
-#ifdef _WIN32
-            _putenv("SWOS_HARNESS_TURBO=1");
-            if (!getenv("SDL_VIDEODRIVER")) _putenv("SDL_VIDEODRIVER=dummy");
-            if (!getenv("SDL_AUDIODRIVER")) _putenv("SDL_AUDIODRIVER=dummy");
-#else
-            setenv("SWOS_HARNESS_TURBO", "1", 1);
-            if (!getenv("SDL_VIDEODRIVER")) setenv("SDL_VIDEODRIVER", "dummy", 1);
-            if (!getenv("SDL_AUDIODRIVER")) setenv("SDL_AUDIODRIVER", "dummy", 1);
-#endif
         } else if (strcmp(a, "--challenge-selftest") == 0) {
             /* Round-trips the setup block and the match state in this process, and says
              * which field failed if one does. Needs no game data, so it runs here and

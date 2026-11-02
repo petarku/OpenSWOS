@@ -15,12 +15,13 @@ extern uint16_t _quitToDos, _fadeInitFlag;
 extern volatile uint16_t _fadeState;
 extern void ResetMenuViewState(void);
 extern void PrepareMenuForFadeIn(void);
-extern int16_t SelectFileOfExtension(uint32_t ext, uint8_t *title);
-extern uint8_t _selectedFilename[];
 extern uint8_t *_spriteGraphicsPtr;
 
-enum { HUB, LIST, DETAILS, RESULT };
-enum { BACK = 1, COLLECTION, SAVED, PLAY, RETRY, NEXT, RETRY_SAVE, LEAVE, PICK = 100 };
+/* CHALLENGES opens the collection's list directly: this build (offline-modes) has
+ * only the predefined challenges, not the SAVED POSITIONS list that shared a
+ * first screen with it. */
+enum { LIST, DETAILS, RESULT };
+enum { BACK = 1, PLAY, RETRY, NEXT, RETRY_SAVE, LEAVE, PICK = 100 };
 static int screen, selected, action, actions[13];
 static int listFocus = 3;
 static char text[13][80];
@@ -118,12 +119,7 @@ void ChallengeCollection_MenuInit(void)
         e->afterDrawCb = 0;
         actions[i] = 0;
     }
-    if (screen == HUB) {
-        row(0, 0, "CHALLENGES", 0, 0x17);
-        row(2, 60, "CHALLENGE COLLECTION", COLLECTION, 14);
-        row(3, 90, "SAVED POSITIONS", SAVED, 14);
-        row(11, 185, "BACK", BACK, 12);
-    } else if (screen == LIST) {
+    if (screen == LIST) {
         static const int ys[] = {38, 54, 70, 86, 102, 118};
         row(0, 0, "CHALLENGE COLLECTION", 0, 0x17);
         swos_io_snprintf(buf, sizeof buf, "%d OF 6 COMPLETED", ChallengeProgress_Count());
@@ -248,7 +244,7 @@ static void play_selected(void)
 void ChallengeCollection_Show(void)
 {
     ChallengeProgress_Load();
-    screen = HUB;
+    screen = LIST;
     notice = "";
     while (!_quitToDos) {
         action = 0;
@@ -256,21 +252,9 @@ void ChallengeCollection_Show(void)
         if (_quitToDos) break;
         if (action == LEAVE) break;
         if (!action || action == BACK) {
-            if (screen == HUB) break;
-            screen = screen == LIST ? HUB : LIST;
+            if (screen == LIST) break;
+            screen = LIST;
             notice = "";
-        } else if (action == COLLECTION) screen = LIST;
-        else if (action == SAVED) {
-            Challenge_EnsureSample();
-            if (SelectFileOfExtension(0x2E43484Cu, (uint8_t *)"SAVED POSITIONS") == 0) {
-                if (Challenge_Arm(_selectedFilename) == 0) {
-                    Challenge_Play();
-                    restore_menu();
-                } else {
-                    extern void ShowErrorMenu(uint8_t *text);
-                    ShowErrorMenu((uint8_t *)"POSITION MISSING OR INCOMPATIBLE");
-                }
-            }
         } else if (action >= PICK && action < PICK + COLLECTION_COUNT) {
             selected = action - PICK;
             notice = "";
