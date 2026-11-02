@@ -46,9 +46,9 @@ extern void ChangeMenuMusic(void);
 extern void ChangeNationality(void);
 extern void ChangePitchStyle(void);
 extern void ChangePitchType(void);
-extern void ChangePracticeDefenders(void);
+extern void ChangePracticeCpuSkill(void);
 extern void ChangePracticeDirection(void);
-extern void ChangePracticeMidfield(void);
+extern void ChangePracticeLine(void);
 extern void ChangeSex(void);
 extern void ChangeTeams(void);
 extern void ChooseTacticsInit(void);
@@ -336,8 +336,8 @@ extern void SelectTraining(void);
 extern void SetExitMenuFlag(void);
 extern void SetName(void);
 extern void SetSurname(void);
-extern void ShootingPracticeContinue(void);
 extern void ShootingPracticeMenu(void);
+extern void ShootingPracticeRandomTeams(void);
 extern void ShootingPracticeSetupInit(void);
 extern void ShootoutKeeperControl(void);
 extern void ShootoutRandomTeams(void);
@@ -370,6 +370,7 @@ extern void TopGoalScorersBeforeDrawCommon(void);
 extern void TopGoalScorersExit(void);
 extern void TopGoalScorersInit(void);
 extern void TopGoalScorersMenu(void);
+extern void TrainingChooseTeamsMenu(void);
 extern void TransferMarketAfterDrawCommon(void);
 extern void TransferMarketCommon(void);
 extern void TransferMarketFinish(void);
@@ -433,6 +434,7 @@ extern char _aAllPlayerTeams[];
 extern char _aAllRandom[];
 extern char _aAskForMore[];
 extern char _aAttack[];
+extern char _aAttackGoal[];
 extern char _aAutoReplays[];
 extern char _aAutoSaveHighli[];
 extern char _aAwayGoals[];
@@ -468,6 +470,7 @@ extern char _aContinue[];
 extern char _aContinueCareer[];
 extern char _aControls[];
 extern char _aCopy[];
+extern char _aCpuSkill[];
 extern char _aCredits[];
 extern char _aCriteria[];
 extern char _aCup1[];
@@ -556,10 +559,16 @@ extern char _aPlayersCurrent[];
 extern char _aPlus[];
 extern char _aPointsForAWin[];
 extern char _aPractice[];
+extern char _aPracticeCpu[];
+extern char _aPracticeDefense[];
+extern char _aPracticeMidfield[];
+extern char _aPracticePitchType[];
+extern char _aPracticePlayer[];
 extern char _aPresetCompetit_0[];
 extern char _aPts[];
 extern char _aPutPlayerOnTra_0[];
 extern char _aRandomSelection[];
+extern char _aRandomTeam[];
 extern char _aRedefineKeys[];
 extern char _aReject[];
 extern char _aRejectOffer[];
@@ -718,9 +727,14 @@ extern char* _pitchStyleStrTable[];
 extern char* _pitchTypeOrSeasonTable[];
 extern char* _pitchTypeStrTable[];
 extern char* _positionFilterStringTable[];
-extern char* _practiceDefendersStrTable[];
+extern char* _practiceCpuAttackStrTable[];
+extern char* _practiceCpuDefenseStrTable[];
+extern char* _practiceCpuMidfieldStrTable[];
+extern char* _practiceCpuSkillStrTable[];
 extern char* _practiceDirectionStrTable[];
-extern char* _practiceMidfieldStrTable[];
+extern char* _practicePlayerAttackStrTable[];
+extern char* _practicePlayerDefenseStrTable[];
+extern char* _practicePlayerMidfieldStrTable[];
 extern char _saveFileTitle[];
 extern char* _shootoutKeeperStrTable[];
 extern char* _skillFilterStringTable[];
@@ -772,9 +786,9 @@ const MenuSymbol _menuSymbols[] = {
     { "ChangeNationality", (void*)ChangeNationality, SYM_FUNC },
     { "ChangePitchStyle", (void*)ChangePitchStyle, SYM_FUNC },
     { "ChangePitchType", (void*)ChangePitchType, SYM_FUNC },
-    { "ChangePracticeDefenders", (void*)ChangePracticeDefenders, SYM_FUNC },
+    { "ChangePracticeCpuSkill", (void*)ChangePracticeCpuSkill, SYM_FUNC },
     { "ChangePracticeDirection", (void*)ChangePracticeDirection, SYM_FUNC },
-    { "ChangePracticeMidfield", (void*)ChangePracticeMidfield, SYM_FUNC },
+    { "ChangePracticeLine", (void*)ChangePracticeLine, SYM_FUNC },
     { "ChangeSex", (void*)ChangeSex, SYM_FUNC },
     { "ChangeTeams", (void*)ChangeTeams, SYM_FUNC },
     { "ChooseTacticsInit", (void*)ChooseTacticsInit, SYM_FUNC },
@@ -1062,8 +1076,8 @@ const MenuSymbol _menuSymbols[] = {
     { "SetExitMenuFlag", (void*)SetExitMenuFlag, SYM_FUNC },
     { "SetName", (void*)SetName, SYM_FUNC },
     { "SetSurname", (void*)SetSurname, SYM_FUNC },
-    { "ShootingPracticeContinue", (void*)ShootingPracticeContinue, SYM_FUNC },
     { "ShootingPracticeMenu", (void*)ShootingPracticeMenu, SYM_FUNC },
+    { "ShootingPracticeRandomTeams", (void*)ShootingPracticeRandomTeams, SYM_FUNC },
     { "ShootingPracticeSetupInit", (void*)ShootingPracticeSetupInit, SYM_FUNC },
     { "ShootoutKeeperControl", (void*)ShootoutKeeperControl, SYM_FUNC },
     { "ShootoutRandomTeams", (void*)ShootoutRandomTeams, SYM_FUNC },
@@ -1096,6 +1110,7 @@ const MenuSymbol _menuSymbols[] = {
     { "TopGoalScorersExit", (void*)TopGoalScorersExit, SYM_FUNC },
     { "TopGoalScorersInit", (void*)TopGoalScorersInit, SYM_FUNC },
     { "TopGoalScorersMenu", (void*)TopGoalScorersMenu, SYM_FUNC },
+    { "TrainingChooseTeamsMenu", (void*)TrainingChooseTeamsMenu, SYM_FUNC },
     { "TransferMarketAfterDrawCommon", (void*)TransferMarketAfterDrawCommon, SYM_FUNC },
     { "TransferMarketCommon", (void*)TransferMarketCommon, SYM_FUNC },
     { "TransferMarketFinish", (void*)TransferMarketFinish, SYM_FUNC },
@@ -1156,6 +1171,7 @@ const MenuSymbol _menuSymbols[] = {
     { "_aAllRandom", (void*)_aAllRandom, SYM_STRING },
     { "_aAskForMore", (void*)_aAskForMore, SYM_STRING },
     { "_aAttack", (void*)_aAttack, SYM_STRING },
+    { "_aAttackGoal", (void*)_aAttackGoal, SYM_STRING },
     { "_aAutoReplays", (void*)_aAutoReplays, SYM_STRING },
     { "_aAutoSaveHighli", (void*)_aAutoSaveHighli, SYM_STRING },
     { "_aAwayGoals", (void*)_aAwayGoals, SYM_STRING },
@@ -1191,6 +1207,7 @@ const MenuSymbol _menuSymbols[] = {
     { "_aContinueCareer", (void*)_aContinueCareer, SYM_STRING },
     { "_aControls", (void*)_aControls, SYM_STRING },
     { "_aCopy", (void*)_aCopy, SYM_STRING },
+    { "_aCpuSkill", (void*)_aCpuSkill, SYM_STRING },
     { "_aCredits", (void*)_aCredits, SYM_STRING },
     { "_aCriteria", (void*)_aCriteria, SYM_STRING },
     { "_aCup1", (void*)_aCup1, SYM_STRING },
@@ -1279,10 +1296,16 @@ const MenuSymbol _menuSymbols[] = {
     { "_aPlus", (void*)_aPlus, SYM_STRING },
     { "_aPointsForAWin", (void*)_aPointsForAWin, SYM_STRING },
     { "_aPractice", (void*)_aPractice, SYM_STRING },
+    { "_aPracticeCpu", (void*)_aPracticeCpu, SYM_STRING },
+    { "_aPracticeDefense", (void*)_aPracticeDefense, SYM_STRING },
+    { "_aPracticeMidfield", (void*)_aPracticeMidfield, SYM_STRING },
+    { "_aPracticePitchType", (void*)_aPracticePitchType, SYM_STRING },
+    { "_aPracticePlayer", (void*)_aPracticePlayer, SYM_STRING },
     { "_aPresetCompetit_0", (void*)_aPresetCompetit_0, SYM_STRING },
     { "_aPts", (void*)_aPts, SYM_STRING },
     { "_aPutPlayerOnTra_0", (void*)_aPutPlayerOnTra_0, SYM_STRING },
     { "_aRandomSelection", (void*)_aRandomSelection, SYM_STRING },
+    { "_aRandomTeam", (void*)_aRandomTeam, SYM_STRING },
     { "_aRedefineKeys", (void*)_aRedefineKeys, SYM_STRING },
     { "_aReject", (void*)_aReject, SYM_STRING },
     { "_aRejectOffer", (void*)_aRejectOffer, SYM_STRING },
@@ -1441,9 +1464,14 @@ const MenuSymbol _menuSymbols[] = {
     { "_pitchTypeOrSeasonTable", (void*)_pitchTypeOrSeasonTable, SYM_TABLE },
     { "_pitchTypeStrTable", (void*)_pitchTypeStrTable, SYM_TABLE },
     { "_positionFilterStringTable", (void*)_positionFilterStringTable, SYM_TABLE },
-    { "_practiceDefendersStrTable", (void*)_practiceDefendersStrTable, SYM_TABLE },
+    { "_practiceCpuAttackStrTable", (void*)_practiceCpuAttackStrTable, SYM_TABLE },
+    { "_practiceCpuDefenseStrTable", (void*)_practiceCpuDefenseStrTable, SYM_TABLE },
+    { "_practiceCpuMidfieldStrTable", (void*)_practiceCpuMidfieldStrTable, SYM_TABLE },
+    { "_practiceCpuSkillStrTable", (void*)_practiceCpuSkillStrTable, SYM_TABLE },
     { "_practiceDirectionStrTable", (void*)_practiceDirectionStrTable, SYM_TABLE },
-    { "_practiceMidfieldStrTable", (void*)_practiceMidfieldStrTable, SYM_TABLE },
+    { "_practicePlayerAttackStrTable", (void*)_practicePlayerAttackStrTable, SYM_TABLE },
+    { "_practicePlayerDefenseStrTable", (void*)_practicePlayerDefenseStrTable, SYM_TABLE },
+    { "_practicePlayerMidfieldStrTable", (void*)_practicePlayerMidfieldStrTable, SYM_TABLE },
     { "_saveFileTitle", (void*)_saveFileTitle, SYM_BUFFER },
     { "_shootoutKeeperStrTable", (void*)_shootoutKeeperStrTable, SYM_TABLE },
     { "_skillFilterStringTable", (void*)_skillFilterStringTable, SYM_TABLE },

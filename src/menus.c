@@ -2621,6 +2621,7 @@ extern uint8_t _diyCompetitionMenu[];
 extern uint8_t _editMenu[];        /* OpenSWOS: the EDIT submenu (menu_data.c) */
 extern uint8_t _practiceMenu[];    /* OpenSWOS: the PRACTICE submenu (menu_data.c) */
 extern uint8_t _shootoutStartMenu[]; /* OpenSWOS: PENALTY SHOOTOUT's start screen */
+extern uint8_t _shootingPracticeSetupMenu[]; /* OpenSWOS: SHOOTING PRACTICE's start screen */
 extern uint8_t _highlightsMenu[];
 extern uint8_t _optionsMenu[];
 extern uint8_t _diskMenu[];
@@ -2774,10 +2775,12 @@ void ShowFriendlyMenu(void)
     _minSubstitutes = 2;
     _maxSubstitutes = 5;
     _friendlyOk = 0;
-    /* PENALTY SHOOTOUT has a start screen of its own, SWOS 2020's: CHOOSE TEAMS,
-     * RANDOM SELECTION by group, GOALKEEPER CONTROL (penalty_shootout_menu.c).
-     * Everything around it here is the friendly's, unchanged. */
-    ShowMenu(g_penaltyShootoutMode ? _shootoutStartMenu : _friendlyGameMenu);
+    /* PENALTY SHOOTOUT and SHOOTING PRACTICE have start screens of their own,
+     * SWOS 2020's (penalty_shootout_menu.c, shooting_practice_menu.c).
+     * Everything around them here is the friendly's, unchanged. */
+    ShowMenu(g_penaltyShootoutMode  ? _shootoutStartMenu
+           : g_shootingPracticeMode ? _shootingPracticeSetupMenu
+                                    : _friendlyGameMenu);
     _inFriendlyMenu = 0;
 }
 
@@ -5790,6 +5793,20 @@ void ChooseTeamsMenu(void)
     InitTeams();
     PlayFriendly();
     SetExitMenuFlag();
+}
+
+/* TrainingChooseTeamsMenu -- CHOOSE TEAM(S) on the training modes' start
+ * screens (SHOOTING PRACTICE, PENALTY SHOOTOUT). The friendly's handler above
+ * closes the screen it was pressed on whatever happened, because on the
+ * FRIENDLY screen that is the original's way back to the main menu. A start
+ * screen is the mode's own home instead: leaving team selection or PLAY MATCH,
+ * or finishing the drill, comes back to it, one screen up, not to the PRACTICE
+ * submenu two up (user report, 2026-11-02). */
+__attribute__((used, externally_visible))
+void TrainingChooseTeamsMenu(void)
+{
+    ChooseTeamsMenu();
+    _exitMenu = 0;
 }
 
 /* MinSubstitutes: increment minSubstitutes with wraparound to 1. */

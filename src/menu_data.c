@@ -371,10 +371,19 @@ extern void UseMatchTeamSelect(void);
 extern void UniformSelected(void);
 extern void ShootingPracticeMenu(void);
 extern void ShootingPracticeSetupInit(void);
-extern void ChangePracticeDefenders(void);
-extern void ChangePracticeMidfield(void);
 extern void ChangePracticeDirection(void);
-extern void ShootingPracticeContinue(void);
+extern void ChangePracticeCpuSkill(void);
+extern void ChangePracticeLine(void);
+extern void ShootingPracticeRandomTeams(void);
+extern void TrainingChooseTeamsMenu(void);
+extern char _aAttackGoal[];
+extern char _aCpuSkill[];
+extern char _aPracticePlayer[];
+extern char _aPracticeCpu[];
+extern char _aPracticeDefense[];
+extern char _aPracticeMidfield[];
+extern char _aPracticePitchType[];
+extern char _aRandomTeam[];
 extern void PenaltyShootoutMenu(void);
 extern void PracticeMenuSelected(void);
 extern void User_A_Tactics(void);
@@ -608,9 +617,14 @@ extern char _asc_135D96[];
 
 /* ---- External string tables ---- */
 extern char* _allPlTeamsEqualStrTable[];
-extern char* _practiceDefendersStrTable[];
-extern char* _practiceMidfieldStrTable[];
 extern char* _practiceDirectionStrTable[];
+extern char* _practiceCpuSkillStrTable[];
+extern char* _practicePlayerDefenseStrTable[];
+extern char* _practicePlayerMidfieldStrTable[];
+extern char* _practicePlayerAttackStrTable[];
+extern char* _practiceCpuDefenseStrTable[];
+extern char* _practiceCpuMidfieldStrTable[];
+extern char* _practiceCpuAttackStrTable[];
 extern char* _autoReplaysStrTable[];
 extern char* _autoSaveHlStrTable[];
 extern char* _diyAwayGoalsStrTab[];
@@ -8035,60 +8049,162 @@ Menu_PracticeMenu _practiceMenu = {
 
 /* ---- shootingPracticeSetupMenu (SHOOTING PRACTICE) — OpenSWOS, no SWOS2.s
  * counterpart ----------------------------------------------------------------
- * The setup screen the PRACTICE submenu's SHOOTING PRACTICE button opens
- * (shooting_practice.c ShootingPracticeMenu): DEFENDERS OFF/ON and MIDFIELD
- * OFF/ON (string-table rows over g_shootingPracticeDefenders /
- * g_shootingPracticeMidfield, recoloured green/yellow by
- * ShootingPracticeSetupInit / ChangePracticeDefenders / ChangePracticeMidfield),
- * ATTACK UP/DOWN chooses the human attacking direction for the untimed session.
- * CONTINUE (ShootingPracticeContinue runs the friendly flow with the mode flag
- * set), EXIT. Hand-written like _practiceMenu above: scripts/emit_menus.py
- * splices VALUES into the braces that are already here, so the shape of a new
- * menu has to exist in C first (docs/MENUS.md section 12). */
+ * SHOOTING PRACTICE's start screen, SWOS 2020's TEAM TRAINING layout, shown by
+ * ShowFriendlyMenu in place of the friendly's own while g_shootingPracticeMode
+ * is on (src/shooting_practice_menu.c): ATTACK GOAL, CPU SKILL, the PLAYER /
+ * CPU columns of DEFENSE / MIDFIELD / ATTACK switches, PITCH TYPE (the
+ * friendly's own table and handler), CHOOSE TEAM, RANDOM TEAM, EXIT.
+ * Hand-written like _practiceMenu above: scripts/emit_menus.py splices VALUES
+ * into the braces that are already here, so the shape of a menu has to exist
+ * in C first (docs/MENUS.md section 12). */
 Menu_ShootingPracticeSetup _shootingPracticeSetupMenu = {
-    { ShootingPracticeSetupInit, ShootingPracticeSetupInit, 0, 4 },
+    { ShootingPracticeSetupInit, ShootingPracticeSetupInit, 0, 18 },
     MENU_MARK_BYTE_COORDS,
     {
-        { 92, 0, 120, 15 },
+        { 57, 0, -66, 15 },
         { MENU_CMD_COLORS, 0x17 },
         { MENU_CMD_TEXT_PTR, 0x0, _aShootingPractice },
         MENU_CMD_END
     },
     {
-        { 82, 50, -116, 15 },
-        { MENU_CMD_NAV, -1, -1, -1, 2 },
-        { MENU_CMD_COLORS, 0xE },
-        { MENU_CMD_STRING_TABLE, 0x0, _practiceDefendersStrTable },
-        { MENU_CMD_ONSELECT_FIRE, ChangePracticeDefenders },
+        { 40, 22, 110, 15 },
+        { MENU_CMD_COLORS, 0x17 },
+        { MENU_CMD_TEXT_PTR, 0x0, _aAttackGoal },
         MENU_CMD_END
     },
     {
-        { 82, 68, -116, 15 },
-        { MENU_CMD_NAV, -1, -1, 1, 3 },
-        { MENU_CMD_COLORS, 0xE },
-        { MENU_CMD_STRING_TABLE, 0x0, _practiceMidfieldStrTable },
-        { MENU_CMD_ONSELECT_FIRE, ChangePracticeMidfield },
-        MENU_CMD_END
-    },
-    {
-        { 82, 86, -116, 15 },
-        { MENU_CMD_NAV, -1, -1, 2, 4 },
-        { MENU_CMD_COLORS, 0xE },
+        { -100, 22, 124, 15 },
+        { MENU_CMD_NAV, -1, -1, -1, 4 },
+        { MENU_CMD_COLORS, 0xD },
         { MENU_CMD_STRING_TABLE, 0x0, _practiceDirectionStrTable },
         { MENU_CMD_ONSELECT_FIRE, ChangePracticeDirection },
         MENU_CMD_END
     },
     {
-        { 82, 114, -116, 15 },
-        { MENU_CMD_NAV, -1, -1, 3, 5 },
-        { MENU_CMD_COLORS, 0xE },
-        { MENU_CMD_TEXT_PTR, 0x0, _aContinue },
-        { MENU_CMD_ONSELECT_FIRE, ShootingPracticeContinue },
+        { 40, 40, 110, 15 },
+        { MENU_CMD_COLORS, 0x17 },
+        { MENU_CMD_TEXT_PTR, 0x0, _aCpuSkill },
         MENU_CMD_END
     },
     {
-        { 102, -71, 100, 15 },
-        { MENU_CMD_NAV, -1, -1, 4, -1 },
+        { -100, 40, 124, 15 },
+        { MENU_CMD_NAV, -1, -1, 2, 8 },
+        { MENU_CMD_COLORS, 0xD },
+        { MENU_CMD_STRING_TABLE, 0x0, _practiceCpuSkillStrTable },
+        { MENU_CMD_ONSELECT_FIRE, ChangePracticeCpuSkill },
+        MENU_CMD_END
+    },
+    {
+        { -100, 58, 60, 9 },
+        { MENU_CMD_COLORS, 0x0 },
+        { MENU_CMD_TEXT_PTR, 0x0, _aPracticePlayer },
+        MENU_CMD_END
+    },
+    {
+        { -36, 58, 60, 9 },
+        { MENU_CMD_COLORS, 0x0 },
+        { MENU_CMD_TEXT_PTR, 0x0, _aPracticeCpu },
+        MENU_CMD_END
+    },
+    {
+        { 40, 69, 110, 15 },
+        { MENU_CMD_COLORS, 0x17 },
+        { MENU_CMD_TEXT_PTR, 0x0, _aPracticeDefense },
+        MENU_CMD_END
+    },
+    {
+        { -100, 69, 60, 15 },
+        { MENU_CMD_NAV, -1, 9, 4, 11 },
+        { MENU_CMD_COLORS, 0xD },
+        { MENU_CMD_STRING_TABLE, 0x0, _practicePlayerDefenseStrTable },
+        { MENU_CMD_ONSELECT_FIRE, ChangePracticeLine },
+        MENU_CMD_END
+    },
+    {
+        { -36, 69, 60, 15 },
+        { MENU_CMD_NAV, 8, -1, 4, 12 },
+        { MENU_CMD_COLORS, 0xD },
+        { MENU_CMD_STRING_TABLE, 0x0, _practiceCpuDefenseStrTable },
+        { MENU_CMD_ONSELECT_FIRE, ChangePracticeLine },
+        MENU_CMD_END
+    },
+    {
+        { 40, 87, 110, 15 },
+        { MENU_CMD_COLORS, 0x17 },
+        { MENU_CMD_TEXT_PTR, 0x0, _aPracticeMidfield },
+        MENU_CMD_END
+    },
+    {
+        { -100, 87, 60, 15 },
+        { MENU_CMD_NAV, -1, 12, 8, 14 },
+        { MENU_CMD_COLORS, 0xD },
+        { MENU_CMD_STRING_TABLE, 0x0, _practicePlayerMidfieldStrTable },
+        { MENU_CMD_ONSELECT_FIRE, ChangePracticeLine },
+        MENU_CMD_END
+    },
+    {
+        { -36, 87, 60, 15 },
+        { MENU_CMD_NAV, 11, -1, 9, 15 },
+        { MENU_CMD_COLORS, 0xD },
+        { MENU_CMD_STRING_TABLE, 0x0, _practiceCpuMidfieldStrTable },
+        { MENU_CMD_ONSELECT_FIRE, ChangePracticeLine },
+        MENU_CMD_END
+    },
+    {
+        { 40, 105, 110, 15 },
+        { MENU_CMD_COLORS, 0x17 },
+        { MENU_CMD_TEXT_PTR, 0x0, _aAttack },
+        MENU_CMD_END
+    },
+    {
+        { -100, 105, 60, 15 },
+        { MENU_CMD_NAV, -1, 15, 11, 17 },
+        { MENU_CMD_COLORS, 0xD },
+        { MENU_CMD_STRING_TABLE, 0x0, _practicePlayerAttackStrTable },
+        { MENU_CMD_ONSELECT_FIRE, ChangePracticeLine },
+        MENU_CMD_END
+    },
+    {
+        { -36, 105, 60, 15 },
+        { MENU_CMD_NAV, 14, -1, 12, 17 },
+        { MENU_CMD_COLORS, 0xD },
+        { MENU_CMD_STRING_TABLE, 0x0, _practiceCpuAttackStrTable },
+        { MENU_CMD_ONSELECT_FIRE, ChangePracticeLine },
+        MENU_CMD_END
+    },
+    {
+        { 40, 125, 110, 15 },
+        { MENU_CMD_COLORS, 0x17 },
+        { MENU_CMD_TEXT_PTR, 0x0, _aPracticePitchType },
+        MENU_CMD_END
+    },
+    {
+        { -100, 125, 124, 15 },
+        { MENU_CMD_NAV, -1, -1, 14, 18 },
+        { MENU_CMD_COLORS, 0xD },
+        { MENU_CMD_STRING_TABLE, 0x0, _friendlyPitchTypeTable },
+        { MENU_CMD_ONSELECT_FIRE, FriendlyPitchTypeProc },
+        MENU_CMD_END
+    },
+    {
+        { 40, -106, 116, 15 },
+        { MENU_CMD_NAV, -1, 19, 17, 20 },
+        { MENU_CMD_COLORS, 0xE },
+        { MENU_CMD_TEXT_PTR, 0x0, _aChooseTeam },
+        { MENU_CMD_ONSELECT_FIRE, TrainingChooseTeamsMenu },
+        MENU_CMD_END
+    },
+    {
+        { -92, -106, 116, 15 },
+        { MENU_CMD_NAV, 18, -1, 17, 20 },
+        { MENU_CMD_COLORS, 0xE },
+        { MENU_CMD_TEXT_PTR, 0x0, _aRandomTeam },
+        { MENU_CMD_ONSELECT_FIRE, ShootingPracticeRandomTeams },
+        MENU_CMD_END
+    },
+    {
+        { 120, -81, 80, 15 },
+        { MENU_CMD_NAV, -1, -1, 18, -1 },
         { MENU_CMD_COLORS, 0xC },
         { MENU_CMD_TEXT_PTR, 0x0, _aExit },
         { MENU_CMD_ONSELECT_FIRE, SetExitMenuFlag },
@@ -8144,7 +8260,7 @@ Menu_ShootoutStart _shootoutStartMenu = {
         { MENU_CMD_NAV, -1, -1, -1, 4 },
         { MENU_CMD_COLORS, 0xE },
         { MENU_CMD_TEXT_PTR, 0x0, _aChooseTeams },
-        { MENU_CMD_ONSELECT_FIRE, ChooseTeamsMenu },
+        { MENU_CMD_ONSELECT_FIRE, TrainingChooseTeamsMenu },
         MENU_CMD_END
     },
     {

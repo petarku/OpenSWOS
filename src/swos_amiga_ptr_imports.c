@@ -850,26 +850,18 @@ ON_OFF_TABLE(_allPlTeamsEqualStrTable, _allPlayerTeamsEqual);
 ON_OFF_TABLE(_autoSaveHlStrTable,      _autoSaveHighlights);
 ON_OFF_TABLE(_menuMusicStrTable,       _menuMusic);
 
-/* SHOOTING PRACTICE setup screen's DEFENDERS and MIDFIELD rows: OFF / ON,
- * indexed by their flags (shooting_practice.c). Same shape as the ON/OFF
- * tables above; spelled out because the entries name their line too. */
-extern char _aDefendersOff[], _aDefendersOn[];
-extern char _aMidfieldOff[], _aMidfieldOn[];
-extern uint16_t g_shootingPracticeDefenders;
-extern uint16_t g_shootingPracticeMidfield;
-struct __attribute__((packed)) {
-    void    *indexPtr; uint16_t base; void    *entries[2];
-} _practiceDefendersStrTable = {
-    (&g_shootingPracticeDefenders), 0,
-    { (void *)_aDefendersOff, (void *)_aDefendersOn }
-};
-struct __attribute__((packed)) {
-    void    *indexPtr; uint16_t base; void    *entries[2];
-} _practiceMidfieldStrTable = {
-    (&g_shootingPracticeMidfield), 0,
-    { (void *)_aMidfieldOff, (void *)_aMidfieldOn }
-};
+/* SHOOTING PRACTICE start screen (shooting_practice_menu.c): the DEFENSE /
+ * MIDFIELD / ATTACK switches of each side, OFF / ON, indexed by their flags. */
+extern uint16_t g_practicePlayerDefense, g_practicePlayerMidfield, g_practicePlayerAttack;
+extern uint16_t g_practiceCpuDefense, g_practiceCpuMidfield, g_practiceCpuAttack;
+ON_OFF_TABLE(_practicePlayerDefenseStrTable,  &g_practicePlayerDefense);
+ON_OFF_TABLE(_practicePlayerMidfieldStrTable, &g_practicePlayerMidfield);
+ON_OFF_TABLE(_practicePlayerAttackStrTable,   &g_practicePlayerAttack);
+ON_OFF_TABLE(_practiceCpuDefenseStrTable,     &g_practiceCpuDefense);
+ON_OFF_TABLE(_practiceCpuMidfieldStrTable,    &g_practiceCpuMidfield);
+ON_OFF_TABLE(_practiceCpuAttackStrTable,      &g_practiceCpuAttack);
 
+/* Its ATTACK GOAL button: UP / DOWN. */
 extern char _aPracticeAttackUp[], _aPracticeAttackDown[];
 extern uint16_t g_shootingPracticeAttackDown;
 struct __attribute__((packed)) {
@@ -877,6 +869,19 @@ struct __attribute__((packed)) {
 } _practiceDirectionStrTable = {
     (&g_shootingPracticeAttackDown), 0,
     { (void *)_aPracticeAttackUp, (void *)_aPracticeAttackDown }
+};
+
+/* Its CPU SKILL button: RANDOM (the default: any strength), BEGINNER ..
+ * WORLD CLASS. */
+extern const char _aRandom[];
+extern char _aSkillBeginner[], _aSkillAmateur[], _aSkillProfessional[], _aSkillWorldClass[];
+extern uint16_t g_shootingPracticeCpuSkill;
+struct __attribute__((packed)) {
+    void *indexPtr; uint16_t base; void *entries[5];
+} _practiceCpuSkillStrTable = {
+    (&g_shootingPracticeCpuSkill), 0,
+    { (void *)_aRandom, (void *)_aSkillBeginner, (void *)_aSkillAmateur,
+      (void *)_aSkillProfessional, (void *)_aSkillWorldClass }
 };
 
 /* PENALTY SHOOTOUT start screen's GOALKEEPER CONTROL button: PLAYER / COMPUTER,
