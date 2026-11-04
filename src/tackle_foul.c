@@ -7,6 +7,15 @@
 #include "test_rules.h"
 #include "dos_sound.h"
 #include "contest_log.h"    /* how long a slide leaves a player down (ContestLog_Down) */
+#ifdef SWOS_SDL_BUILD
+#include <stdio.h>          /* the [card] log line */
+#define CARD_LOG(what) \
+    fprintf(stderr, "[card] %s for %.17s player %d%s\n", (what), \
+            (const char *)team->inGameTeamPtr->teamName, player->playerOrdinal, \
+            team->playerNumber == 0 && team->playerCoachNumber == 0 ? " (computer)" : "")
+#else
+#define CARD_LOG(what) ((void)0)
+#endif
 
 extern int16_t  _gsPlayerDownTimer;   /* Amiga 50 / DOS 55 — dos_gameplay.c */
 
@@ -300,21 +309,11 @@ TryBookingThePlayer(Sprite *player, TeamGeneralInfo *team)
     if (TestRules_NoInjuriesCards())
         return 1;  /* the testers' rule (test_rules.h): never book — eligibility=no */
 
-    if (_plgD3Param != 0) {
-        /* Highlight mode */
-        if (team->playerNumber == 0 &&
-            team->playerCoachNumber == 0) {
-            /* Not a human-controlled team -- check cards */
-            if ((uint16_t)player->cards != 0)
-                return 1; /* not eligible */
-        }
-    } else {
-        /* Normal mode -- need at least one human controller */
-        if (team->playerNumber == 0 &&
-            team->playerCoachNumber == 0) {
-            return 1; /* not eligible */
-        }
-    }
+    /* The original never books a computer side (a team with no human controller;
+     * SWOS2.s:26026, both releases) -- the computer fouls you all match and collects
+     * nothing for it. ai-sidegoal-improvements (experiment, always on): it is booked
+     * by the same rolls as a human side. (From game-modes-and-android f3c98c81,
+     * without its OPTIONS row.) */
 
     /* If player already has a card, check injury quota for second yellow / red */
     if ((uint16_t)player->cards != 0) {
@@ -356,6 +355,7 @@ TryBookingThePlayer(Sprite *player, TeamGeneralInfo *team)
     _lastTeamBooked = team;
     _bookedPlayer = player;
     _refTimer = 0;
+    CARD_LOG((uint16_t)player->cards == 2 ? "second yellow" : "yellow");
 
     if ((uint16_t)player->cards == 2) {
         /* Second yellow = red card (second yellow) */
@@ -393,10 +393,8 @@ TrySendingOffThePlayer(Sprite *player, TeamGeneralInfo *team)
     if (TestRules_NoInjuriesCards())
         return 1;  /* the testers' rule (test_rules.h): never send off — eligibility=no */
 
-    /* Need at least one human controller */
-    if (team->playerNumber == 0 &&
-        team->playerCoachNumber == 0)
-        return 1;
+    /* The original needs a human controller here too; a computer side is now sent
+     * off like a human one (see TryBookingThePlayer). */
 
     /* Check injury quota */
     if (team->teamNumber == 1) {
@@ -434,6 +432,7 @@ TrySendingOffThePlayer(Sprite *player, TeamGeneralInfo *team)
     _bookedPlayer = player;
     _refTimer = 0;
     _whichCard = CARD_RED;
+    CARD_LOG("RED");
 
     stats = team->teamStatsPtr;
     if ((uint16_t)player->cards == 1) {
@@ -545,6 +544,11 @@ PlayerTacklingTestFoul(Sprite *player, TeamGeneralInfo *team)
     /* It's a foul! Increment fouls counter */
     stats = team->teamStatsPtr;
     stats->foulsConceded++;
+#ifdef SWOS_SDL_BUILD
+    fprintf(stderr, "[foul] by %.17s player %d on %.17s player %d (card chance %d)\n",
+            (const char *)team->inGameTeamPtr->teamName, player->playerOrdinal,
+            (const char *)oppTeam->inGameTeamPtr->teamName, victim->playerOrdinal, _playerCardChance);
+#endif
 
     /* Check if cards are allowed */
     if (_cardsDisallowed != 0 || _trainingGame != 0)
