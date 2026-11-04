@@ -23,6 +23,7 @@ extern int16_t  _playerXQuadrantOffset;
 extern int16_t  _playerYQuadrantOffset;
 
 /* Tactics lookup table: array of raw 68k pointers to TeamTactics structures */
+#include "cpu_tactics_data.h"
 extern void *_teamTacticsTable[];
 
 /* Position lookup tables (in SWOS2.s code section) */
@@ -47,6 +48,13 @@ SetPlayerWithNoBallDestination(Sprite *player, TeamGeneralInfo *team,
 {
     /* Look up tactics structure */
     TeamTactics *tactics = (TeamTactics *)(_teamTacticsTable[team->tactics]);
+
+    /* ai-sidegoal-improvements: a computer team plays the MOZG set (cpu_tactics.c). */
+    {
+        TeamTactics *cpu = CpuTactics_For(team);
+        if (cpu)
+            tactics = cpu;
+    }
 
     /* If ball out of play: use redirect tactics */
     if (_gameState == ST_KEEPER_HOLDS_BALL ||
