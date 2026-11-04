@@ -16,6 +16,9 @@
 #include "dos_mode.h"       /* _gDosGameplay: the DOS build has no position gate here */
 #include "game_types.h"
 #include "math68k.h"
+#ifdef SWOS_SDL_BUILD
+#include <stdio.h>          /* ai-sidegoal log line */
+#endif
 
 extern Sprite          _ballSprite;
 extern int16_t         _gsResultAutoAdvance;   /* GS_660_600 600/660 — dos_gameplay.c */
@@ -305,6 +308,104 @@ FindClosestPlayerToBallFacing(uint16_t fullDir, TeamGeneralInfo *team)
 }
 
 
+/* ===== AI_SideGoalCutBack (ai-sidegoal-improvements branch, experiment) =====
+ *
+ * Not in the original. The original AI, with the ball near the byline wide of the
+ * goal, turns the player sideways toward the goal centre (choose_dir_when_not_very_close)
+ * and then refuses to shoot sideways inside 29px of the goal line (the horizontal gate)
+ * -- so he dribbles along the line into the keeper. Here, in that strip, he looks for a
+ * team mate in the box BEHIND him and cuts the ball back: turn to face him, then pass
+ * (quickFire; DoPass takes the closest team mate in the facing direction).
+ *
+ * Returns 1 when it decided this frame's controls, 0 to let the original AI run. */
+#define SIDEGOAL_STRIP        50    /* ball within this of the goal line */
+#define SIDEGOAL_MOUTH_LEFT   300   /* goal mouth x range (as AI_SetDirectionTowardOpponentsGoal) */
+#define SIDEGOAL_MOUTH_RIGHT  371
+#define SIDEGOAL_MIN_BACK     15    /* target at least this much further from the goal line */
+#define SIDEGOAL_MAX_DEPTH    170   /* target at most this far from the goal line */
+#define SIDEGOAL_MAX_WIDTH    120   /* target at most this far from the goal centre in x */
+
+static int16_t
+AI_SideGoalCutBack(TeamGeneralInfo *team, Sprite *pl, int16_t goalY)
+{
+    Sprite **sprites = team->spritesTable;
+    Sprite *best = (Sprite *)0;
+    int32_t bestScore = 0x7FFFFFFF;
+    int16_t ballX = _ballSprite.x.s.i;
+    int16_t ballY = _ballSprite.y.s.i;
+    int16_t ballDepth = (int16_t)(ballY > goalY ? ballY - goalY : goalY - ballY);
+    int16_t i, bucket;
+    int32_t ddx, ddy;
+
+    if (pl->playerOrdinal == 1)
+        return 0;
+    if (!team->playerHasBall)                       /* last frame's possession */
+        return 0;
+    if (!team->plVeryCloseToBall && !team->plCloseToBall)
+        return 0;
+    if (_ballSprite.z.s.i > 4)
+        return 0;
+    if (ballDepth > SIDEGOAL_STRIP)
+        return 0;
+    if (ballX >= SIDEGOAL_MOUTH_LEFT && ballX <= SIDEGOAL_MOUTH_RIGHT)
+        return 0;
+
+    for (i = 0; i < 11; i++) {
+        Sprite *mate = sprites[i];
+        int16_t depth, wide;
+        int32_t score;
+
+        if (mate == pl || mate->playerOrdinal == 1)
+            continue;
+        if (mate->sentAway != 0 || mate->playerState != PL_NORMAL)
+            continue;
+        depth = (int16_t)(mate->y.s.i > goalY ? mate->y.s.i - goalY : goalY - mate->y.s.i);
+        wide  = (int16_t)(mate->x.s.i > 336 ? mate->x.s.i - 336 : 336 - mate->x.s.i);
+        if (depth < ballDepth + SIDEGOAL_MIN_BACK || depth > SIDEGOAL_MAX_DEPTH)
+            continue;
+        if (wide > SIDEGOAL_MAX_WIDTH)
+            continue;
+        /* Prefer the one nearest the penalty spot (~70px out, centred). */
+        score = (int32_t)(depth - 70) * (depth - 70) + (int32_t)wide * wide;
+        if (score < bestScore) {
+            bestScore = score;
+            best = mate;
+        }
+    }
+    if (best == (Sprite *)0) {
+#ifdef SWOS_SDL_BUILD
+        static uint16_t s_lastLog = 0xFFFF;
+        if ((uint16_t)(_currentGameTick - s_lastLog) > 50) {
+            s_lastLog = _currentGameTick;
+            fprintf(stderr, "[ai-sidegoal] in strip, no mate: ball (%d,%d)\n", ballX, ballY);
+        }
+#endif
+        return 0;
+    }
+
+    /* 8-way direction from the ball to him (same convention as d5 above). */
+    bucket = (int16_t)CalculateDeltaXAndY(best->x.s.i, best->y.s.i,
+                                          ballX, ballY, 256, &ddx, &ddy);
+    if (bucket < 0)
+        bucket = 0;
+    bucket = (int16_t)((((uint16_t)bucket + 16) & 0xFF) >> 5);
+
+    team->currentAllowedDirection = bucket;
+    if (pl->direction != bucket)
+        return 1;                                   /* still turning to face him */
+
+    if (_aiResumePlayTimer != 0 || team->passKickTimer >= 13)
+        return 1;
+    _aiResumePlayTimer = 15;
+    team->quickFire = 1;
+#ifdef SWOS_SDL_BUILD
+    fprintf(stderr, "[ai-sidegoal] cut-back: ball (%d,%d) dir %d -> mate (%d,%d)\n",
+            ballX, ballY, bucket, best->x.s.i, best->y.s.i);
+#endif
+    return 1;
+}
+
+
 /* ===== AI_SetControlsDirection =====
  *
  * Main AI controller for computer-controlled teams.
@@ -515,6 +616,11 @@ AI_SetControlsDirection(TeamGeneralInfo *team)
     /* Check if we're in spin mode */
     if (team->spinTimer >= 0)
         goto we_have_ball_spin;
+
+    /* ai-sidegoal-improvements: cut back from the byline instead of walking
+     * into the keeper. */
+    if (AI_SideGoalCutBack(team, a5, goalY))
+        return;
 
     /* Check if a player is near the ball */
     if (team->plVeryCloseToBall != 0 || team->plCloseToBall != 0)
