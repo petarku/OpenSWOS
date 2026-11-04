@@ -719,8 +719,12 @@ UpdatePlayerSpeed(Sprite *player, TeamGeneralInfo *team)
         player->speed = curSpeed;
     }
 
-    /* Injury speed handicap (only for human or coached teams) */
-    if (team->playerNumber != 0 || team->playerCoachNumber != 0) {
+    /* Injury speed handicap. The original gives it only to human or coached teams: a
+     * computer side's injured player ran at full speed. ai-sidegoal-improvements: every
+     * side's (a computer side's light injury plays on slowed, a serious one is taken off
+     * -- bench_subs.c cpuSubstituteInjured; none of it carries to the next match, as
+     * before: UpdatePlayerInjuries skips computer teams). */
+    {
         uint8_t injuries = (uint8_t)pi->injuriesBitfield;
         if (injuries != 0) {
             int16_t handicapIdx = (injuries & 0xE0) >> 4;

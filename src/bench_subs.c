@@ -22,6 +22,9 @@
  */
 
 #include "bench_subs.h"
+#ifdef SWOS_SDL_BUILD
+#include <stdio.h>          /* the [cpu-sub] log line */
+#endif
 #include "dos_sound.h"
 #include "game_types.h"
 #include "game_state.h"
@@ -241,6 +244,7 @@ static void drawSubstitutesMenuEntry(uint16_t y, uint16_t baseColor, int16_t sel
                                      uint8_t *charsTable, TeamGame *teamGame, uint16_t *playerOffsets);
 static void drawFormationMenu(void);
 static void drawFormationMenuEntry(uint8_t *charsTable, uint16_t y, uint16_t entryColor, uint16_t entryIndex);
+static int16_t cpuSubstituteInjured(TeamGeneralInfo *team);
 
 /* ================================================================
  * BenchCheckControls
@@ -318,6 +322,11 @@ BenchCheckControls(void)
 
     if (_gameState >= ST_STARTING_GAME && _gameState <= ST_GAME_ENDED)
         goto reset_bench_tap_state;
+
+    /* ai-sidegoal-improvements: a computer side takes off a seriously injured player
+     * here, at a stoppage where a human could open the bench. */
+    if (cpuSubstituteInjured(&_topTeamData) || cpuSubstituteInjured(&_bottomTeamData))
+        return;
 
     /* check if either player has called the bench */
     a6 = &_topTeamData;
@@ -3212,4 +3221,176 @@ dec_scan:
     _benchPlayerIndex--;
     if (_benchPlayerIndex == 0) return;
     if (IsThisPlayerOkToSelect() < 0) goto dec_scan;
+}
+
+/* ================================================================
+ * cpuSubstituteInjured -- ai-sidegoal-improvements (experiment, not in the original)
+ *
+ * The original never substitutes for a computer side: every substitution goes through
+ * the bench menu a human opens. Here a computer team (no player, no coach) takes off a
+ * SERIOUSLY injured player -- the blinking cross, injury level 2 and up -- at the next
+ * stoppage where a human could open the bench (BenchCheckControls' gates). A light
+ * injury (the steady cross, level 1) plays on. No menu and no camera: the same data
+ * steps as selectPlayerToSubstituteMenuHandler + substitutePlayer, and the substitute
+ * stands where the injured player was.
+ *
+ * Who comes on: for the keeper, the reserve keeper (bench index 11) or nobody; for an
+ * outfield player, a bench player of the same position, else the same line
+ * (findInitialPlayerToBeSubstituted's groups), else anyone available -- never the
+ * reserve keeper.
+ *
+ * Returns 1 if it substituted (one per frame), 0 if not.
+ * ================================================================ */
+static int16_t cpuInSameLine(int8_t a, int8_t b)
+{
+    if (a == b)
+        return 1;
+    if ((a == POS_DEFENDER || a == POS_RIGHT_BACK || a == POS_LEFT_BACK) &&
+        (b == POS_DEFENDER || b == POS_RIGHT_BACK || b == POS_LEFT_BACK))
+        return 1;
+    if ((a == POS_MIDFIELDER || a == POS_RIGHT_WING || a == POS_LEFT_WING) &&
+        (b == POS_MIDFIELDER || b == POS_RIGHT_WING || b == POS_LEFT_WING))
+        return 1;
+    return 0;
+}
+
+#ifdef SWOS_SDL_BUILD
+/* Why a seriously injured computer player stays on, said once per stoppage-ish. */
+static void cpuSubWhy(const TeamGame *tg, int16_t out, const char *why)
+{
+    static uint16_t s_lastWhy = 0xFFFF;
+    if ((uint16_t)(_frameCount - s_lastWhy) > 200) {
+        s_lastWhy = (uint16_t)_frameCount;
+        fprintf(stderr, "[cpu-sub] %.17s: slot %d seriously injured, stays on: %s\n",
+                (const char *)tg->teamName, out, why);
+    }
+}
+#define CPU_SUB_WHY(why) cpuSubWhy(tg, out, (why))
+#else
+#define CPU_SUB_WHY(why) ((void)0)
+#endif
+
+static int16_t cpuSubstituteInjured(TeamGeneralInfo *team)
+{
+    TeamGame *tg;
+    uint16_t *numSubs, *gkReplaced;
+    int16_t out, in, s, bestRank, outLevel;
+    PlayerInfo *outPi;
+    Sprite *spr;
+
+    if (_trainingGame != 0)
+        return 0;
+    if (team->playerNumber != 0 || team->playerCoachNumber != 0)
+        return 0;
+
+    if ((uint16_t)team->teamNumber == 1) {
+        tg = _topTeamPtr;
+        numSubs = &_team1NumSubs;
+        gkReplaced = &_team1GoalkeeperReplaced;
+    } else {
+        tg = _bottomTeamPtr;
+        numSubs = &_team2NumSubs;
+        gkReplaced = &_team2GoalkeeperReplaced;
+    }
+    /* The seriously injured player still on the pitch. */
+    out = -1;
+    for (s = 0; s < 11; s++) {
+        PlayerInfo *pi = piFromOffset(tg, _ingameTeamPlayerOffsets[s]);
+        if (team->spritesTable[s]->sentAway != 0 || (uint8_t)pi->numYellowCards >= 2)
+            continue;
+        if (pi->isInjured && ((uint8_t)pi->injuriesBitfield & 0xE0) >= 0x40) {
+            out = s;
+            break;
+        }
+    }
+    if (out < 0)
+        return 0;
+    outPi = piFromOffset(tg, _ingameTeamPlayerOffsets[out]);
+    outLevel = (int16_t)(((uint8_t)outPi->injuriesBitfield & 0xE0) >> 5);
+    if (*numSubs >= _maxSubsPerTeam) {
+        CPU_SUB_WHY("no substitutions left");
+        return 0;
+    }
+
+    /* Who comes on. Rank: 3 same position, 2 same line, 1 anyone. */
+    in = -1;
+    bestRank = 0;
+    for (s = 11; s <= 15; s++) {
+        PlayerInfo *pi = piFromOffset(tg, _ingameTeamPlayerOffsets[s]);
+        int16_t rank;
+        if (pi->skip != 0 || (int8_t)pi->position < 0 || (uint8_t)pi->numYellowCards >= 2)
+            continue;
+        if (out == 0) {
+            rank = (s == 11 && pi->position == POS_GOALKEEPER) ? 3 : 0;
+        } else {
+            if (s == 11 || pi->position == POS_GOALKEEPER)
+                continue;
+            rank = pi->position == outPi->position ? 3
+                 : cpuInSameLine(pi->position, outPi->position) ? 2 : 1;
+        }
+        if (rank > bestRank) {
+            bestRank = rank;
+            in = s;
+        }
+    }
+    if (in < 0) {
+        CPU_SUB_WHY("nobody on the bench can come on");
+        return 0;
+    }
+
+    /* selectPlayerToSubstituteMenuHandler's counting ... */
+    (*numSubs)++;
+    if (in == 11)
+        (*gkReplaced)++;
+
+    /* ... and substitutePlayer's swap, on this team. */
+    {
+        uintptr_t savedBenchTeam = _benchTeam, savedBenchTeamGame = _benchTeamGame;
+        uint8_t *bytes = (uint8_t *)tg;
+        uint16_t offIn = _ingameTeamPlayerOffsets[in];
+        uint16_t offOut = _ingameTeamPlayerOffsets[out];
+        int16_t i;
+
+        _benchTeam = (uintptr_t)team;
+        _benchTeamGame = (uintptr_t)tg;
+
+        spr = team->spritesTable[out];
+        spr->injuryLevel = 0;
+        spr->sentAway = 0;
+        spr->cards = 0;
+
+        if ((uint16_t)tg->markedPlayer == (uint16_t)out)
+            tg->markedPlayer = (int16_t)0xFFFF;
+        if ((uint16_t)tg->markedPlayer == (uint16_t)in)
+            tg->markedPlayer = (int16_t)(out != 0 ? out : 0xFFFF);
+
+        swapPlayerNameData(in, out);
+        bytes[offOut + 42 + 4] = 0xFF;          /* the leaving player is used up */
+        for (i = 60; i >= 0; i--) {
+            uint8_t tmp = bytes[offIn + 42 + i];
+            bytes[offIn + 42 + i] = bytes[offOut + 42 + i];
+            bytes[offOut + 42 + i] = tmp;
+        }
+
+        InitializePlayerSpriteFrameIndices();
+        ApplyTeamTactics(tg);
+
+        _benchTeam = savedBenchTeam;
+        _benchTeamGame = savedBenchTeamGame;
+    }
+
+    /* The substitute is fresh: on his feet, not rolling about. */
+    if (spr->playerState == PL_ROLLING_INJURED || spr->playerState == PL_TACKLED) {
+        spr->playerState = PL_NORMAL;
+        spr->playerDownTimer = 0;
+        SetPlayerAnimationTable(&_playerNormalStandingAnimTable, spr);
+    }
+    DOS_SOUND(DOS_EV_SUBSTITUTION, 0);
+
+#ifdef SWOS_SDL_BUILD
+    { extern uint8_t _gameTime[4]; fprintf(stderr, "[cpu-sub] minute %d%d%d: ", _gameTime[1], _gameTime[2], _gameTime[3]); }
+    fprintf(stderr, "%.17s: slot %d off (injury level %d), bench %d on (%s)\n",
+            (const char *)tg->teamName, out, outLevel, in, bestRank == 3 ? "same position" : bestRank == 2 ? "same line" : "any");
+#endif
+    return 1;
 }

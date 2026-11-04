@@ -244,6 +244,12 @@ PlayerTackled(Sprite *player, TeamGeneralInfo *team)
 
     /* Roll for injury */
     roll = Rand();
+#ifdef SWOS_SDL_BUILD
+    /* Test switch (ai-sidegoal-improvements): SWOS_TEST_SERIOUS_INJURIES=1 makes every
+     * tackle a serious injury (level 4), to prove the computer's substitutions. */
+    { extern char *getenv(const char *);
+      if (getenv("SWOS_TEST_SERIOUS_INJURIES")) { severity = 0x80; goto apply_injury; } }
+#endif
     if ((uint8_t)roll >= probTable[gameLen])
         goto set_tackled;
 
@@ -268,6 +274,13 @@ PlayerTackled(Sprite *player, TeamGeneralInfo *team)
 
 apply_injury:
     pi->isInjured = 1;
+#ifdef SWOS_SDL_BUILD
+    { extern uint8_t _gameTime[4];   /* the clock's digits: [1] hundreds, [2] tens, [3] ones */
+      fprintf(stderr, "[injury] minute %d%d%d: ", _gameTime[1], _gameTime[2], _gameTime[3]); }
+    fprintf(stderr, "%.17s player %d%s, level %d (%s)\n", (const char *)team->inGameTeamPtr->teamName,
+            player->playerOrdinal, team->playerNumber == 0 && team->playerCoachNumber == 0 ? " (computer)" : "",
+            (severity & 0xE0) >> 5, (severity & 0xE0) >= 0x40 ? "serious, blinking" : "light, cross");
+#endif
     DOS_SOUND(DOS_EV_INJURY, team->playerNumber != 0);
 
     /* Only upgrade injury severity, never downgrade */
