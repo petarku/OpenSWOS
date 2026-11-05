@@ -203,6 +203,21 @@ static int16_t placeFromStick(int16_t dir)
     }
 }
 
+/* A human TAKER since 2026-11-05 (the user's play test: LEFT alone kicked with
+ * no lean, the shootout lets him face only NW / N / NE): the stick picks the
+ * SIDE -- anything with LEFT in it the left, with RIGHT the right, else the
+ * middle -- and the press the HEIGHT: a held (strong) press high, a tap low.
+ * So UP+LEFT does both heights and the taker leans with every side kick. The
+ * keeper still guesses with the stick alone (placeFromStick). */
+static int16_t takerPlace(int16_t dir, int16_t strong)
+{
+    switch (dir) {
+    case 5: case 6: case 7: return strong ? 7 : 6;
+    case 1: case 2: case 3: return strong ? 1 : 2;
+    default:                return SHOT_CENTER;
+    }
+}
+
 static int16_t randomPlace(void)
 {
     static const int16_t k_places[5] = { 7, 6, SHOT_CENTER, 1, 2 };
@@ -226,7 +241,7 @@ static int16_t ballDistanceToKeeper(const Sprite *keeper, const Sprite *ball)
                           : (int16_t)(keeper->y.s.i - ball->y.s.i);
 }
 
-void PenaltyShootout_ShotStruck(Sprite *shooter, TeamGeneralInfo *team)
+void PenaltyShootout_ShotStruck(Sprite *shooter, TeamGeneralInfo *team, int16_t strong)
 {
     Sprite *ball = &_ballSprite;
     int16_t place;
@@ -235,7 +250,7 @@ void PenaltyShootout_ShotStruck(Sprite *shooter, TeamGeneralInfo *team)
     if (!s_shootoutMatch || !_playingPenalties || _gameState != ST_PENALTIES)
         return;
 
-    place = team->playerNumber ? placeFromStick(team->direction) : randomPlace();
+    place = team->playerNumber ? takerPlace(team->direction, strong) : randomPlace();
 
     s_shot.active = 1;
     s_shot.frame = 0;

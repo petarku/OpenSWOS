@@ -81,11 +81,12 @@ int16_t ManualKeeper_DiveInput(TeamGeneralInfo *team);
 /* FIVE PLACES — how a kick is decided IN THE DRILL
  * (penalty_shootout.c, docs/PENALTY_SHOOTOUT.md). Every kick goes, always on
  * target, to one of five places: high left, left, the middle, right, high
- * right. A computer taker picks one; a human aims with the stick as he
- * strikes (UP+LEFT, LEFT or DOWN+LEFT, nothing / UP / DOWN, RIGHT or
- * DOWN+RIGHT, UP+RIGHT). The keeper commits to a place the same way when the
- * ball reaches him; the same place is a save, any other a goal. Physics plays
- * no part.
+ * right. A computer taker picks one; a human taker picks the side with the
+ * stick (anything with LEFT / RIGHT in it, else the middle) and the height
+ * with the press, as for a pass and a shot: held high, a tap low. The keeper
+ * commits with the stick alone when the ball reaches him (UP+LEFT, LEFT or
+ * DOWN+LEFT, nothing / UP / DOWN, RIGHT or DOWN+RIGHT, UP+RIGHT); the same
+ * place is a save, any other a goal. Physics plays no part.
  *
  *   ShotStruck   — the kick sites (update_players.c), after the engine's own
  *                  kick: picks the place and takes the ball over.
@@ -94,7 +95,8 @@ int16_t ManualKeeper_DiveInput(TeamGeneralInfo *team);
  *                  1 = handled this frame.
  *   BallScripted — non-zero while it flies: the keeper's own catch, claim
  *                  and deflect checks stand aside (the guess decides). */
-void    PenaltyShootout_ShotStruck(Sprite *shooter, TeamGeneralInfo *team);
+void    PenaltyShootout_ShotStruck(Sprite *shooter, TeamGeneralInfo *team,
+                                  int16_t strong);   /* 1 held fire (shot), 0 a tap (pass) */
 int16_t PenaltyShootout_ScriptBall(Sprite *ball);
 int16_t PenaltyShootout_Keeper(Sprite *keeper, Sprite *ball, TeamGeneralInfo *team);
 int16_t PenaltyShootout_BallScripted(void);

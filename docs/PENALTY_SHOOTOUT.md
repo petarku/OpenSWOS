@@ -104,15 +104,20 @@ In PENALTY SHOOTOUT (the drill only, not a cup tie's shootout) physics plays
 no part in a kick. Every kick is **on target**, going to one of **five places**,
 and the keeper's guess decides it: **same place = save, any other = goal**.
 
-| place | taker aims with / keeper guesses with |
-|---|---|
-| high left | UP + LEFT |
-| left (low) | LEFT or DOWN + LEFT |
-| the middle | nothing, UP or DOWN |
-| right (low) | RIGHT or DOWN + RIGHT |
-| high right | UP + RIGHT |
+| place | taker aims with | keeper guesses with |
+|---|---|---|
+| high left | any LEFT, fire held (a shot) | UP + LEFT |
+| left (low) | any LEFT, fire tapped (a pass) | LEFT or DOWN + LEFT |
+| the middle | nothing, UP or DOWN | nothing, UP or DOWN |
+| right (low) | any RIGHT, fire tapped (a pass) | RIGHT or DOWN + RIGHT |
+| high right | any RIGHT, fire held (a shot) | UP + RIGHT |
 
-- **Takers.** A human taker aims with the stick at the moment he strikes. A
+- **Takers.** A human taker picks the side with the stick at the moment he
+  strikes ("any LEFT": UP + LEFT, LEFT or DOWN + LEFT) and the height with the
+  press, as the game tells a pass from a shot: held is high, a tap low. Since
+  2026-11-05 -- before, LEFT alone was the low kick, and the taker kicked it
+  facing straight up: the shootout lets him face only NW, N and NE, so only
+  UP + side leaned him into the kick. Now UP + side does both heights. A
   computer taker picks one of the five at random. Both kick sites
   (`PlayerKickingBall`, `DoPass` in `src/update_players.c`) call
   `PenaltyShootout_ShotStruck`.

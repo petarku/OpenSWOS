@@ -18,6 +18,7 @@ Sprite _ballSprite;
 int16_t _gameState;
 Sprite *_lastPlayerPlayed;
 static int s_claims, s_dives, s_lowDives, s_catches;
+static int16_t s_strong = 1;   /* the taker's press: 1 held (a shot), 0 a tap (a pass) */
 static uint16_t s_rand;
 uint16_t Rand(void) { return s_rand++; }
 void PlayMissGoalSample(void) {}
@@ -64,7 +65,7 @@ static int playKick(int shooterDir, int keeperDir, int humanShooter, int humanKe
     s_claims = 0;
 
     _gameState = ST_PENALTIES;
-    PenaltyShootout_ShotStruck(0, &_bottomTeamData);
+    PenaltyShootout_ShotStruck(0, &_bottomTeamData, s_strong);
     assert(PenaltyShootout_BallScripted());
     _gameState = ST_GAME_IN_PROGRESS;
     for (frame = 0; frame < 40 && PenaltyShootout_BallScripted(); frame++) {
@@ -84,7 +85,18 @@ static int playKick(int shooterDir, int keeperDir, int humanShooter, int humanKe
     return 0;
 }
 
-/* The five places: DOWN+side is that side, UP / DOWN / nothing the middle. */
+/* The taker's place: the side from the stick (anything with LEFT / RIGHT in
+ * it), the height from the press -- held high, a tap low. */
+static int takerPlaceOf(int dir, int strong)
+{
+    switch (dir) {
+    case 5: case 6: case 7: return strong ? 7 : 6;
+    case 1: case 2: case 3: return strong ? 1 : 2;
+    default: return 8;
+    }
+}
+
+/* The keeper's five places: DOWN+side is that side, UP / DOWN / nothing the middle. */
 static int placeOf(int dir)
 {
     switch (dir) {
@@ -103,10 +115,12 @@ static void testFivePlaces(void)
     g_penaltyShootoutMode = 1;
     PenaltyShootout_BeginMatch();
 
-    /* Human v human: every stick against every stick. */
-    for (s = -1; s < 8; s++)
-        for (k = -1; k < 8; k++)
-            assert(playKick(s, k, 1, 1) == (placeOf(s) == placeOf(k)));
+    /* Human v human: every stick and press against every stick. */
+    for (s_strong = 0; s_strong < 2; s_strong++)
+        for (s = -1; s < 8; s++)
+            for (k = -1; k < 8; k++)
+                assert(playKick(s, k, 1, 1) == (takerPlaceOf(s, s_strong) == placeOf(k)));
+    s_strong = 1;
 
     /* The keeper's dive follows his place: UP+side a high dive, the side
      * (with or without DOWN) a low one, the middle stands. */
@@ -141,7 +155,7 @@ static void testFivePlaces(void)
     g_penaltyShootoutMode = 0;
     PenaltyShootout_BeginMatch();
     _gameState = ST_PENALTIES;
-    PenaltyShootout_ShotStruck(0, &_bottomTeamData);
+    PenaltyShootout_ShotStruck(0, &_bottomTeamData, s_strong);
     assert(!PenaltyShootout_BallScripted());
     _playingPenalties = 0;
     puts("five places: every shot against every guess, dives, CPU taker passed");

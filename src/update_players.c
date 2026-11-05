@@ -1583,8 +1583,8 @@ not_in_penalty:
             _playerHadBall = 0;
             ball->z.s.i = 0;
             DoPass(player, team);
-            if (_playingPenalties)          /* the drill's EIGHT PLACES */
-                PenaltyShootout_ShotStruck(player, team);
+            if (_playingPenalties)          /* the drill's FIVE PLACES: a tap is low */
+                PenaltyShootout_ShotStruck(player, team, 0);
             team->lastHeadingTacklingPlayer = player;
 
             if (_gameStatePl != ST_GAME_IN_PROGRESS) {
@@ -1637,8 +1637,8 @@ not_in_penalty:
             _penalty = 0;
             _playerHadBall = 0;
             PlayerKickingBall(player, team);
-            if (_playingPenalties)          /* the drill's EIGHT PLACES */
-                PenaltyShootout_ShotStruck(player, team);
+            if (_playingPenalties)          /* the drill's FIVE PLACES: held is high */
+                PenaltyShootout_ShotStruck(player, team, 1);
             team->lastHeadingTacklingPlayer = player;
 
             if (_gameStatePl != ST_GAME_IN_PROGRESS) {
