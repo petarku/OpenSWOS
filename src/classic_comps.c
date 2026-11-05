@@ -94,6 +94,7 @@ static struct {
     char    name[kListRows][kNameLen];   /* the competition's own name */
     char    title[kNameLen];
     char    teams[kTeamSlots][18];
+    int8_t  order[kTeamSlots];           /* the teams screen's order: by name */
 } s;
 
 /* strlen/strcmp: the Amiga's minimal C library has neither. */
@@ -344,9 +345,10 @@ static int8_t s_wide;     /* the buttons are in three columns, row by row */
 static int32_t team_of_entry(uint16_t ordinal)
 {
     int32_t slot = (int32_t)ordinal - ClassicTeams_first;
-    if (s_wide)
-        return slot;
-    return slot % kTeamRows * kTeamColumns + slot / kTeamRows;
+    int32_t pos = s_wide ? slot : slot % kTeamRows * kTeamColumns + slot / kTeamRows;
+    /* Shown A to Z so a team is easy to find; the competition's own order (its groups,
+     * its draw) is _selectedTeams', which this never changes. */
+    return pos >= 0 && pos < _numSelectedTeams ? s.order[pos] : pos;
 }
 
 /* Three columns across the four's span, from the top-left button down, and the cursor's
@@ -483,9 +485,13 @@ static int32_t load_competition(int32_t group, int32_t pick)
         return 0;
     }
     for (i = 0; i < _numSelectedTeams; i++) {
+        int32_t j;
         _selectedTeams[i].team.teamControls = TEAM_COMPUTER;
         memcpy(s.teams[i], _selectedTeams[i].team.teamName, 17);
         s.teams[i][17] = 0;
+        for (j = i; j > 0 && str_cmp(s.teams[i], s.teams[s.order[j - 1]]) < 0; j--)
+            s.order[j] = s.order[j - 1];     /* at most 64: insertion sort, stable */
+        s.order[j] = (int8_t)i;
     }
     return 1;
 }
