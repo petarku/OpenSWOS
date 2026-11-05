@@ -71,8 +71,8 @@ extern int16_t _gameState;
 
 /* Colours: the match palette's first 16 (OCS and AGA alike); sprites are 16
  * colours on both targets. 8 is the font's own shadow colour, a dark green. */
-enum { C_WHITE = 2, C_BLACK = 3, C_DARK = 8, C_RED = 10, C_LIGHT_BLUE = 13,
-       C_GREEN = 14 };
+enum { C_WHITE = 2, C_BLACK = 3, C_BROWN = 4, C_DARK = 8, C_RED = 10, C_MAROON = 12,
+       C_LIGHT_BLUE = 13, C_GREEN = 14 };
 
 /* ---- the kick record -------------------------------------------------- */
 
@@ -407,6 +407,29 @@ static const uint8_t *controlLabel(const TeamGeneralInfo *t)
  * are as long as the side's longest name needs. */
 static int16_t s_panelTeam = -1, s_panelSlot = -1;
 
+/* As SWOS 2020 draws it: your side's takers on dark red, the other side's on red,
+ * the one at the spot light blue on both. "Yours" is PLAYER 1's side; with no
+ * PLAYER 1, a human side; with none, team 1. */
+static int16_t isYourSide(const TeamGeneralInfo *t)
+{
+    const TeamGeneralInfo *o = t == &_topTeamData ? &_bottomTeamData : &_topTeamData;
+    if (t->playerNumber == 1 || o->playerNumber == 1)
+        return t->playerNumber == 1;
+    if ((t->playerNumber != 0) != (o->playerNumber != 0))
+        return t->playerNumber != 0;
+    return t->teamNumber == 1;
+}
+
+/* Dark red is the maroon kit's entry 12, which a match with purple in it repaints
+ * purple (team_colors.c); the dark brown-red 4 stands in then. */
+static uint8_t takersBarColor(const TeamGeneralInfo *t)
+{
+    extern int32_t TeamColors_PurpleInMatch(void);
+    if (!isYourSide(t))
+        return C_RED;
+    return TeamColors_PurpleInMatch() ? C_BROWN : C_MAROON;
+}
+
 static void paintPanel(void)
 {
     TeamGeneralInfo *t = &_bottomTeamData;
@@ -435,7 +458,7 @@ static void paintPanel(void)
         int16_t x = 1;
 
         canvasFill(&s_panel, 0, (int16_t)(y - 1), (int16_t)(barW + 2), 10, C_BLACK);  /* rows share an edge */
-        canvasFill(&s_panel, 1, y, barW, 8, slot == current ? C_LIGHT_BLUE : C_RED);
+        canvasFill(&s_panel, 1, y, barW, 8, slot == current ? C_LIGHT_BLUE : takersBarColor(t));
         if (face) {
             canvasSprite(&s_panel, _playerFacesTable[(uint8_t)pi->face], x, y);
             x = (int16_t)(x + face);
