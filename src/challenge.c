@@ -190,6 +190,8 @@ static uint32_t      s_setupLen, s_stateLen;
 static ChallengeInfo s_info;
 static int32_t       s_armed;
 static int32_t       s_stateLoaded;
+static int32_t       s_noticeFrames;
+static char          s_notice[24];
 /* The menus' own setup globals, kept across a challenge (Challenge_Play). */
 static uint16_t      s_menuScalars[64];
 
@@ -329,8 +331,279 @@ static uint8_t rules_here(void)
     return r;
 }
 
-/* Positions are not saved by this build: it plays only the bundled challenge
- * collection (src/challenge_collection.c, docs/CHALLENGE_COLLECTION.md). */
+static uint16_t clock_minute(void)
+{
+    return (uint16_t)(_gameTime[1] * 100 + _gameTime[2] * 10 + _gameTime[3]);
+}
+
+/* ---- saving ---- */
+
+/* How many sides a human is playing, asked of the match itself rather than of the menu
+ * globals: a side is somebody's if its TeamGeneralInfo names a player or a player-coach,
+ * which is the same question MatchStep_TeamOwner asks to route a bench call, and what
+ * MainKeysCheck's own ESC handler reads to decide whose match it is. */
+static int32_t human_sides(void)
+{
+    int32_t n = 0;
+    if (_topTeamData.playerNumber || _topTeamData.playerCoachNumber)       n++;
+    if (_bottomTeamData.playerNumber || _bottomTeamData.playerCoachNumber) n++;
+    return n;
+}
+
+int32_t Challenge_CanSave(void)
+{
+    /* A match has to be running. */
+    if (!_playGame)
+        return 0;
+    /* One human side against the computer, and only that: a challenge is a position you
+     * play out yourself (docs/CHALLENGE.md). The same pair of globals the shooting-practice
+     * latch reads, and the same question -- exactly one computer side. */
+    if (human_sides() != 1)
+        return 0;       /* two players, or a match nobody is playing */
+    /* Not in the middle of something that is not a position. */
+    if (_inSubstitutesMenu || _replayState || _playHighlightFlag)
+        return 0;
+    if (_gameState == ST_RESULT_AFTER_THE_GAME || _gameState == ST_RESULT_ON_HALFTIME)
+        return 0;
+#ifdef SWOS_SDL_BUILD
+    {
+        /* A live match's position is the other player's too, and writing a file inside a
+         * frame would stall them. Its own reason, rather than relying on the rule above --
+         * which already excludes it, both sides being human. */
+        extern int32_t NetplayMatch_IsLive(void);
+        if (NetplayMatch_IsLive())
+            return 0;
+    }
+#endif
+    return 1;
+}
+
+static void name_for_slot(int32_t slot, uint8_t *out)
+{
+    /* CHAL01.CHL .. CHAL99.CHL -- an 8.3 name, which the Amiga and the game's own file
+     * picker both want. */
+    out[0] = 'C'; out[1] = 'H'; out[2] = 'A'; out[3] = 'L';
+    out[4] = (uint8_t)('0' + (slot / 10) % 10);
+    out[5] = (uint8_t)('0' + slot % 10);
+    out[6] = '.'; out[7] = 'C'; out[8] = 'H'; out[9] = 'L'; out[10] = 0;
+}
+
+/* TEMPORARY (both targets, but it exists for the Amiga, which writes no log): how far the
+ * save key got, in a 16-byte CHALDBG.BIN beside the binary. Remove once saving a position
+ * is proven on the m68k target. */
+#define CHAL_DBG_KEY    1   /* the key reached the handler */
+#define CHAL_DBG_GATE   2   /* refused: a=human sides, b=game state */
+#define CHAL_DBG_HOLD   3   /* refused: the per-press hold-off */
+#define CHAL_DBG_MEM    4   /* out of memory: a=bytes wanted */
+#define CHAL_DBG_PTRS   5   /* a=pointers in the state with no identity */
+#define CHAL_DBG_WRITE  6   /* the file would not write: a=slot */
+#define CHAL_DBG_OK     7   /* written: a=slot, b=bytes */
+
+static void chal_dbg(uint8_t stage, uint32_t a, uint32_t b)
+{
+    uint8_t d[16];
+    d[0] = 'C'; d[1] = 'D'; d[2] = 'B'; d[3] = 'G';
+    d[4] = stage;
+    d[5] = (uint8_t)(_playGame != 0);
+    d[6] = (uint8_t)human_sides();
+    d[7] = (uint8_t)(_gameState & 0xFF);
+    BE_WRITE_U32(d + 8, a);
+    BE_WRITE_U32(d + 12, b);
+    swos_io_save((const uint8_t *)"CHALDBG.BIN", d, sizeof d);
+}
+
+/* The first CHALnn slot with no file in it, so a session can keep several positions. */
+static int32_t next_free_slot(void)
+{
+    uint8_t name[12];
+    int32_t slot;
+    for (slot = 1; slot < 100; slot++) {
+        uint8_t  *probe = NULL;
+        uint32_t  probeLen = 0;
+        name_for_slot(slot, name);
+        if (swos_io_load_alloc(name, &probe, &probeLen) != 0)
+            break;
+        swos_io_free(probe);
+    }
+    return slot < 100 ? slot : 99;              /* all taken: overwrite the last */
+}
+
+/* The encode and the write, for a caller that has already passed the gate and picked
+ * the name. Both saving paths -- the in-match key and the generator -- end here. */
+static int32_t save_position_as(const uint8_t *name)
+{
+    uint8_t  *buf;
+    uint8_t  *p;
+    uint32_t  stateLen, total;
+    int32_t   unresolved;
+
+    stateLen = SimState_PortableSize(SIM_TIER_SIM);
+    total = CHAL_HEADER_BYTES + (uint32_t)SETUP_BYTES + stateLen;
+    buf = (uint8_t *)swos_io_alloc(total);
+    if (!buf) {
+        CHAL_LOG("no memory for a %u-byte position\n", (unsigned)total);
+        chal_dbg(CHAL_DBG_MEM, total, 0);
+        return 1;
+    }
+    memset(buf, 0, total);
+
+    /* The state first: if a pointer in it has no identity the file would be unreadable
+     * anywhere, so nothing is written at all. */
+    unresolved = SimState_SavePortable(buf + CHAL_HEADER_BYTES + SETUP_BYTES, SIM_TIER_SIM);
+    if (unresolved != 0) {
+        CHAL_LOG("not saved: %d pointers in the match state have no identity\n", unresolved);
+        /* a = how many had no identity, b = the KIND of the last one (SIM_PTR_*) in the
+         * top byte and its value in the rest -- enough to name the class responsible. */
+        chal_dbg(CHAL_DBG_PTRS, (uint32_t)unresolved,
+                 (SimState_LastUnidentifiedKind() << 28) |
+                 (SimState_LastUnidentifiedPtr() & 0x0FFFFFFFu));
+        swos_io_free(buf);
+        return 1;
+    }
+    setup_write(buf + CHAL_HEADER_BYTES);
+
+    p = buf;
+    BE_WRITE_U32(p +  0, CHAL_MAGIC);
+    BE_WRITE_U16(p +  4, CHAL_VERSION);
+    BE_WRITE_U16(p +  6, 0);
+    BE_WRITE_U32(p +  8, (uint32_t)(SimState_LayoutHash() >> 32));
+    BE_WRITE_U32(p + 12, (uint32_t)SimState_LayoutHash());
+    BE_WRITE_U32(p + 16, (uint32_t)(SimState_Hash(SIM_TIER_SIM) >> 32));
+    BE_WRITE_U32(p + 20, (uint32_t)SimState_Hash(SIM_TIER_SIM));
+    BE_WRITE_U32(p + 24, (uint32_t)_frameCount);
+    BE_WRITE_U32(p + 28, (uint32_t)SETUP_BYTES);
+    BE_WRITE_U32(p + 32, stateLen);
+    BE_WRITE_U16(p + 36, (uint16_t)_sim_draw_width);
+    BE_WRITE_U16(p + 38, _pitchNumberAndType);
+    p[40] = rules_here();
+    p[41] = (uint8_t)(_team1Computer ? 2 : 1);      /* the side that is NOT the computer */
+    BE_WRITE_U16(p + 42, clock_minute());
+    BE_WRITE_U16(p + 44, _team1TotalGoals);
+    BE_WRITE_U16(p + 46, _team2TotalGoals);
+    memcpy(p + 48, _topTeamInGame.teamName, 16);
+    memcpy(p + 64, _bottomTeamInGame.teamName, 16);
+    {
+        const char *stamp = Build_Id();
+        uint32_t n = 0;
+        while (stamp && stamp[n] && n < 16) n++;
+        memcpy(p + 80, stamp ? stamp : "", n);
+    }
+
+    if (swos_io_save(name, buf, total) != 0) {
+        CHAL_LOG("could not write %s\n", (const char *)name);
+        chal_dbg(CHAL_DBG_WRITE, 0, total);
+        swos_io_free(buf);
+        return 1;
+    }
+    swos_io_free(buf);
+    chal_dbg(CHAL_DBG_OK, 0, total);
+
+    CHAL_LOG("saved %s: frame %u, minute %u, %.16s %u-%u %.16s, %u bytes\n",
+             (const char *)name, (unsigned)_frameCount, (unsigned)clock_minute(),
+             (const char *)_topTeamInGame.teamName, (unsigned)_team1TotalGoals,
+             (unsigned)_team2TotalGoals, (const char *)_bottomTeamInGame.teamName,
+             (unsigned)total);
+    return 0;
+}
+
+int32_t Challenge_SaveNow(void)
+{
+    uint8_t name[12];
+
+    chal_dbg(CHAL_DBG_KEY, 0, 0);
+
+    if (!Challenge_CanSave()) {
+        chal_dbg(CHAL_DBG_GATE, (uint32_t)human_sides(), _gameState);
+        return 1;
+    }
+    /* One file per press, not one per frame the key is held (Challenge_TickNotice runs it
+     * down from the match loop). The same shape as _spaceReplayTimer, which holds the
+     * SPACE highlight grab off for 0x64 frames. */
+    if (s_noticeFrames > 0) {
+        chal_dbg(CHAL_DBG_HOLD, (unsigned)s_noticeFrames, 0);
+        return 1;
+    }
+
+    name_for_slot(next_free_slot(), name);
+    if (save_position_as(name) != 0)
+        return 1;
+
+    /* Tell the player, on the pitch, for a second and a half. */
+    {
+        const char *src = "STATE SAVED  ";
+        uint32_t i;
+        for (i = 0; i < 11 && src[i]; i++) s_notice[i] = src[i];
+        s_notice[11] = name[4];
+        s_notice[12] = name[5];
+        s_notice[13] = 0;
+        s_noticeFrames = 75;
+    }
+    return 0;
+}
+
+int32_t Challenge_SaveAs(const uint8_t *name)
+{
+    uint8_t slotName[12];
+
+    if (!Challenge_CanSave()) {
+        CHAL_LOG("not saved: there is no position to take here\n");
+        return 1;
+    }
+    if (!name || !name[0]) {
+        name_for_slot(next_free_slot(), slotName);
+        name = slotName;
+    }
+    return save_position_as(name);
+}
+
+#ifdef CHAL_AUTOPROBE
+/* TEMPORARY, built only with -DCHAL_AUTOPROBE (Makefile.amiga's EXTRA_CFLAGS).
+ *
+ * The m68k target has no log and no command line, so diagnosing a save there meant asking
+ * a person to play a match and press a key for every question. This probes the state from
+ * inside ANY match the moment one has run for a while -- the attract demo starts one with
+ * no input at all -- and writes what SimState_SavePortable made of it to CHALDBG.BIN.
+ * Delete with the rest of the chal_dbg scaffolding. */
+void Challenge_AutoProbe(void)
+{
+    static int32_t s_done;
+    uint8_t  *buf;
+    uint32_t  stateLen;
+    int32_t   unresolved;
+
+    if (s_done || !_playGame || _frameCount < 400)
+        return;
+    s_done = 1;
+
+    stateLen = SimState_PortableSize(SIM_TIER_SIM);
+    buf = (uint8_t *)swos_io_alloc(stateLen);
+    if (!buf) {
+        chal_dbg(CHAL_DBG_MEM, stateLen, 0);
+        return;
+    }
+    SimState_ClearUnidentified();
+    unresolved = SimState_SavePortable(buf, SIM_TIER_SIM);
+    swos_io_free(buf);
+
+    if (unresolved == 0) {
+        chal_dbg(CHAL_DBG_OK, 0, stateLen);
+        return;
+    }
+    /* a = how many had no identity; b = the first one's kind (top byte) and value. */
+    chal_dbg(CHAL_DBG_PTRS, (uint32_t)unresolved,
+             (SimState_LastUnidentifiedKind() << 28) |
+             (SimState_LastUnidentifiedPtr() & 0x0FFFFFFFu));
+    /* And the tally per kind, so one run names every class that failed. */
+    {
+        uint8_t d[32];
+        uint32_t k;
+        d[0] = 'C'; d[1] = 'K'; d[2] = 'N'; d[3] = 'D';
+        for (k = 0; k < SIM_PTR_KINDS && k < 14; k++)
+            BE_WRITE_U16(d + 4 + k * 2, (uint16_t)SimState_UnidentifiedOfKind(k));
+        swos_io_save((const uint8_t *)"CHALKIND.BIN", d, sizeof d);
+    }
+}
+#endif
 
 /* TEMPORARY: the pitch as this match actually has it -- the pitch number/type and a
  * sample of the tile-slot map -- so a loaded position can be diffed against a normal
@@ -387,6 +660,10 @@ void Challenge_DebugCamera(int16_t tx, int16_t ty, int16_t fromX, int16_t camX, 
     swos_io_save((const uint8_t *)"CHALCAM.BIN", d, sizeof d);
 }
 
+int32_t Challenge_NoticeFrames(void) { return s_noticeFrames; }
+void    Challenge_TickNotice(void)   { if (s_noticeFrames > 0) s_noticeFrames--; }
+const char *Challenge_NoticeText(void) { return s_notice; }
+
 /* ---- loading ---- */
 
 static void forget(void)
@@ -400,6 +677,21 @@ static void forget(void)
     s_armed = 0;
     s_stateLoaded = 0;
     s_hasTitle = 0;
+}
+
+static char s_wanted[32];
+
+void Challenge_Request(const char *name)
+{
+    uint32_t i = 0;
+    if (!name) { s_wanted[0] = 0; return; }
+    while (name[i] && i < sizeof s_wanted - 1) { s_wanted[i] = name[i]; i++; }
+    s_wanted[i] = 0;
+}
+
+const char *Challenge_Requested(void)
+{
+    return s_wanted[0] ? s_wanted : NULL;
 }
 
 /* TEMPORARY: does every registry region's field layout tile its struct exactly on THIS
@@ -422,6 +714,35 @@ static void layout_check(void)
     BE_WRITE_U16(d + 4, (uint16_t)bad);
     BE_WRITE_U16(d + 6, (uint16_t)g_simStateRegionCount);
     swos_io_save((const uint8_t *)"LAYOUT.BIN", d, sizeof d);
+}
+
+void Challenge_EnsureSample(void)
+{
+    static const uint8_t sampleName[] = "SAMPLE.CHL";
+#ifdef SWOS_SDL_BUILD
+    const char *source = "data/CHALSDL.DAT";
+#else
+    const char *source = "data/CHALAMI.DAT";
+#endif
+    uint8_t *buf = NULL;
+    uint32_t len = 0;
+    uint64_t layout;
+
+    if (swos_io_load_alloc(sampleName, &buf, &len) == 0) {
+        swos_io_free(buf);
+        return;
+    }
+    if (swos_io_load_data_alloc(source, &buf, &len) != 0)
+        return;
+    /* Refuse a stale sample if the state registry or gameplay rules change.
+     * The regular loader validates the complete format when it is selected. */
+    if (len >= CHAL_HEADER_BYTES && BE_READ_U32(buf) == CHAL_MAGIC &&
+        BE_READ_U16(buf + 4) == CHAL_VERSION) {
+        layout = ((uint64_t)BE_READ_U32(buf + 8) << 32) | BE_READ_U32(buf + 12);
+        if (layout == SimState_LayoutHash() && buf[40] == rules_here())
+            (void)swos_io_save(sampleName, buf, len);
+    }
+    swos_io_free(buf);
 }
 
 static int32_t arm_file(const uint8_t *name, int bundled)
@@ -528,6 +849,7 @@ static int32_t arm_file(const uint8_t *name, int bundled)
     return 0;
 }
 
+int32_t Challenge_Arm(const uint8_t *name) { return arm_file(name, 0); }
 int32_t Challenge_ArmBundled(const char *path) { return arm_file((const uint8_t *)path, 1); }
 int32_t Challenge_Armed(void) { return s_armed; }
 
@@ -730,6 +1052,22 @@ void Challenge_Play(void)
         _sim_draw_width = (int32_t)s_info.simWidth;
 #endif
     Challenge_ApplySetup();
+    /* The menu sprites the STADIUM LINE-UP draws, extracted ONLY when the front end was
+     * skipped -- that is, for --challenge=<file> on the command line, which never ran it
+     * (the same reason --srp-resim does this, src/srp_resim.c). From the CHALLENGES menu
+     * the front end has already filled that sprite pool, and running the stream over it
+     * again corrupts it: the match drew wrong pitch tiles, misplaced crowd rows and
+     * inverted colours behind the bench, and the MAIN MENU was wrecked after the match
+     * returned -- which is what gave it away, since no amount of match state could do
+     * that. */
+#ifdef SWOS_SDL_BUILD
+    if (Challenge_Requested()) {
+        extern uint16_t _menuBGImageCmdStream[];
+        extern uint8_t *_menuImageStreamBaseEnd;
+        extern void     ProcessImageCommandStream(uint16_t *script, uint8_t *dest);
+        ProcessImageCommandStream(_menuBGImageCmdStream, _menuImageStreamBaseEnd);
+    }
+#endif
     InitTeams();            /* as the friendly menu does before a match */
     {   /* keep the menus' own setup globals; put back when the match ends (below) */
         int32_t i;

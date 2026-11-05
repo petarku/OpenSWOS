@@ -172,6 +172,8 @@ tests/career-golden/
 # sound and the commentary README.
 bin/data/*
 !bin/data/credits_icons.bmp
+!bin/data/CHALAMI.DAT
+!bin/data/CHALSDL.DAT
 !bin/data/CCS0[1-6].DAT
 !bin/data/CCA0[1-6].DAT
 bin/grafs/*

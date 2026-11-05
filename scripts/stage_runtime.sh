@@ -28,10 +28,10 @@ STAGED=""
 for d in "$@"; do
     n=0
     while IFS= read -r -d '' f; do
-        # The challenge collection's positions are per target. A combined
-        # multi-binary drop can request 'all'; each still gets only its own six.
+        # One bundled challenge per target. A combined multi-binary drop can
+        # request 'all'; each executable still installs only its own sample.
         case "$RUNTIME_TARGET:$f" in
-            sdl:data/CCA0?.DAT|amiga:data/CCS0?.DAT) continue ;;
+            sdl:data/CHALAMI.DAT|sdl:data/CCA0?.DAT|amiga:data/CHALSDL.DAT|amiga:data/CCS0?.DAT) continue ;;
         esac
         mkdir -p "$DEST/$(dirname "$f")"
         cp "$f" "$DEST/$f"

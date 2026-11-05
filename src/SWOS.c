@@ -15,6 +15,7 @@
 #include "audio.h"
 #include "menus.h"
 #include "deterministic.h"
+#include "challenge_gen.h"
 
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
@@ -230,6 +231,9 @@ void mainC(void)
     InitDisplayAndCopper();
     AssetSys_InitDiskImageSources();
     InitSkinAndDefaultPointers();
+#ifndef SWOS_SDL_BUILD
+    if (ChallengeGen_Boot() < 0) return;
+#endif
 
     /* ---- Phase 2: Build palettes ---- */
     {
@@ -358,6 +362,10 @@ skip_title_screens: ;
     _hilNumGoals = 0;
 
     /* ---- Phase 9: Enter front-end loop (or arcade attract loop) ---- */
+    if (ChallengeGen_Armed()) {
+        ChallengeGen_Run();
+        return;
+    }
 #ifdef SWOS_SDL_BUILD
     {
         extern int  NetplayLiveTest_Armed(void);
@@ -380,6 +388,21 @@ skip_title_screens: ;
             extern void    DiyConvert_Run(void);
             if (DiyConvert_Armed())
                 DiyConvert_Run();     /* writes the JSON .DIY, then exits */
+        }
+        {
+            /* --challenge=<file>: play on from a saved position instead of the front end
+             * (src/challenge.c). Here for the same reason as the rigs above -- the match
+             * needs its data loaded, and this wants no menus. */
+            extern const char *Challenge_Requested(void);
+            extern int32_t     Challenge_Arm(const uint8_t *name);
+            extern void        Challenge_Play(void);
+            const char *want = Challenge_Requested();
+            if (want) {
+                if (Challenge_Arm((const uint8_t *)want) != 0)
+                    return;
+                Challenge_Play();
+                return;
+            }
         }
         {
             extern int32_t ReplayV2_ViewTestArmed(void);

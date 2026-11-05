@@ -10,11 +10,12 @@
 
 #include "raster_bars.h"     /* -DRASTER_BARS: the frame's phases as colour bands */
 #include "game_loop.h"
+#include "challenge_gen.h"
 #include "dos_sound.h"
 #include "game_types.h"
 #include "display.h"
 #include "deterministic.h"
-#include "challenge.h"       /* a challenge position loaded before frame 1 */
+#include "challenge.h"       /* the 'C' key, and a saved position loaded before frame 1 */
 #include "fade.h"            /* ApplyFadeStep, FADE_MAX — see Challenge_LoadState's caller */
 
 /* ---- Extern globals (data section, exported from asm/Data.c) ---- */
@@ -314,6 +315,17 @@ MainKeysCheck(uint16_t key)
         if (_replayState != 0)
             return;
         _userRequestedReplay = 1;
+        return;
+    }
+
+    /* 'C' — save the position to a file, to be played on from later
+     * (src/challenge.c). Challenge_SaveNow decides whether this is a position worth
+     * keeping: a match under way, one human side against the computer, and not in the
+     * middle of the substitutes menu or a replay. It writes the file from here, on the
+     * frame the key was read, which is a coherent start-of-frame state -- GetKey has run
+     * and nothing of the frame's logic has. */
+    if (key == 0x43) {
+        Challenge_SaveNow();
         return;
     }
 
@@ -676,7 +688,17 @@ GameFrameResult GameLoop_Frame(void)
     _frameCount += 1;
     if (_spaceReplayTimer != 0)
         _spaceReplayTimer -= 1;
+    /* The save-position key's own hold-off, beside the one SPACE uses: a key is read on
+     * every frame it is held, so one press of 'C' wrote a file per frame (four of them,
+     * first time it was tried). */
+    Challenge_TickNotice();
+    /* CHALLENGE GENERATOR (--challenge-gen, src/challenge_gen.c): drives the match
+     * toward the spec'd position and saves it; a no-op in every ordinary match. */
+    ChallengeGen_Frame();
     Challenge_DumpPitch();      /* TEMPORARY diagnostic */
+#ifdef CHAL_AUTOPROBE
+    Challenge_AutoProbe();      /* TEMPORARY: see include/challenge.h */
+#endif
 
     /* Panel update block */
     RASTER(RASTER_UNDRAW);
@@ -713,7 +735,7 @@ GameFrameResult GameLoop_Frame(void)
 #endif
     /* Check end of match */
     if (_playGame == 0)
-        return GAME_FRAME_MATCH_OVER;
+        return (ChallengeGen_Armed() && _quitToDos) ? GAME_FRAME_QUIT : GAME_FRAME_MATCH_OVER;
 
     /* Fade state management */
     if (_fadeState == 0 && _fadeInitFlag == 0x3E7)
