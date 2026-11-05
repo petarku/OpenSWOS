@@ -575,12 +575,6 @@ void Specials_MenuInit(void)
             prev = i;
         }
     SetCurrentEntry((uint16_t)first);
-#ifdef SWOS_SDL_BUILD
-    {   /* one packed menu, two screens: name this one in the [menu] show line */
-        extern void MenuLog_Screen(const char *name);
-        MenuLog_Screen(s_screen == SCREEN_CUP ? k_cups[s_run.cup].log : "specials/specials");
-    }
-#endif
 }
 
 void Specials_MenuSelect(MenuEntry *entry)
