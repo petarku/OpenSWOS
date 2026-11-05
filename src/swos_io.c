@@ -672,12 +672,6 @@ int swos_io_load_data_alloc(const char *name, uint8_t **out_buf, uint32_t *out_s
 /* Amiga: the game runs from its own directory and resload owns the save
  * device, so both of these are nothing. Defined anyway so the shared call
  * sites need no #ifdef. */
-int swos_io_load_data_alloc(const char *name, uint8_t **out_buf, uint32_t *out_size)
-{
-    /* Bundled .DAT files are not redirected to save/ by resload. */
-    return swos_io_load_alloc((const uint8_t *)name, out_buf, out_size);
-}
-
 const char *swos_data_path(const char *rel, char *buf, uint32_t buf_sz)
 {
     (void)buf; (void)buf_sz;
