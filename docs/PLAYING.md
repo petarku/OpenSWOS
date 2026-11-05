@@ -20,6 +20,7 @@ The keys and gamepad buttons, and the arcade (coin-op) mode. New to OpenSWOS? St
 | Move         | Arrow keys         | D-pad / left stick   |
 | Kick / shoot / pass / tackle | Right Ctrl / Space / Left Ctrl / Enter | A or B |
 | Pause / unpause | `P`             | **+ / Start**        |
+| Save a challenge position | `C` (one human side vs computer) | — |
 | Statistics   | `S`                | **− / Back**         |
 | Instant replay | `R`              | **Y**                |
 | Replay after the match | `H`      | **X**                |
@@ -87,10 +88,11 @@ ever stronger national teams. The opponents are drawn afresh each time; each rou
 match, a draw goes to extra time and penalties, and one defeat ends the run. See
 [CHALLENGE_CUP.md](CHALLENGE_CUP.md).
 
-## Challenges
+## Saved challenges
 
-Choose **CHALLENGES** on the main menu for the challenge collection: six matches
-to rescue, rated 1-5 stars. See [CHALLENGE_COLLECTION.md](CHALLENGE_COLLECTION.md).
+Press **C** during a match against the computer to save the position. Choose
+**CHALLENGES** on the main menu to resume a save or try the bundled **SAMPLE**.
+See [CHALLENGE.md](CHALLENGE.md) for file locations, compatibility and limitations.
 
 ## Arcade mode
 
