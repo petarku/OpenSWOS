@@ -551,6 +551,32 @@ extern Sprite *_penaltyShooterSprite;
 extern uint16_t _currentPlayerIndicatorPosition;
 extern Sprite _team1CurPlayerNumSprite, _team2CurPlayerNumSprite;
 extern Sprite _playerMarkSprite;
+extern uint16_t _currentGameTick;
+
+/* The match's marked-player diamond (MarkPlayer, game_hud.c: sprite 0x442, 20
+ * up) over YOUR man in the shootout -- the taker when your side shoots, the
+ * keeper when it defends -- so a player who let the takers be picked at random
+ * can tell whose they are (asked 2026-11-05). A side is yours when a human
+ * plays it (PLAYER 1 or 2), whoever controls its keeper. With two humans both
+ * men are someone's, and the one sprite takes turns on bit 4 of the tick, as
+ * the match's own marker does between the teams. */
+static void markYourPlayer(void)
+{
+    Sprite *taker = _bottomTeamData.playerNumber ? _penaltyShooterSprite : (Sprite *)0;
+    Sprite *keeper = _topTeamData.playerNumber && _topTeamData.spritesTable
+                   ? _topTeamData.spritesTable[0] : (Sprite *)0;
+    Sprite *who = taker;
+
+    if (!taker || (keeper && (_currentGameTick & 0x10)))
+        who = keeper;
+    _playerMarkSprite.imageIndex = -1;
+    if (!who)
+        return;
+    _playerMarkSprite.imageIndex = 0x442;
+    _playerMarkSprite.x.s.i = who->x.s.i;
+    _playerMarkSprite.y.s.i = who->y.s.i;
+    _playerMarkSprite.z.s.i = (int16_t)(who->z.s.i + 20);
+}
 
 void PenaltyShootout_HideMatchHud(void)
 {
@@ -565,7 +591,7 @@ void PenaltyShootout_HideMatchHud(void)
         _currentPlayerNameSprite.imageIndex = -1;
     _team1CurPlayerNumSprite.imageIndex = -1;
     _team2CurPlayerNumSprite.imageIndex = -1;
-    _playerMarkSprite.imageIndex = -1;
+    markYourPlayer();
 }
 
 static int16_t s_canvasesReady;
