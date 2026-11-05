@@ -30,6 +30,7 @@
 
 extern void *_charTables[];
 #define SHOOTOUT_ORDER_COLOR 2  /* menu text colour index: white */
+#include "ghost_teams.h"        /* (GHOST TEAM) where the country would be named */
 
 /* Prevent GCC from converting byte loops to memcpy/memset (no libc) */
 #pragma GCC optimize("no-tree-loop-distribute-patterns")
@@ -654,6 +655,11 @@ void SetVariableButtons(void) {
             if (CustomTeam_IsCustom(tm))
                 cname = custom;
 #endif
+            {   /* a ghost team (ghost_teams.c) is filed under CUSTOM, and is no country's */
+                static uint8_t ghost[] = "GHOST TEAM";
+                if (GhostTeams_IsGhost(tm))
+                    cname = ghost;
+            }
             *nameOut++ = '(';
             nameOut = StringCopy(cname, nameOut);
             *nameOut++ = ')';
