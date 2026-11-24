@@ -32,11 +32,24 @@
  */
 #include "mod_api.h"
 
-#ifdef SWOS_SDL_BUILD
+/* Both targets since feature/menus2020-amiga. The Amiga has the main menu (baked, put over the
+ * game's own at start: amiga_install), COMPETE, PRACTICE, EXTRAS (the team and tactics editors),
+ * OPTIONS, REPLAYS (the highlights), the careers, SAVE / LOAD, QUIT and CREDITS, its pictures in
+ * the menus' 16 colours (src/menus2020_amiga_icons.inc) -- and nothing online: no MULTIPLAYER, live
+ * TV, ticker, tips, streams or manual; nor the run-in, the dark-yellow box or MATCH REPLAYS.
+ * Everything under SWOS_SDL_BUILD below is the PC's alone. */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "display.h"            /* _screen_width, _menu_draw_x_offset: the dark-yellow box */
+#include "menu_load_json.h"     /* MenuJson_Load, MenuJson_RegisterSymbols */
+#include "menu_system.h"
+#include "menus.h"
+#include "swos2020_menus.h"
+
+#ifdef SWOS_SDL_BUILD
 #include <strings.h>          /* strncasecmp */
 
 #include "dos_graphics.h"       /* DosGfx_DecodePlanarSprite */
@@ -45,17 +58,18 @@
 #include "file_io.h"            /* LoadFileEx */
 #include "math68k.h"            /* CalculateDeltaXAndY */
 #include "gfx.h"
-#include "display.h"            /* _screen_width, _menu_draw_x_offset: the dark-yellow box */
 #include "easing.h"            /* the run-in's ease */
-#include "menu_load_json.h"     /* MenuJson_VerifyDynamic (SWOS_MENUS2020_TEST) */
-#include "menu_system.h"
 #include "mjson.h"
-#include "menus.h"
 #include "platform_sdl.h"       /* Platform_OpenUrl, Platform_RequestQuit */
 #include "united_ticker.h"       /* UnitedTicker_News */
-#include "menu_load_json.h"      /* MenuJson_RegisterSymbols: REPLAYS' handlers, by SWOS 2020's names */
 #include "menu_symbols.h"
-#include "swos2020_menus.h"
+#else
+#include "menu_baked.h"         /* g_bakedMenus: the main menu's size */
+#include "world.h"              /* World_Current: the drawer's world, for the two careers */
+#include "united_ui.h"          /* United_PutPixel: the pictures; United_MainMenuSize */
+extern uint8_t _swosMainMenu[];         /* the game's main menu, overwritten in place */
+extern void Platform_RequestQuit(void);
+#endif
 
 #define SLUG "menus2020"
 
@@ -79,6 +93,125 @@ static void nav(int32_t ordinal, int32_t left, int32_t right, int32_t up, int32_
 }
 
 static void show(int32_t ordinal, int32_t visible) { entry(ordinal)->isInvisible = visible ? 0 : 1; }
+
+#ifndef SWOS_SDL_BUILD
+/* ---- the Amiga's pictures: the main menu's entries' "image"s, which the PC draws from .bmp
+ * (src/menu_extras.c), in the menus' 16 colours (scripts/make_menus2020_amiga_icons.py), drawn
+ * after their entry each time it is drawn -- centred in its box, or at image_x / image_y ---- */
+#include "menus2020_amiga_icons.inc"
+
+/* Each picture as the screen's own bytes: per row its mask and its 4 colour planes (the menus'
+ * colours are 0..15: planes 4.. are cleared under the mask), for the pixel offset in a byte it is
+ * drawn at -- made once, then copied a byte at a time. Per pixel through United_PutPixel (8 planes,
+ * a bit each) the logo alone took most of an A1200's frame (measured 2026-11-24). */
+enum { kPicPlanes = 4, kPicMax = sizeof k_pictures / sizeof k_pictures[0] };
+static struct { int16_t shift, bpr; uint8_t *bytes; } s_planar[kPicMax];   /* bytes: h rows of (1 + kPicPlanes) * bpr */
+
+static const uint8_t *planar_of(uint32_t i, int32_t shift)
+{
+    if (s_planar[i].bytes && s_planar[i].shift == shift)
+        return s_planar[i].bytes;
+    free(s_planar[i].bytes);
+    const int32_t w = k_pictures[i].w, h = k_pictures[i].h, bpr = (shift + w + 7) / 8;
+    uint8_t *b = (uint8_t *)calloc((size_t)h * (1 + kPicPlanes) * (size_t)bpr, 1);
+    s_planar[i].bytes = b;
+    s_planar[i].shift = (int16_t)shift;
+    s_planar[i].bpr = (int16_t)bpr;
+    if (!b)
+        return NULL;
+    const char *p = k_pictures[i].pix;
+    for (int32_t y = 0; y < h; y++) {
+        uint8_t *row = b + (size_t)y * (1 + kPicPlanes) * bpr;
+        for (int32_t x = 0; x < w; x++, p++) {
+            if (*p == '0')
+                continue;
+            const int32_t c = *p <= '9' ? *p - '0' : *p - 'A' + 10, sx = shift + x;
+            const uint8_t bit = (uint8_t)(0x80 >> (sx & 7));
+            row[sx >> 3] |= bit;                                    /* the mask */
+            for (int32_t pl = 0; pl < kPicPlanes; pl++)
+                if (c & (1 << pl))
+                    row[(1 + pl) * bpr + (sx >> 3)] |= bit;
+        }
+    }
+    return b;
+}
+
+static void picture_AfterDraw(MenuEntry *e)
+{
+    extern volatile uintptr_t _frontbufferBasePtr;
+    for (uint32_t i = 0; i < kPicMax; i++) {
+        if (e->ordinal != k_pictures[i].entry)
+            continue;
+        const int32_t w = k_pictures[i].w, h = k_pictures[i].h;
+        const int32_t x0 = e->x + (k_pictures[i].x >= 0 ? k_pictures[i].x : ((int32_t)e->dwWidth - w) / 2);
+        const int32_t y0 = e->y + (k_pictures[i].y >= 0 ? k_pictures[i].y : ((int32_t)e->dwHeight - h) / 2);
+        if (x0 < 0 || y0 < 0 || x0 + w > SCREEN_WIDTH || y0 + h > SCREEN_HEIGHT)
+            return;                     /* (all of them are on the screen; never past it) */
+        const uint8_t *src = planar_of(i, x0 & 7);
+        if (!src)
+            return;
+        const int32_t bpr = s_planar[i].bpr;
+        uint8_t *dst = (uint8_t *)_frontbufferBasePtr + _menu_draw_x_offset + (uint32_t)y0 * ROW_STRIDE_BYTES +
+                       ((uint32_t)x0 >> 3);
+        for (int32_t y = 0; y < h; y++, dst += ROW_STRIDE_BYTES, src += (1 + kPicPlanes) * bpr)
+            for (int32_t b = 0; b < bpr; b++) {
+                const uint8_t m = src[b];
+                if (!m)
+                    continue;
+                uint8_t *d = dst + b;
+                for (int32_t pl = 0; pl < NUM_PLANES; pl++, d += PLANE_STRIDE)
+                    *d = (uint8_t)((*d & ~m) | (pl < kPicPlanes ? src[(1 + pl) * bpr + b] : 0));
+            }
+        return;
+    }
+}
+
+/* (after every unpack: the entries' callbacks are the packed menu's, none) */
+static void amiga_pictures(void)
+{
+    for (uint32_t i = 0; i < sizeof k_pictures / sizeof k_pictures[0]; i++)
+        entry(k_pictures[i].entry)->afterDrawCb = picture_AfterDraw;
+}
+
+/* A packed menu redrawn as the game's own menus are (an entry at a time), not whole. SWOS 2020's
+ * menus carry MENU_FLAG_DOS_REDRAW (the whole menu each frame; on the Amiga, menu_system.c MenuProc:
+ * the whole menu on each change). The main menu needs neither -- no onDraw -- and a cursor move
+ * then redraws two entries, not the screen and its pictures. */
+static void no_dos_redraw(uint8_t *packed)
+{
+    if (!packed)
+        return;
+    uint16_t *f = (uint16_t *)(packed + 3 * sizeof(uintptr_t) + 4);    /* (after its header) */
+    if (f[0] == MENU_FLAGS_MARKER)
+        f[1] &= (uint16_t)~MENU_FLAG_DOS_REDRAW;
+}
+
+/* The main menu put over the game's own, in place, as the PC's JSON install does
+ * (MenuJson_InstallAll): its baked bytes (Makefile.amiga), its handlers already registered. Only
+ * when it fits the game's: never past it into the next global. */
+static void amiga_install(void)
+{
+    const MenuBaked *baked = NULL;
+    for (int32_t i = 0; i < g_bakedMenuCount && !baked; i++)
+        if (strcmp(g_bakedMenus[i].name, "swosMainMenu") == 0)
+            baked = &g_bakedMenus[i];
+    if (!baked) {
+        fprintf(stderr, "[menus2020] no baked main menu (Makefile.amiga)\n");
+        return;
+    }
+    if (baked->size > United_MainMenuSize()) {
+        fprintf(stderr, "[menus2020] main menu %u B > the game's %u B: the game's kept\n", (unsigned)baked->size,
+                (unsigned)United_MainMenuSize());
+        return;
+    }
+    const uint8_t *packed = MenuJson_Load("swosMainMenu");      /* (a copy, its slots filled) */
+    if (!packed)
+        return;
+    memcpy(_swosMainMenu, packed, baked->size);
+    no_dos_redraw(_swosMainMenu);       /* (no onDraw; its onReturn, mainDrawn, runs before the redraw
+                                         *  that follows a sub-screen) */
+}
+#endif
 
 /* ======================================================================================
  * The main menu. Ordinals: scripts/make_menus2020.py MAIN_ORDER.
@@ -115,8 +248,17 @@ static void main_refresh(void)
     show(Main_worldCareer, 1);
     nav(Main_classicCareer, -1, Main_worldCareer, Main_practice, contest ? Main_continue : Main_load);
     nav(Main_worldCareer, Main_classicCareer, -1, Main_replays, contest ? Main_continue : Main_load);
+#ifdef SWOS_SDL_BUILD
     if (s_runState >= 1 && s_runState <= 3)     /* (unpacked again mid-run: no picture until they settle) */
         ModApi_SetMenuImage(Main_credits, NULL);
+#else
+    show(Main_ticker, 0);               /* (the Amiga: no news, nothing online) */
+    amiga_pictures();
+    /* WORLD 26/27 CAREER in light orange (menu colour 6, $F71): the PC's box is colour 15 painted
+     * dark yellow after (world_career_paint), which the Amiga has not; its bright yellow did not look
+     * good there (the user, 2026-11-24). */
+    entry(Main_worldCareer)->bgColor = 6;
+#endif
     s_liveShown = -2;                   /* (unpacked again: the JSON's idle picture) */
     {   /* The ticker under SAVE and LOAD, as SWOS 2020's -- or across the top (where it was) on a
          * screen with no rows under the menu; back under them when there are again. */
@@ -184,6 +326,7 @@ static void main_refresh(void)
     }
 }
 
+#ifdef SWOS_SDL_BUILD   /* ---- to mainInit: the run-in and the test dumps, the PC's ---- */
 /* ---- SWOS 2020's PixelAnimation: three little players -- red, green and blue, their faces dark,
  * ginger and fair -- run in from just off the top left each time the main menu opens and stand at
  * the bottom right, where the CREDITS entry's picture -- the SWOS United logo, the same three
@@ -650,9 +793,15 @@ static void shirt_dump(const char *path)
     fflush(stdout);
     exit(ok ? 0 : 1);
 }
+#endif  /* SWOS_SDL_BUILD (the run-in, the dumps) */
 
 static void mainInit(void)
 {
+#ifndef SWOS_SDL_BUILD
+    extern void SWOSMainMenuInit(void);
+    SWOSMainMenuInit();                 /* the game's: CommonMenuExit */
+    main_refresh();
+#else
     if (getenv("SWOS_SHIRT_DUMP"))
         shirt_dump(getenv("SWOS_SHIRT_DUMP"));
     if (getenv("SWOS_PLAYER_DUMP")) {   /* (the PC graphics' match players: color_sprites.c) */
@@ -670,6 +819,7 @@ static void mainInit(void)
     SWOSMainMenuInit();                 /* the game's: CommonMenuExit, its test hook */
     main_refresh();
     run_begin();
+#endif
 }
 
 /* Each frame of the main menu: the TV shows a match when one is live (SWOS 2020's drawTvIcon). */
@@ -682,6 +832,9 @@ static void mainDrawn(void)
         if (cont->isInvisible && load->x != (uint16_t)(cont->x + (cont->dwWidth - load->dwWidth) / 2))
             main_refresh();
     }
+#ifndef SWOS_SDL_BUILD
+    amiga_pictures();                   /* (an unpack drops the entries' callbacks) */
+#endif
 #ifdef SWOS_NETPLAY
     const int32_t live = ModApi_LiveAny() == 1;
     if (live != s_liveShown) {
@@ -726,8 +879,89 @@ GAME_BUTTON(continueContest, StartContest)
 GAME_BUTTON(saveContest, SaveContest)
 GAME_BUTTON(loadContest, LoadOldCompetitionMenu)
 GAME_BUTTON(credits, CreditsMenuSelected)
+#ifdef SWOS_SDL_BUILD
 GAME_BUTTON(classicCareer, CareerSeasons_Classic)     /* (src/career_seasons.c) */
 GAME_BUTTON(worldCareer, CareerSeasons_World)
+#else
+/* The Amiga: the world is fixed at the start (data/WORLD, read through the mods: resload.c
+ * make_read_path), with no switching while the game runs (src/world_switch.c is the PC's). Both
+ * careers are there (the user's design, 2026-11-24):
+ *   - the button of the world played opens the game's career screen;
+ *   - the other one, when the drawer has BOTH worlds -- World 2026-27 as the mod folder
+ *     mods/world2627/ (its data/ team files and data/WORLD over the drawer's own), not copied over
+ *     data/ -- puts world2627 in or out of data/MODS and asks for a restart: the next start plays
+ *     that world, on the main menu;
+ *   - else (World 2026-27 not in the drawer, or copied over data/ by an older setup) it says where
+ *     the world is chosen.
+ * The error box's one line fits about 44 characters: a longer one is cut at both ends. */
+#include "mods.h"
+#include "swos_io.h"
+extern uint32_t Resload_FileSize(const char *name);
+
+#define WORLD_MOD "world2627"
+
+static int32_t world_mod_on(void)
+{
+    for (int32_t i = 0; i < Mods_Count(); i++)
+        if (strcmp(Mods_Id(i), WORLD_MOD) == 0)
+            return 1;
+    return 0;
+}
+
+/* data/MODS with the world's mod in (on) or out: every other line kept as it was. 0 written. */
+static int32_t world_mod_set(int32_t on)
+{
+    uint8_t *old = NULL;
+    uint32_t n = 0;
+    static char out[MODS_MAX * (MODS_ID_MAX + 2) + 16];
+    uint32_t used = 0;
+    if (swos_io_load_data_alloc("data/MODS", &old, &n) != 0)
+        old = NULL, n = 0;
+    for (uint32_t i = 0; i < n;) {
+        uint32_t j = i;
+        while (j < n && old[j] != '\n' && old[j] != '\r')
+            j++;
+        uint32_t idLen = 0;             /* (the id: up to a '*', which marks a mod that is not cosmetic) */
+        while (i + idLen < j && old[i + idLen] != '*' && old[i + idLen] != ' ')
+            idLen++;
+        const int32_t isWorld = idLen == sizeof WORLD_MOD - 1 && memcmp(old + i, WORLD_MOD, idLen) == 0;
+        if (j > i && !isWorld && used + (j - i) + 1 < sizeof out) {
+            memcpy(out + used, old + i, j - i);
+            used += j - i;
+            out[used++] = '\n';
+        }
+        i = j;
+        while (i < n && (old[i] == '\n' || old[i] == '\r'))
+            i++;
+    }
+    if (old)
+        swos_io_free(old);
+    if (on && used + sizeof WORLD_MOD + 2 < sizeof out) {
+        memcpy(out + used, WORLD_MOD "*\n", sizeof WORLD_MOD + 1);   /* ("data": not cosmetic) */
+        used += sizeof WORLD_MOD + 1;
+    }
+    return swos_io_save((const uint8_t *)"data/MODS", (const uint8_t *)out, used) == 0 ? 0 : -1;
+}
+
+static void amiga_career(WorldId world, const char *notHere)
+{
+    const int32_t both = Resload_FileSize("mods/" WORLD_MOD "/data/WORLD") > 0 &&
+                         (World_Current() == WORLD_9697 || world_mod_on());
+    if (World_Current() == world) {
+        CareerMenu();                   /* (ends in CommonMenuExit, as every game handler) */
+    } else {
+        if (both && world_mod_set(world == WORLD_2627) == 0)
+            ModApi_ShowError("CLOSE THE GAME AND START IT AGAIN");
+        else
+            ModApi_ShowError(notHere);
+        CommonMenuExit();               /* (the main menu unpacked again behind the box: CONTINUE / SAVE
+                                         *  shown, empty, until this hides them without a contest) */
+    }
+    main_refresh();
+}
+static void classicCareer(void) { amiga_career(WORLD_9697, "96/97 IS OFF HERE: CHOOSE IT IN SETUP"); }
+static void worldCareer(void)   { amiga_career(WORLD_2627, "NO WORLD 2026-27 HERE: TICK IT IN SETUP"); }
+#endif
 #undef GAME_BUTTON
 
 /* ======================================================================================
@@ -737,6 +971,15 @@ GAME_BUTTON(worldCareer, CareerSeasons_World)
  * viewer's keys, replayControls.mnu), and under them what the chosen one does.
  * ====================================================================================== */
 extern uint8_t   _highlightsMenu[];
+#ifndef SWOS_SDL_BUILD
+/* the Amiga: REPLAYS is the game's HIGHLIGHTS (no SWOS Galore, no whole-match replays there) */
+static void replays(void)
+{
+    ShowMenu(_highlightsMenu);
+    CommonMenuExit();
+    main_refresh();
+}
+#else
 extern uint8_t   _selectedFilename[];
 extern uintptr_t _extension;
 extern int16_t   GetFilenameAndExtension(uint32_t preferredExt, uint8_t *defaultFilename, uint8_t *menuTitleStr);
@@ -833,6 +1076,7 @@ static void replays(void)
     CommonMenuExit();
     main_refresh();
 }
+#endif  /* SWOS_SDL_BUILD (REPLAYS) */
 
 /* QUIT: SWOS 2020's quit.mnu (showQuitMenu) -- QUIT TO <the system this build is for>, RETURN TO
  * GAME chosen -- asked first, as closing the window is not. */
@@ -851,6 +1095,8 @@ static int32_t s_quitChosen;
 #define QUIT_TO "QUIT TO MAC"
 #elif defined(_WIN32) || defined(__CYGWIN__)
 #define QUIT_TO "QUIT TO WINDOWS"
+#elif !defined(SWOS_SDL_BUILD)
+#define QUIT_TO "QUIT TO WORKBENCH"
 #else
 #define QUIT_TO "QUIT TO LINUX"
 #endif
@@ -949,6 +1195,7 @@ static void competitionInit(void)
  * is drawn. Only while CHALLENGES is there (the challenges mod on). */
 static void competitionDraw(void)
 {
+#ifdef SWOS_SDL_BUILD   /* (the Amiga: no arrows yet -- ModApi_DrawMap draws into a chunky frame) */
     static const int32_t kFrame[6] = { 0, 1, 2, 3, 2, 1 };
     int32_t x = 0, y = 0, w = 0, h = 0;
     if (entry(Comp_challenges)->isInvisible)
@@ -960,6 +1207,7 @@ static void competitionDraw(void)
     ModApi_RestoreMenuBackground(x + w + 3, y + dy, 13, 7);
     ModApi_DrawMapAtEntry(SLUG, "rightArrow", Comp_challenges, -13 - step, dy, 0, 0, 10, 7, 0);
     ModApi_DrawMapAtEntry(SLUG, "leftArrow", Comp_challenges, w + 3 + step, dy, 0, 0, 10, 7, 0);
+#endif
 }
 
 /* A mod's MODES entry, run with the main menu current (as every choice here is). */
@@ -1017,7 +1265,22 @@ enum { Extras_header, Extras_news, Extras_tips, Extras_streams, Extras_editTeams
 
 static void set_text(int32_t ordinal, const char *text) { ModApi_MenuText(ordinal, text); }
 
+#ifdef SWOS_SDL_BUILD
 static void extrasInit(void) { SetCurrentEntry(Extras_tips); }   /* (LATEST NEWS, the first, hidden) */
+#else
+/* the Amiga: the two editors only -- the news, tips, streams and manual are online / a browser */
+static void extrasInit(void)
+{
+    show(Extras_news, 0);
+    show(Extras_tips, 0);
+    show(Extras_streams, 0);
+    show(Extras_manual, 0);
+    nav(Extras_editTeams, -1, -1, -1, Extras_editTactics);
+    nav(Extras_editTactics, -1, -1, Extras_editTeams, Extras_exit);
+    entry(Extras_exit)->upEntry = Extras_editTactics;
+    SetCurrentEntry(Extras_editTeams);
+}
+#endif
 
 /* The line under the buttons: what the chosen one does (extrasExMenuOnDraw). */
 static void extrasDraw(void)
@@ -1038,6 +1301,7 @@ static void editTeams(void)   { choose(EditCustomTeamMenu); }
 static void editTactics(void) { choose(EditTacticsMenu); }
 static void diskFiling(void)  { choose(SaveDiskFilingMenu); }
 
+#ifdef SWOS_SDL_BUILD   /* ---- to the live list: the manual and the ticker's lists, the PC's ---- */
 /* INSTRUCTION MANUAL: the one SWOS 2020 opens (manualExtras_OnSelect), in the browser. */
 static void manual(void)
 {
@@ -1240,6 +1504,7 @@ static void tick_list(int32_t mode)
 
 static void tips(void)    { tick_list(1); }
 static void streams(void) { tick_list(2); }
+#endif  /* SWOS_SDL_BUILD (the manual, the ticker's lists) */
 
 /* ======================================================================================
  * LIVE CAST: the live online matches (SWOS 2020 sent its TV to swos.eu/rpl in a browser; here
@@ -1335,14 +1600,21 @@ static void init(void)
         { "practiceInit", practiceInit },
         { "friendly", friendly }, { "modes", modes },
 
-        { "extrasInit", extrasInit }, { "extrasDraw", extrasDraw }, { "tips", tips }, { "streams", streams },
-        { "editTeams", editTeams }, { "editTactics", editTactics }, { "manual", manual },
+        { "extrasInit", extrasInit }, { "extrasDraw", extrasDraw },
+        { "editTeams", editTeams }, { "editTactics", editTactics },
         { "diskFiling", diskFiling },
+#ifdef SWOS_SDL_BUILD
+        { "tips", tips }, { "streams", streams }, { "manual", manual },
         { "tickerInit", tickerInit }, { "tickerDraw", tickerDraw }, { "tickerOpen", tickerOpen },
         { "tickerUp", tickerUp }, { "tickerDown", tickerDown },
+#endif
     };
     ModApi_RegisterHandlers(SLUG, handlers, (int32_t)(sizeof handlers / sizeof handlers[0]));
+#ifdef SWOS_SDL_BUILD
     replays_register();
+#else
+    amiga_install();                    /* (after the handlers: the bake's slots are filled from them) */
+#endif
 }
 
 /* The lobby, SWOS 2020's way: a change on the other side leaves this player's GO as it is -- a
@@ -1350,6 +1622,7 @@ static void init(void)
  * down with any change to their side, so a match starts only on a side both games have. */
 static int32_t keeps_ready(void) { return 1; }
 
+#ifdef SWOS_SDL_BUILD
 /* WORLD 26/27 CAREER in dark yellow (Playa, 2026-11-19): the menus' 16 colours have none (15 is
  * bright yellow, 5 burnt orange), so its box is drawn in 15 and, each frame shown, every pixel of
  * the box that still has 15 (not the text) is painted over in dark yellow -- as the dosmenus mod
@@ -1401,13 +1674,14 @@ static void world_career_paint(void)
     Gfx_SetBlend(GFX_BLEND_ALPHA);
     Gfx_DrawTexture(s_wcTex, NULL, &dst);
 }
+#endif  /* SWOS_SDL_BUILD (the dark-yellow box) */
 
 const ModDef ModDef_menus2020 = {
     .slug            = SLUG,
     .init            = init,
+#ifdef SWOS_SDL_BUILD
     .menuDrawn       = run_menu_frame,
     .frameDrawn      = world_career_paint,
+#endif
     .lobbyKeepsReady = keeps_ready,
 };
-
-#endif /* SWOS_SDL_BUILD */

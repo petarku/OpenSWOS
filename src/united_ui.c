@@ -7,6 +7,9 @@
  */
 #include "united_ui.h"
 #include "display.h"            /* FRONTBUFFER_ROW_STRIDE_BYTES, the Amiga's plane layout */
+#include "menu_data.h"          /* _swosMainMenu's type: its size */
+
+uint32_t United_MainMenuSize(void) { return (uint32_t)sizeof _swosMainMenu; }
 
 void United_PutPixel(int32_t x, int32_t y, uint8_t colour)
 {

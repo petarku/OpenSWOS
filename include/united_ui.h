@@ -11,6 +11,9 @@
 /* One pixel of menu palette index `colour` at (x, y) on the menu's screen, off-screen ones left
  * out: the PC's chunky frame or the Amiga's bitplanes. Every drawing below goes through it. */
 void        United_PutPixel(int32_t x, int32_t y, uint8_t colour);
+/* The game's main menu's room (its compiled packed bytes): what a replacement put over it in place
+ * may take (menus2020 on the Amiga). */
+uint32_t    United_MainMenuSize(void);
 /* SWOS 2020's gameplay-style icons, 16x16 at (x, y) on the menu's screen: 0 the Amiga's tick,
  * 1 PC DOS, 2 XBOX (RANKINGS' buttons, CHOOSE GAMEPLAY's). */
 void        United_DrawStyleIcon(int32_t icon, int32_t x, int32_t y);

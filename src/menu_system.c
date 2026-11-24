@@ -1976,6 +1976,10 @@ void MenuInputInjectPoint(void)
 /* ================================================================
  * MenuProc
  * ================================================================ */
+#ifndef SWOS_SDL_BUILD
+static uint8_t s_dosChanged;    /* (an onSelect ran: a DOS-redraw menu is drawn again, MenuProc) */
+#endif
+
 __attribute__((used, externally_visible, noinline))
 void MenuProc(void)
 {
@@ -2020,8 +2024,35 @@ void MenuProc(void)
          * whole menu every frame -- onDraw, every entry, the selection frame --
          * so a handler can change entries from onDraw without redrawing them
          * itself. DrawMenu presents the frame. */
+#ifndef SWOS_SDL_BUILD
+        /* The Amiga: a whole redraw takes most of an A1200's frame, and every frame
+         * of it left the cursor crawling (SWOS United's screens, measured 2026-11-24).
+         * So the whole menu is redrawn only when something may have changed it: the
+         * selection moved, another menu is up, an onSelect ran (s_dosChanged), or the
+         * game asked (_menuStatus). Other frames are the game's own: the selection
+         * frame, a mod's overlay, the wait. A handler that changes entries from onDraw
+         * still sees them drawn: onDraw runs with every redraw, which follows every
+         * change the player can make. */
+        static MenuEntry *s_dosSelected;
+        static uintptr_t  s_dosMenu;
+        const Menu *dm = (const Menu *)_currentMenu;
+        if (_menuStatus != 0 || s_dosChanged || dm->selectedEntry != s_dosSelected ||
+            _currentMenuPtr != s_dosMenu) {
+            s_dosSelected = dm->selectedEntry;
+            s_dosMenu = _currentMenuPtr;
+            s_dosChanged = 0;
+            _menuCursorFrame++;
+            DrawMenu();
+        } else {
+            DrawSelectedMenuItemFrame();
+            { extern void ModHooks_MenuDrawn(void); ModHooks_MenuDrawn(); }
+            WaitForVSync();
+            _menuCursorFrame++;
+        }
+#else
         _menuCursorFrame++;
         DrawMenu();
+#endif
     } else {
         if (_menuStatus == 0) {
             DrawSelectedMenuItemFrame();
@@ -2145,6 +2176,9 @@ void MenuProc(void)
        Many callbacks (SelectTeamsCommon, SelectLeaguesCommon etc.) read a5
        to get the entry's ordinal and string pointer. */
     CallMenuOnSelect((void *)onSelectPtr, (void *)selectedEntry);
+#ifndef SWOS_SDL_BUILD
+    s_dosChanged = 1;           /* (a DOS-redraw menu: redrawn next frame, above) */
+#endif
     SWOS_AUTOSKIP_LOG("MenuProc: <- CallMenuOnSelect (exitMenu after=%u)", (unsigned)_exitMenu);
 
 no_event_or_done:

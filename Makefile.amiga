@@ -153,6 +153,11 @@ BAKED_MENU_JSON := bin/data_json/menus/openswos/modEntriesMenu.json \
     $(foreach m,$(BAKED_MENU_MODS),$(wildcard $(m)/data_json/menus/*/*.json))
 # SWOS United's challenges2020 draws SWOS 2020's own screens, which live with the other imported
 # SWOS 2020 menus (data_json/menus/swos2020/), not in the mod: the three the Amiga shows.
+# menus2020's main menu replaces the game's (src/mod_menus2020.c amiga_install): it is the mod's,
+# but at data_json/menus/ itself, where the wildcard above does not look.
+ifneq ($(filter bin/mods/menus2020,$(BAKED_MENU_MODS)),)
+BAKED_MENU_JSON += bin/mods/menus2020/data_json/menus/swosMainMenu.json
+endif
 ifneq ($(filter bin/mods/challenges2020,$(BAKED_MENU_MODS)),)
 BAKED_MENU_JSON += $(addprefix bin/data_json/menus/swos2020/,selectCategoryMenu.json scenarioModeMainMenu.json \
     selectScenarioActionMenu.json)
