@@ -12,21 +12,27 @@
  * ranking): without it, or offline, the screens say so and the rest works.
  *
  * Not drawn yet: SWOS 2020's uniforms, red cards and injury icons on a challenge's page.
+ *
+ * Both targets. The Amiga has SELECT CATEGORY, a category's challenges and a challenge's page --
+ * baked from their JSON (Makefile.amiga BAKED_MENU_JSON) -- and nothing online: VIEW ONLINE STATS
+ * and SCENARIO COMPLETION (both online tables) are greyed out there, CUSTOM CHALLENGES (shared
+ * online, typed in) is not shown. Everything under SWOS_SDL_BUILD below is the PC's alone.
  */
 #include "mod_api.h"
 
-#if defined(SWOS_SDL_BUILD)
-
-#include "display.h"            /* FRONTBUFFER_ROW_STRIDE_BYTES */
-#include "input_text.h"
 #include "menu_load_json.h"
 #include "menu_system.h"
 #include "swos2020_menus.h"
 #include "text_render.h"
-#include "united_scn.h"
 #include "united_ui.h"
 
+#ifdef SWOS_SDL_BUILD
+#include "input_text.h"
+#include "united_scn.h"
+
 #include <SDL.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,8 +42,6 @@
 extern void SetExitMenuFlag(void);
 extern uint8_t _currentMenu[];
 extern void *_charTables[];
-extern volatile uintptr_t _frontbufferBasePtr;
-extern int _menu_draw_x_offset;
 
 enum { kGray = 7, kLightBrownWithYellowFrame = 6, kRed = 10, kPurple = 11, kLightBlue = 13, kGreen = 14,
        kWhiteText2 = 2, kYellowText = 15, kLeftAligned = 1 << 15, kRightAligned = 1 << 14 };
@@ -157,13 +161,11 @@ static const char *const k_lock[2][8] = {
 static void draw_map(const char *const *map, int32_t ox, int32_t oy, int32_t offx, int32_t offy, int32_t w,
                      int32_t h)
 {
-    uint8_t *fb = (uint8_t *)_frontbufferBasePtr + _menu_draw_x_offset;
     for (int32_t y = 0; y < h; y++)
         for (int32_t x = 0; x < w; x++) {
             const char c = map[offy + y][offx + x];
             if (c != '0')
-                fb[(uint32_t)(oy + y) * FRONTBUFFER_ROW_STRIDE_BYTES + ox + x] =
-                    (uint8_t)(c <= '9' ? c - '0' : c - 'A' + 10);
+                United_PutPixel(ox + x, oy + y, (uint8_t)(c <= '9' ? c - '0' : c - 'A' + 10));
         }
 }
 
@@ -207,8 +209,10 @@ static char *field(char **p)
     char *start = *p;
     if (!start)
         return (char *)"";
-    char *tab = strpbrk(start, "\t\n");
-    if (tab) {
+    char *tab = start;                      /* (no strpbrk: the Amiga's libc has none) */
+    while (*tab && *tab != '\t' && *tab != '\n')
+        tab++;
+    if (*tab) {
         const char was = *tab;
         *tab = 0;
         *p = was == '\t' ? tab + 1 : NULL;
@@ -297,6 +301,7 @@ static int32_t info_num(const char *info, const char *key)
  * script the menus' keys. */
 static void test_state(void)
 {
+#ifdef SWOS_SDL_BUILD   /* (the Amiga has no environment to arm one) */
     const char *t = getenv("SWOS_CHALLENGES2020_TEST");
     if (!t || s_cat[0])
         return;
@@ -307,6 +312,7 @@ static void test_state(void)
     fetch_list();
     if (s_sel[0])
         fetch_info(s_sel, s_info, sizeof s_info);
+#endif
 }
 
 /* ---- SELECT CATEGORY ---- */
@@ -372,6 +378,11 @@ static void selectCategoryMenu_layout(void)
     place(SelectCategoryMenu_actX, 72, 160, 0);
     for (int32_t s = 0; s < kPerCatPage; s++)
         entry_at(k_catSlots[s])->afterDrawCb = category_AfterDraw;
+#ifndef SWOS_SDL_BUILD
+    /* the Amiga: no CUSTOM CHALLENGES (shared online), nor the line over it */
+    entry_at(SelectCategoryMenu_sepaLine)->isInvisible = 1;
+    entry_at(SelectCategoryMenu_actX)->isInvisible = 1;
+#endif
     /* up and down: through MORE when it is there */
     const int8_t below = (int8_t)(more ? SelectCategoryMenu_act31 : SelectCategoryMenu_actX);
     entry_at(SelectCategoryMenu_act21)->downEntry = below;
@@ -467,8 +478,10 @@ static void cat7_onSelect(void) {}          /* act32: never shown */
 
 static void catX_onSelect(void)             /* CUSTOM CHALLENGES: SWOS 2020's CREATE / SHARE / PLAY */
 {
+#ifdef SWOS_SDL_BUILD
     show("swos2020/customChallengesMainMenu");
     fetch_categories();
+#endif
 }
 
 static void selectCategoryMenu_exit_onSelect(void) { SetExitMenuFlag(); }
@@ -606,6 +619,11 @@ static void scenarioModeMainMenu_OnDraw(void)
     entry_at(ScenarioModeMainMenu_s02)->upEntry = (int8_t)(pages > 1 ? ScenarioModeMainMenu_scrollUp : -1);
     entry_at(ScenarioModeMainMenu_s32)->downEntry =
         (int8_t)(pages > 1 ? ScenarioModeMainMenu_scrollDown : ScenarioModeMainMenu_exit);
+#ifndef SWOS_SDL_BUILD
+    /* the Amiga: SCENARIO COMPLETION is an online table -- not there; EXIT up to the last row */
+    entry_at(ScenarioModeMainMenu_scenCompletion)->isInvisible = 1;
+    entry_at(ScenarioModeMainMenu_exit)->leftEntry = -1;
+#endif
 }
 
 static void scenarioModeMainMenu_OnReturn(void) {}
@@ -645,7 +663,12 @@ static void s30_OnSelect(void) { pick(9); }
 static void s31_OnSelect(void) { pick(10); }
 static void s32_OnSelect(void) { pick(11); }
 
-static void scenCompletion_OnSelect(void) { show("swos2020/scenarioCompletionMenu"); }
+static void scenCompletion_OnSelect(void)
+{
+#ifdef SWOS_SDL_BUILD
+    show("swos2020/scenarioCompletionMenu");
+#endif
+}
 
 /* ---- a challenge's page ---- */
 
@@ -770,12 +793,20 @@ static void selectScenarioActionMenu_OnDraw(void)
 
     /* how often you have beaten it: online (SWOS 2020's count), else done here or not */
     {
+#ifdef SWOS_SDL_BUILD
         char args[256], n1[96], n2[96], out[16];
         snprintf(args, sizeof args, "{\"name\":\"%s\",\"category\":\"%s\"}",
                  ModApi_JsonEscape(info_get(info, "name", v, sizeof v), n1, sizeof n1),
                  ModApi_JsonEscape(info_get(info, "category", t0, sizeof t0), n2, sizeof n2));
         const int32_t rc = ModApi_CallService("online-records", "challenges.wins", args, out, sizeof out);
         const int32_t wins = rc == 0 ? atoi(out) : -1;
+#else
+        const int32_t wins = -1;            /* (the Amiga: nothing online) */
+        /* VIEW ONLINE STATS greyed out, passed over */
+        MenuEntry *stats = entry_at(SelectScenarioActionMenu_act2);
+        stats->isDisabled = 1;
+        set_back(stats, kGray);
+#endif
         if (wins > 1)
             snprintf(s_beat, sizeof s_beat, "YOU HAVE BEATEN THIS SCENARIO %d TIMES.", (int)wins);
         else if (wins == 1 || (wins < 0 && info_num(info, "state") == 1))
@@ -793,8 +824,15 @@ static void act1_onSelect(void)             /* PLAY SCENARIO */
     call("play", args, out, sizeof out);
 }
 
-static void act2_onSelect(void) { show("swos2020/scenarioOnlineStatsMenu"); }   /* VIEW ONLINE STATS */
+static void act2_onSelect(void)             /* VIEW ONLINE STATS */
+{
+#ifdef SWOS_SDL_BUILD
+    show("swos2020/scenarioOnlineStatsMenu");
+#endif
+}
 static void selectScenarioActionMenu_onSelect(void) { SetExitMenuFlag(); }      /* EXIT */
+
+#ifdef SWOS_SDL_BUILD   /* ---- from here to the mod's table: the PC's alone (online, typed in) ---- */
 
 /* ---- the two online tables: who has beaten a challenge, and a category's completion ---- */
 
@@ -1852,10 +1890,12 @@ static void customChallengesEditMenu_delete_onSelect(void)
     }
 }
 static void customChallengesEditMenu_exit_onSelect(void) { SetExitMenuFlag(); }
+#endif  /* SWOS_SDL_BUILD */
 
 /* ---- the mod ---- */
 
 #define HANDLER(fn) { #fn, (void *)fn, SYM_FUNC }
+/* the three screens both targets have */
 static const MenuSymbol k_handlers[] = {
     HANDLER(selectCategoryMenu_OnInit), HANDLER(selectCategoryMenu_OnDraw), HANDLER(selectCategoryMenu_OnReturn),
     HANDLER(selectCategoryMenu_OnBackground), HANDLER(selectCategoryMenu_exit_onSelect),
@@ -1870,6 +1910,10 @@ static const MenuSymbol k_handlers[] = {
     HANDLER(scenCompletion_OnSelect),
     HANDLER(selectScenarioActionMenu_OnInit), HANDLER(selectScenarioActionMenu_OnDraw),
     HANDLER(selectScenarioActionMenu_onSelect), HANDLER(act1_onSelect), HANDLER(act2_onSelect),
+};
+#ifdef SWOS_SDL_BUILD
+/* the online tables and CUSTOM CHALLENGES: the PC's */
+static const MenuSymbol k_handlersPc[] = {
     HANDLER(scenarioOnlineStatsMenu_OnInit), HANDLER(scenarioOnlineStatsMenu_OnDraw),
     HANDLER(scenarioOnlineStatsMenu_OnReturn), HANDLER(scenarioOnlineStatsMenu_exit_OnSelect),
     HANDLER(scenarioOnlineStatsMenu_scrollUp_onSelect), HANDLER(scenarioOnlineStatsMenu_scrollDown_onSelect),
@@ -1891,6 +1935,7 @@ static const MenuSymbol k_handlers[] = {
     HANDLER(customChallengesSortByMenu_exit_onSelect),
     HANDLER(customChallengesNewOrLoadMenu_OnInit), HANDLER(customChallengesNewOrLoadMenu_OnDraw), HANDLER(customChallengesNewOrLoadMenu_onBackground), HANDLER(customChallengesNewOrLoadMenu_exit_onSelect), HANDLER(customChallengesNewOrLoadMenu_new_onSelect), HANDLER(customChallengesNewOrLoadMenu_load_onSelect), HANDLER(customChallengesEditMenu_onInit), HANDLER(customChallengesEditMenu_onDraw), HANDLER(customChallengesEditMenu_onBackground), HANDLER(customChallengesEditMenu_team1_onSelect), HANDLER(customChallengesEditMenu_team2_onSelect), HANDLER(customChallengesEditMenu_scenarioNickname_onSelect), HANDLER(customChallengesEditMenu_team1Score_onSelect), HANDLER(customChallengesEditMenu_team2Score_onSelect), HANDLER(customChallengesEditMenu_teamScoreReset_onSelect), HANDLER(customChallengesEditMenu_minus10_onSelect), HANDLER(customChallengesEditMenu_minus1_onSelect), HANDLER(customChallengesEditMenu_reset0_onSelect), HANDLER(customChallengesEditMenu_plus1_onSelect), HANDLER(customChallengesEditMenu_plus10_onSelect), HANDLER(customChallengesEditMenu_secondLeg_onSelect), HANDLER(customChallengesEditMenu_legTeam1Score_onSelect), HANDLER(customChallengesEditMenu_legTeam2Score_onSelect), HANDLER(customChallengesEditMenu_legTeamScoreReset_onSelect), HANDLER(customChallengesEditMenu_et_onSelect), HANDLER(customChallengesEditMenu_pen_onSelect), HANDLER(customChallengesEditMenu_directPen_onSelect), HANDLER(customChallengesEditMenu_subsMin_onSelect), HANDLER(customChallengesEditMenu_subsMax_onSelect), HANDLER(customChallengesEditMenu_sentOffInjurySetting_onSelect), HANDLER(customChallengesEditMenu_customUniforms_onSelect), HANDLER(customChallengesEditMenu_changePitchSet_onSelect), HANDLER(customChallengesEditMenu_attackGoal_onSelect), HANDLER(customChallengesEditMenu_changePitchType_onSelect), HANDLER(customChallengesEditMenu_startingTeam_onSelect), HANDLER(customChallengesEditMenu_startingEvent_onSelect), HANDLER(customChallengesEditMenu_winCondition_onSelect), HANDLER(customChallengesEditMenu_difficulty_onSelect), HANDLER(customChallengesEditMenu_test_onSelect), HANDLER(customChallengesEditMenu_save_onSelect), HANDLER(customChallengesEditMenu_delete_onSelect), HANDLER(customChallengesEditMenu_exit_onSelect),
 };
+#endif
 #undef HANDLER
 
 /* "challenges-screens": the challenges mod opens these in place of its own */
@@ -1907,6 +1952,7 @@ static int32_t screens(const char *method, const char *args, char *out, uint32_t
     return 0;
 }
 
+#ifdef SWOS_SDL_BUILD
 /* SWOS_SCN_IMPORT_TEST=<file.SCN>: at the first menu frame, the file imported (src/united_scn.c),
  * the challenges read again and the challenge's fields printed (SCN TEST ...), then exit. */
 static void customChallengesEditMenu_save_onSelect(void);
@@ -1972,19 +2018,21 @@ static void scn_import_test(void)
     fflush(stdout);
     exit(ok && got ? 0 : 1);
 }
+#endif  /* SWOS_SDL_BUILD */
 
 static void challenges2020_init(void)
 {
     MenuJson_RegisterSymbols(k_handlers, (int)(sizeof k_handlers / sizeof k_handlers[0]));
+#ifdef SWOS_SDL_BUILD
+    MenuJson_RegisterSymbols(k_handlersPc, (int)(sizeof k_handlersPc / sizeof k_handlersPc[0]));
+#endif
     ModApi_RegisterService(SLUG, "challenges-screens", screens);
 }
 
 const ModDef ModDef_challenges2020 = {
     .slug = SLUG,
     .init = challenges2020_init,
+#ifdef SWOS_SDL_BUILD
     .menuDrawn = scn_import_test,
-};
-
-#else
-const ModDef ModDef_challenges2020 = { .slug = "challenges2020" };
 #endif
+};

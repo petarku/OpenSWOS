@@ -151,6 +151,12 @@ HOSTCC ?= cc
 BAKED_MENU_MODS := $(patsubst %/mod.json,%,$(shell grep -l '"amiga"' bin/mods/*/mod.json 2>/dev/null))
 BAKED_MENU_JSON := bin/data_json/menus/openswos/modEntriesMenu.json \
     $(foreach m,$(BAKED_MENU_MODS),$(wildcard $(m)/data_json/menus/*/*.json))
+# SWOS United's challenges2020 draws SWOS 2020's own screens, which live with the other imported
+# SWOS 2020 menus (data_json/menus/swos2020/), not in the mod: the three the Amiga shows.
+ifneq ($(filter bin/mods/challenges2020,$(BAKED_MENU_MODS)),)
+BAKED_MENU_JSON += $(addprefix bin/data_json/menus/swos2020/,selectCategoryMenu.json scenarioModeMainMenu.json \
+    selectScenarioActionMenu.json)
+endif
 MENU_BAKE_TOOL := obj/menu_bake_host
 MENU_BAKE_SRCS := tools/menu_bake/menu_bake.c src/menu_load_json.c src/mjson.c include/menu_baked.h \
     include/menu_load_json.h include/mjson.h

@@ -4,9 +4,10 @@
  "name": "SWOS 2020 challenge screens",
  "version": "1.0",
  "author": "SWOS United (the screens: SWOS 2020's, github.com/starwindz/swos-2020)",
- "about": "Challenges as SWOS 2020 showed them: SELECT CATEGORY, the challenges twelve to a page with their stars and descriptions, each one's page, and the online stats and completion.",
+ "about": "Challenges as SWOS 2020 showed them: SELECT CATEGORY, the challenges twelve to a page with their stars and descriptions, each one's page, and the online stats and completion (on the Amiga the three screens, nothing online).",
  "targets": [
-  "sdl"
+  "sdl",
+  "amiga"
  ],
  "changes": "cosmetic",
  "default": true

@@ -8,10 +8,13 @@
 
 #include "swos_types.h"
 
+/* One pixel of menu palette index `colour` at (x, y) on the menu's screen, off-screen ones left
+ * out: the PC's chunky frame or the Amiga's bitplanes. Every drawing below goes through it. */
+void        United_PutPixel(int32_t x, int32_t y, uint8_t colour);
 /* SWOS 2020's gameplay-style icons, 16x16 at (x, y) on the menu's screen: 0 the Amiga's tick,
- * 1 PC DOS, 2 XBOX (RANKINGS' buttons, CHOOSE GAMEPLAY's). SDL builds. */
+ * 1 PC DOS, 2 XBOX (RANKINGS' buttons, CHOOSE GAMEPLAY's). */
 void        United_DrawStyleIcon(int32_t icon, int32_t x, int32_t y);
-/* SWOS 2020's red page arrow (drawScrollButtons), 12x12 at (x, y): up, or down. SDL builds. */
+/* SWOS 2020's red page arrow (drawScrollButtons), 12x12 at (x, y): up, or down. */
 void        United_DrawPageArrow(int32_t down, int32_t x, int32_t y);
 /* SWOS 2020's difficulty stars (its starsMap), n of them at (x, y) (src/united_challenges.c). */
 void        United_DrawStars(int32_t n, int32_t x, int32_t y);

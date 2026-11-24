@@ -2075,14 +2075,12 @@ static int32_t find_id(const char *id)
 static void arg_str(const char *args, const char *key, char *out, int32_t cap)
 {
     out[0] = 0;
-#ifdef SWOS_SDL_BUILD
+    /* (both targets: a fork's screens ask by category and id on the Amiga too -- SWOS United's
+     * challenges2020; mjson is in the Amiga's binary already) */
     char path[32];
     snprintf(path, sizeof path, "$.%s", key);
-    if (mjson_get_string(args, (int)strlen(args), path, out, (int)cap) < 0)
+    if (!args || mjson_get_string(args, (int)strlen(args), path, out, (int)cap) < 0)
         out[0] = 0;
-#else
-    (void)args; (void)key; (void)cap;   /* (the Amiga: no JSON, and no fork's screens) */
-#endif
 }
 
 typedef struct { char *p; uint32_t left; } Out;

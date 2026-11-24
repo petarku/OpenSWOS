@@ -1,10 +1,37 @@
 /*
  * united_ui.c -- SWOS United's online screens' own drawing (include/united_ui.h): SWOS 2020's
  * style icons and page arrows. (The API itself is SWOS-API's client: third_party/swos-api.)
+ *
+ * Both targets: everything is drawn through United_PutPixel, which writes the PC's chunky frame
+ * and the Amiga's interleaved bitplanes alike.
  */
-#ifdef SWOS_SDL_BUILD
 #include "united_ui.h"
-#include "display.h"            /* FRONTBUFFER_ROW_STRIDE_BYTES */
+#include "display.h"            /* FRONTBUFFER_ROW_STRIDE_BYTES, the Amiga's plane layout */
+
+void United_PutPixel(int32_t x, int32_t y, uint8_t colour)
+{
+    extern volatile uintptr_t _frontbufferBasePtr;
+    extern int _menu_draw_x_offset;
+    if (x < 0 || y < 0 || x >= _screen_width || y >= _screen_height)
+        return;
+#ifdef SWOS_SDL_BUILD
+    /* one byte a pixel; the menu's offset in pixels */
+    ((uint8_t *)_frontbufferBasePtr + _menu_draw_x_offset)[(uint32_t)y * FRONTBUFFER_ROW_STRIDE_BYTES + (uint32_t)x] =
+        colour;
+#else
+    /* a row is NUM_PLANES planes of PLANE_STRIDE bytes, plane 0 first, 8 pixels a byte (bit 7
+     * leftmost); the menu's offset in BYTES of a plane row (menu_system.c) */
+    uint8_t *p = (uint8_t *)_frontbufferBasePtr + _menu_draw_x_offset + (uint32_t)y * ROW_STRIDE_BYTES +
+                 ((uint32_t)x >> 3);
+    const uint8_t bit = (uint8_t)(0x80 >> (x & 7));
+    for (int32_t plane = 0; plane < NUM_PLANES; plane++, p += PLANE_STRIDE) {
+        if (colour & (1 << plane))
+            *p |= bit;
+        else
+            *p &= (uint8_t)~bit;
+    }
+#endif
+}
 
 /* The buttons' icons: SWOS 2020's mp_game_style_icon_set_v2_16x16_3x1_map (PixelmapAndStrings.h),
  * three 16x16 icons side by side -- the Amiga's tick, PC DOS, XBOX -- each a menu palette index
@@ -47,24 +74,17 @@ static const char *const k_pageArrows[12] = {
 
 void United_DrawPageArrow(int32_t down, int32_t ox, int32_t oy)
 {
-    extern volatile uintptr_t _frontbufferBasePtr;
-    extern int _menu_draw_x_offset;
-    uint8_t *fb = (uint8_t *)_frontbufferBasePtr + _menu_draw_x_offset;
     int32_t x, y;
     for (y = 0; y < 12; y++)
         for (x = 0; x < 12; x++) {
             const char c = k_pageArrows[y][(down ? 12 : 0) + x];
             if (c != '.')
-                fb[(uint32_t)(oy + y) * FRONTBUFFER_ROW_STRIDE_BYTES + ox + x] =
-                    (uint8_t)(c <= '9' ? c - '0' : c - 'A' + 10);
+                United_PutPixel(ox + x, oy + y, (uint8_t)(c <= '9' ? c - '0' : c - 'A' + 10));
         }
 }
 
 void United_DrawStyleIcon(int32_t icon, int32_t ox, int32_t oy)
 {
-    extern volatile uintptr_t _frontbufferBasePtr;
-    extern int _menu_draw_x_offset;
-    uint8_t *fb = (uint8_t *)_frontbufferBasePtr + _menu_draw_x_offset;
     int32_t x, y;
     if (icon < 0 || icon > 2)
         return;
@@ -72,8 +92,6 @@ void United_DrawStyleIcon(int32_t icon, int32_t ox, int32_t oy)
         for (x = 0; x < 16; x++) {
             const char c = k_styleIcons[y][icon * 16 + x];
             if (c != '.')
-                fb[(uint32_t)(oy + y) * FRONTBUFFER_ROW_STRIDE_BYTES + ox + x] =
-                    (uint8_t)(c <= '9' ? c - '0' : c - 'A' + 10);
+                United_PutPixel(ox + x, oy + y, (uint8_t)(c <= '9' ? c - '0' : c - 'A' + 10));
         }
 }
-#endif
