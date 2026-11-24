@@ -2299,7 +2299,11 @@ struct App {
   // Amiga into its mods/, and data/MODS listing them (an id with '*': not cosmetic) -- or no
   // data/MODS when none is, so an earlier one does not stay.
   // A mod with an amiga/ folder gives the Amiga that folder's contents only (a world: its Amiga
-  // team files, not the PC's). A world's mod goes in only with the world tick: the one named there.
+  // team files, not the PC's).
+  // A world's mod (the one the Amiga tab names) always goes in, its tick on or off; the tick only
+  // decides whether data/MODS lists it -- the world the first start plays. SWOS United: the game's
+  // CLASSIC CAREER / WORLD 26/27 CAREER switch a drawer that has both worlds by that one line and a
+  // restart (src/mod_menus2020.c), so a drawer must have the world's folder whichever it starts in.
   void ModsToDrawer(const std::string& drawerGame, bool withWorld) {
     ModsScan();
     std::string list;
@@ -2307,12 +2311,14 @@ struct App {
     sd::RemoveTree(Join(drawerGame, "mods"));
     bool tookWorld = false;   // (the Amiga plays one world: its drawer takes the first world mod that is on)
     for (const ModFile& m : modList) {
-      // (the world ticked goes in on or off: the player asked for it)
-      if (!m.amiga || !m.problem.empty() || (!ModOn(m) && !(withWorld && IsWorldMod(m) && m.slug == AmigaWorldSlug())))
+      const std::string want = AmigaWorldSlug();
+      // (the world goes in on or off: the tick says only whether it is played)
+      if (!m.amiga || !m.problem.empty() ||
+          (!ModOn(m) && !(IsWorldMod(m) && (want.empty() || m.slug == want))))
         continue;
+      bool listed = true;
       if (IsWorldMod(m)) {
-        if (!withWorld) continue;
-        const std::string want = AmigaWorldSlug();
+        listed = withWorld;
         if (tookWorld || (!want.empty() && m.slug != want)) {
           FileLog("mods: " + m.slug + " not in the drawer (the Amiga plays one world)");
           continue;
@@ -2335,7 +2341,10 @@ struct App {
           FileLog("mods: " + m.slug + " for the Amiga: " + cerr);
         sd::RemoveTree(Join(to, "data_json"));
       }
-      list += m.slug + (m.changes == "cosmetic" || m.canonical ? "" : "*") + "\n";
+      if (listed)
+        list += m.slug + (m.changes == "cosmetic" || m.canonical ? "" : "*") + "\n";
+      else
+        FileLog("mods: " + m.slug + " in the drawer, not played (its tick is off: the game switches to it)");
     }
     if (list.empty()) {
       std::remove(data.c_str());
