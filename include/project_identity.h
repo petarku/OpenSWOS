@@ -128,6 +128,10 @@
  * 3 points for a win, 5 substitutes). 1 builds them even when PROJECT_TWEAKS is 0, as the
  * stronger keepers above; RULES OPTIONS shows them. Off line only, like every tweak. */
 #define PROJECT_TWEAK_FIXES     1   /* SWOS United: SWOS 2020's league rules and the contest fix, on (the owner, 2026-11-10) */
+/* A world's PRESET COMPETITION list (src/teams.c): 1 shows the world's own (World 2026-27's UEFA
+ * cups, its countries' leagues), 0 OpenSWOS's "NO PRESET COMPETITIONS FOR THIS WORLD" notice.
+ * SWOS United: shown (the owner, 2026-11-24). */
+#define PROJECT_WORLD_PRESETS   1
 
 /* STATIC MODS (docs/MODS.md §14): canonical mods -- folders in the game's own mods/ -- that are
  * part of this game rather than a choice: always on, whatever [mods] disabled says, and never

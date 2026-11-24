@@ -9,6 +9,7 @@
 #include "squad_extras.h"
 #include "teams.h"
 #include "world.h"
+#include "project_identity.h"   /* PROJECT_WORLD_PRESETS */
 #include "career_teams.h"
 #include "comp_identity.h"
 #include "swos_platform.h"   /* HLOG — force-included by the SDL Makefile, not the
@@ -3413,7 +3414,10 @@ loc_E012:
      * in PRESET COMPETITION's world list. It is no competition: its slot in leaguesPtrTable
      * holds a marker, which the selection below catches before anything reads it as one. */
     noPresets = 0;
-#if SWOS_WORLDS
+    /* SWOS United (2026-11-24, the owner's call): a world's preset competitions are shown -- its
+     * tables have them (EUROPE: the UEFA cups, the countries' leagues) -- not OpenSWOS's notice.
+     * PROJECT_WORLD_PRESETS (include/project_identity.h) is 0 in OpenSWOS's own. */
+#if SWOS_WORLDS && !PROJECT_WORLD_PRESETS
     if ((uint8_t)d7 == 254 && _choosingPreset != 0 && World_Current() != WORLD_9697) {
         noPresets = 1;
         for (int32_t k = 0; k < 2; k++) {
