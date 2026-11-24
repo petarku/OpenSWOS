@@ -86,7 +86,9 @@ extern void SetExitMenuFlag(void);
 #ifdef SWOS_SDL_BUILD
 enum { kMax = 192 };                    /* (SWOS 2020's pack alone is 92) */
 #else
-enum { kMax = 112 };                    /* (each ~1.1 KB, and a stock A1200 has 2 MB) */
+enum { kMax = 400 };                    /* (each ~1.1 KB, from fast RAM -- the minimum is 8 MB of it -- when
+                                         *  the list is first wanted: SWOS 2020's packs and SWOS United's
+                                         *  shared ones, 275 on 2026-11-24, --shared-challenges-pack) */
 #endif
 enum { kRows = 8 };
 enum { W_WIN = CHALLENGE_WIN, W_DRAW = CHALLENGE_DRAW, W_EXACT = CHALLENGE_EXACT };
@@ -362,7 +364,9 @@ static int by_category_difficulty(const void *a, const void *b)
     const Challenge *x = (const Challenge *)a, *y = (const Challenge *)b;
     if (x->catIndex != y->catIndex)
         return x->catIndex - y->catIndex;
-    if (x->difficulty != y->difficulty)
+    /* (SWOS United's shared challenges pack -- src/united_scn.c, newest first -- keeps its files'
+     *  order: its table sorts by date as that order, and by level itself) */
+    if (x->difficulty != y->difficulty && strcmp(x->category, "SHARED CHALLENGES") != 0)
         return x->difficulty - y->difficulty;
     return x->seq - y->seq;
 }
@@ -530,7 +534,9 @@ static int32_t category_closed(const char *category)
  * the category's scenarios), or its category is closed (category_closed) */
 static int32_t locked(int32_t i)
 {
-    if (s_ch[i].custom)
+    /* (the player's own, and SWOS United's shared challenges pack -- unrelated players' scenarios,
+     *  as fetched ones are on the PC: none waits for an easier one) */
+    if (s_ch[i].custom || !strcmp(s_ch[i].category, "SHARED CHALLENGES"))
         return 0;
     if (category_closed(s_ch[i].category))
         return 1;

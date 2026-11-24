@@ -160,7 +160,7 @@ BAKED_MENU_JSON += bin/mods/menus2020/data_json/menus/swosMainMenu.json
 endif
 ifneq ($(filter bin/mods/challenges2020,$(BAKED_MENU_MODS)),)
 BAKED_MENU_JSON += $(addprefix bin/data_json/menus/swos2020/,selectCategoryMenu.json scenarioModeMainMenu.json \
-    selectScenarioActionMenu.json)
+    selectScenarioActionMenu.json customChallengesSelectSCNMenu.json customChallengesSortByMenu.json)
 endif
 MENU_BAKE_TOOL := obj/menu_bake_host
 MENU_BAKE_SRCS := tools/menu_bake/menu_bake.c src/menu_load_json.c src/mjson.c include/menu_baked.h \

@@ -132,6 +132,10 @@
  * cups, its countries' leagues), 0 OpenSWOS's "NO PRESET COMPETITIONS FOR THIS WORLD" notice.
  * SWOS United: shown (the owner, 2026-11-24). */
 #define PROJECT_WORLD_PRESETS   1
+/* SWOS.exe --shared-challenges-pack (src/main.c, src/united_scn.c): SWOS 2020's shared custom
+ * challenges as an Amiga pack mod, as the Amiga has no network. SWOS United's (united_scn.c is
+ * the fork's); undefined in OpenSWOS. */
+#define PROJECT_SHARED_CHALLENGES_PACK 1
 
 /* STATIC MODS (docs/MODS.md §14): canonical mods -- folders in the game's own mods/ -- that are
  * part of this game rather than a choice: always on, whatever [mods] disabled says, and never

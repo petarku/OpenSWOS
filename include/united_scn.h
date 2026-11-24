@@ -12,6 +12,12 @@
  * Its id into id[idCap] ("scn-<hash>"); the challenges service's "reload" then reads it. 1 done. */
 int32_t UnitedScn_Import(const unsigned char *data, uint32_t size, char *id, uint32_t idCap);
 
+/* SWOS 2020's shared custom challenges (fetched, newest first, at most `max`) as a challenge pack
+ * mod in `dir` for the Amiga: mod.json (targets the Amiga), data_json/challenges/shared.json
+ * (category SHARED CHALLENGES), teams/scn-<hash>.EDT. Prints a summary line. 1 made. (SWOS.exe
+ * --shared-challenges-pack; OpenSWOS Setup carries it into an Amiga drawer.) */
+int32_t UnitedScn_BuildPack(const char *dir, int32_t max);
+
 /* A 7z archive (its bytes): its first file whose name ends in `ext` (case ignored, ".rpl") into
  * *out (malloc'd: free it), *outSize its length. 1 found. (SWOS 2020's speedrun replays: a .7z
  * holding the run's .RPL.) */

@@ -310,9 +310,9 @@ static int32_t same_team(const char *a, const char *b)
     return !*a && !*b;
 }
 
-/* The challenge's JSON object into o; its id into id. 1 done. */
-static int32_t challenge_json(const Scn *scn, const char *edt, const char teamNames[2][24], char *id, uint32_t idCap,
-                              Out *o)
+/* The challenge's JSON object into o, in `category`; its id into id. 1 done. */
+static int32_t challenge_json(const Scn *scn, const char *edt, const char teamNames[2][24], const char *category,
+                              char *id, uint32_t idCap, Out *o)
 {
     const char *ini = scn->ini;
     char v[256], e1[300], e2[300];
@@ -330,8 +330,8 @@ static int32_t challenge_json(const Scn *scn, const char *edt, const char teamNa
     char shortName[32];
     snprintf(shortName, sizeof shortName, "%.31s", name);
 
-    put(o, "  { \"id\": \"%s\", \"name\": \"%s\", \"record_name\": \"%s\", \"category\": \"CUSTOM\",\n", id,
-        esc(shortName, e1, sizeof e1), esc(name, e2, sizeof e2));
+    put(o, "  { \"id\": \"%s\", \"name\": \"%s\", \"record_name\": \"%s\", \"category\": \"%s\",\n", id,
+        esc(shortName, e1, sizeof e1), esc(name, e2, sizeof e2), category);
     put(o, "    \"title\": \"%s\", ", esc(ini_get(ini, "SCENARIO NICKNAME", v, sizeof v), e1, sizeof e1));
     put(o, "\"difficulty\": %d, \"win_message\": \"%s\",\n", (int)ini_num(ini, "DIFFICULTY", 1),
         esc(ini_get(ini, "WIN MESSAGE", v, sizeof v), e1, sizeof e1));
@@ -465,10 +465,16 @@ static int32_t challenge_json(const Scn *scn, const char *edt, const char teamNa
 
 /* ---- the import ---- */
 
-int32_t UnitedScn_Import(const unsigned char *data, uint32_t size, char *id, uint32_t idCap)
+/* One .SCN converted: its two teams as an .EDT's bytes (edtBuf, 2 + 2 records) named edtName
+ * ("scn-<hash>.EDT"), and its challenge's JSON object into o -- the .EDT named in it as
+ * edtDir + edtName, its category `category`. 1 done. Shared by the import (one fetched challenge,
+ * into the save folder) and the pack (all of them, for the Amiga). */
+enum { kEdtSize = 2 + 2 * kTeamRecord };
+static int32_t convert(const unsigned char *data, uint32_t size, const char *edtDir, const char *category,
+                       char *edtName, uint32_t edtCap, unsigned char *edtBuf, char *id, uint32_t idCap, Out *o)
 {
     Scn scn;
-    char edt[48], names[2][24], v[64];
+    char names[2][24], v[64];
     if (!unpack(data, size, &scn)) {
         fprintf(stderr, "[scn] not a 7z archive SWOS 2020 would open\n");
         return 0;
@@ -495,35 +501,39 @@ int32_t UnitedScn_Import(const unsigned char *data, uint32_t size, char *id, uin
         return 0;
     }
     /* the .EDT: a big-endian count, then the records, each its 16-bit field big-endian */
-    {
-        unsigned char buf[2 + 2 * kTeamRecord];
-        buf[0] = 0;
-        buf[1] = 2;
-        for (int32_t t = 0; t < 2; t++) {
-            unsigned char *r = buf + 2 + t * kTeamRecord;
-            memcpy(r, scn.teams[pick[t]].rec, kTeamRecord);
-            const unsigned char lo = r[2];
-            r[2] = r[3];
-            r[3] = lo;
-            record_name(r, names[t], sizeof names[t]);
-        }
-        char sname[96];
-        ini_get(scn.ini, "SCENARIO NAME", sname, sizeof sname);
-        snprintf(edt, sizeof edt, "scn-%08x.EDT", (unsigned)fnv32(sname));
-        if (ModApi_SaveFile("challenges", edt, buf, sizeof buf) != 0) {
-            free(scn.ini);
-            return 0;
-        }
+    edtBuf[0] = 0;
+    edtBuf[1] = 2;
+    for (int32_t t = 0; t < 2; t++) {
+        unsigned char *r = edtBuf + 2 + t * kTeamRecord;
+        memcpy(r, scn.teams[pick[t]].rec, kTeamRecord);
+        const unsigned char lo = r[2];
+        r[2] = r[3];
+        r[3] = lo;
+        record_name(r, names[t], sizeof names[t]);
     }
+    {
+        char sname[96], file[96];
+        ini_get(scn.ini, "SCENARIO NAME", sname, sizeof sname);
+        snprintf(edtName, edtCap, "scn-%08x.EDT", (unsigned)fnv32(sname));
+        snprintf(file, sizeof file, "%s%s", edtDir, edtName);
+        const int32_t ok = challenge_json(&scn, file, (const char (*)[24])names, category, id, idCap, o);
+        free(scn.ini);
+        return ok;
+    }
+}
+
+int32_t UnitedScn_Import(const unsigned char *data, uint32_t size, char *id, uint32_t idCap)
+{
+    char edt[48];
+    static unsigned char edtBuf[kEdtSize];
+    static char obj[8192];
+    Out o = { obj, sizeof obj };
+    if (!convert(data, size, "", "CUSTOM", edt, sizeof edt, edtBuf, id, idCap, &o))
+        return 0;
+    if (ModApi_SaveFile("challenges", edt, edtBuf, sizeof edtBuf) != 0)
+        return 0;
     /* shared.json: the challenges already there (but one of this id), then this one */
     {
-        static char obj[8192];
-        Out o = { obj, sizeof obj };
-        if (!challenge_json(&scn, edt, (const char (*)[24])names, id, idCap, &o)) {
-            free(scn.ini);
-            return 0;
-        }
-        free(scn.ini);
         uint32_t oldSize = 0;
         char *old = (char *)ModApi_LoadFile("challenges", "shared.json", &oldSize);
         const uint32_t cap = oldSize + sizeof obj + 256;
@@ -559,6 +569,165 @@ int32_t UnitedScn_Import(const unsigned char *data, uint32_t size, char *id, uin
     }
     fprintf(stderr, "[scn] imported %s\n", id);
     return 1;
+}
+
+/* ---- the pack: every shared challenge, for the Amiga (SWOS.exe --shared-challenges-pack) ----
+ * The Amiga has no network: the PC fetches SWOS 2020's shared custom challenges (newest first, at
+ * most `max`) and writes them as a challenge pack mod in `dir` -- mod.json (targets the Amiga
+ * only: the PC plays them online, CUSTOM CHALLENGES -> PLAY), data_json/challenges/shared.json
+ * (category SHARED CHALLENGES) and teams/scn-<hash>.EDT -- which OpenSWOS Setup carries into an
+ * Amiga drawer like any Amiga mod, the pack converted to the binary the Amiga reads. */
+#include "united_records.h"
+
+#include <sys/stat.h>
+
+#define PACK_SLUG     "shared-challenges"
+#define PACK_UUID     "4f1d2b3a-6c58-4e0b-9a7d-2e5b8c1f6a03"   /* (this pack's, for good) */
+#define PACK_CATEGORY "SHARED CHALLENGES"
+
+static int32_t write_file(const char *path, const void *data, uint32_t size)
+{
+    FILE *f = fopen(path, "wb");
+    if (!f)
+        return 0;
+    const int32_t ok = fwrite(data, 1, size, f) == size;
+    return fclose(f) == 0 && ok;
+}
+
+int32_t UnitedScn_BuildPack(const char *dir, int32_t max)
+{
+    enum { kListCap = 1 << 20 };
+    char path[1200];
+    char *list = (char *)malloc(kListCap);
+    uint32_t jsonCap = 1 << 20;
+    char *json = (char *)malloc(jsonCap);
+    static char obj[8192];
+    static unsigned char edtBuf[kEdtSize];
+    static char ids[1024][16];
+    int32_t listed = 0, done = 0, failed = 0, dupes = 0;
+    if (max > (int32_t)(sizeof ids / sizeof ids[0]))
+        max = (int32_t)(sizeof ids / sizeof ids[0]);
+    if (!list || !json) {
+        free(list);
+        free(json);
+        return 0;
+    }
+    if (!UnitedRecords_ScnList(0, list, kListCap)) {
+        fprintf(stderr, "[scn-pack] the shared challenges' list cannot be fetched (online?)\n");
+        free(list);
+        free(json);
+        return 0;
+    }
+    snprintf(path, sizeof path, "%s", dir);         /* (its parent first: the user's mods/) */
+    {
+        char *slash = strrchr(path, '/');
+        if (slash && slash != path) {
+            *slash = 0;
+            mkdir(path, 0755);
+        }
+    }
+    mkdir(dir, 0755);
+    snprintf(path, sizeof path, "%s/teams", dir);
+    mkdir(path, 0755);
+    snprintf(path, sizeof path, "%s/data_json", dir);
+    mkdir(path, 0755);
+    snprintf(path, sizeof path, "%s/data_json/challenges", dir);
+    mkdir(path, 0755);
+
+    /* In files of kPerFile (shared-01.json, ...): the setup's Amiga converter takes at most 256 a
+     * file (tools/swosdata/lib/amiga_mod.c), and a file of 100 stays well inside the buffer. */
+    enum { kPerFile = 100 };
+    int32_t files = 0, inFile = 0, wrote = 1;
+    Out w = { json, jsonCap };
+#define PACK_HEAD "{\n \"format\": \"openswos-challenges\",\n \"version\": 2,\n \"category\": \"" PACK_CATEGORY "\",\n" \
+                  " \"about\": \"SWOS 2020's shared custom challenges (SWOS United, --shared-challenges-pack)\",\n" \
+                  " \"challenges\": [\n"
+    put(&w, PACK_HEAD);
+    {   /* (an earlier pack's files: gone, so a smaller one leaves none behind) */
+        for (int32_t k = 1; k < 100; k++) {
+            snprintf(path, sizeof path, "%s/data_json/challenges/shared-%02d.json", dir, (int)k);
+            remove(path);
+        }
+    }
+    for (char *line = list; line && *line;) {
+        char *next = strchr(line, '\n');
+        if (next)
+            *next++ = 0;
+        const size_t n = strlen(line);
+        if (n && line[n - 1] == '\r')
+            line[n - 1] = 0;
+        if (*line) {
+            listed++;
+            if (done < max) {
+                unsigned char *data = NULL;
+                uint32_t size = 0;
+                char edt[48], id[48];
+                Out o = { obj, sizeof obj };
+                int32_t ok = UnitedRecords_ScnDownload(line, &data, &size) && data &&
+                             convert(data, size, "teams/", PACK_CATEGORY, edt, sizeof edt, edtBuf, id, sizeof id, &o);
+                free(data);
+                int32_t dupe = 0;
+                for (int32_t k = 0; ok && k < done; k++)
+                    if (!strcmp(ids[k], id))        /* (two files of one scenario name: the newest kept) */
+                        dupe = 1;
+                if (dupe) {
+                    ok = 0;
+                    dupes++;
+                }
+                if (ok) {
+                    snprintf(path, sizeof path, "%s/teams/%s", dir, edt);
+                    ok = write_file(path, edtBuf, sizeof edtBuf);
+                }
+                if (ok) {
+                    put(&w, "%s%s", inFile ? ",\n" : "", obj);
+                    if (++inFile == kPerFile) {     /* (this file full: written, the next begun) */
+                        put(&w, "\n ]\n}\n");
+                        snprintf(path, sizeof path, "%s/data_json/challenges/shared-%02d.json", dir, (int)++files);
+                        if (!write_file(path, json, (uint32_t)(w.p - json)))
+                            wrote = 0;
+                        w.p = json;
+                        w.left = jsonCap;
+                        put(&w, PACK_HEAD);
+                        inFile = 0;
+                    }
+                    snprintf(ids[done], sizeof ids[0], "%s", id);
+                    done++;
+                } else if (!dupe) {
+                    failed++;
+                }
+                fprintf(stderr, "[scn-pack] %s: %s\n", line, ok ? id : dupe ? "same name as a newer one" : "FAILED");
+            }
+        }
+        line = next;
+    }
+    if (inFile) {                       /* (the last, part-full file) */
+        put(&w, "\n ]\n}\n");
+        snprintf(path, sizeof path, "%s/data_json/challenges/shared-%02d.json", dir, (int)++files);
+        if (!write_file(path, json, (uint32_t)(w.p - json)))
+            wrote = 0;
+    }
+    snprintf(path, sizeof path, "%s/data_json/challenges/shared.json", dir);
+    remove(path);                       /* (a one-file pack of before) */
+    int32_t ok = wrote;
+    {
+        char manifest[1024];
+        const int n = snprintf(manifest, sizeof manifest,
+                               "{\n \"uuid\": \"" PACK_UUID "\",\n \"id\": \"" PACK_SLUG "\",\n"
+                               " \"name\": \"Shared challenges\",\n \"version\": \"%d\",\n"
+                               " \"author\": \"SWOS 2020's players (sensiblesoccer.de), made by SWOS United\",\n"
+                               " \"about\": \"SWOS 2020's shared custom challenges for the Amiga, which has no network: "
+                               "%d of them, newest first. Made again with SWOS.exe --shared-challenges-pack.\",\n"
+                               " \"targets\": [\n  \"amiga\"\n ],\n \"changes\": \"modes\",\n \"default\": false\n}\n",
+                               (int)done, (int)done);
+        snprintf(path, sizeof path, "%s/mod.json", dir);
+        ok = ok && n > 0 && write_file(path, manifest, (uint32_t)n);
+    }
+    printf("SHARED CHALLENGES PACK: %d listed, %d in the pack (at most %d) in %d files, %d same-name left out, "
+           "%d failed -> %s\n", (int)listed, (int)done, (int)max, (int)files, (int)dupes, (int)failed, dir);
+    fflush(stdout);
+    free(list);
+    free(json);
+    return ok && done > 0;
 }
 
 #endif

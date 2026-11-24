@@ -323,6 +323,11 @@ static void print_usage(const char *argv0)
         "  --convert-diy=<in>,<out>  Rewrite a PC/SWOS 2020 .DIY as this game's JSON\n"
         "                            .DIY, which the Amiga loads. Exits.\n"
         "  --world-packs-selftest    Other installed worlds' countries as session team packs\n"
+#if defined(SWOS_HTTPS) && PROJECT_SHARED_CHALLENGES_PACK
+        "  --shared-challenges-pack[=N]  SWOS 2020's shared custom challenges (newest N, 200)\n"
+        "                            as an Amiga pack mod in the user's mods/shared-challenges.\n"
+        "                            The setup puts it in an Amiga drawer. Exits.\n"
+#endif
         "  --custom-team-selftest    Check every database team against the custom team\n"
         "                            rule (names, faces, kits and line-up only) and\n"
         "                            through the team file's text. Exits.\n"
@@ -1204,6 +1209,17 @@ int main(int argc, char **argv)
             if (getenv("SWOS_WORLD"))              /* (src/conti_view.c: the continental cups' views) */
                 World_Set(getenv("SWOS_WORLD"));
             return ContiView_SelfTest() ? 1 : 0;
+#if defined(SWOS_HTTPS) && PROJECT_SHARED_CHALLENGES_PACK
+        } else if (strncmp(a, "--shared-challenges-pack", 24) == 0 && (a[24] == '\0' || a[24] == '=')) {
+            /* SWOS United: SWOS 2020's shared custom challenges as an Amiga pack mod in the user's
+             * mods folder (src/united_scn.c UnitedScn_BuildPack), which the setup carries into an
+             * Amiga drawer. =N: at most N, newest first (default 200). Exits. */
+            extern int32_t UnitedScn_BuildPack(const char *dir, int32_t max);
+            char dir[1200];
+            const int32_t max = a[24] == '=' ? atoi(a + 25) : 200;
+            snprintf(dir, sizeof dir, "%s/mods/shared-challenges", swos_user_dir());
+            return UnitedScn_BuildPack(dir, max > 0 ? max : 200) ? 0 : 1;
+#endif
         } else if (strcmp(a, "--custom-team-selftest") == 0) {
             if (getenv("SWOS_WORLD"))
                 World_Set(getenv("SWOS_WORLD"));
