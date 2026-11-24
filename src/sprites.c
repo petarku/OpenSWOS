@@ -2201,9 +2201,9 @@ void DrawQueuedSprites(void)
             _frontbufferBasePtr = savedFbBase;
 #endif
     }
-#ifdef SWOS_SDL_BUILD
-    { extern void ModHooks_SpritesEnd(void); ModHooks_SpritesEnd(); }   /* (a mod's: mod_hooks.h) */
-#endif
+    /* (a mod's: mod_hooks.h -- both targets: on the Amiga what a mod draws here with
+     *  DrawSpriteClipped is undrawn with the frame's sprites, as the practice mod's shoot-out board) */
+    { extern void ModHooks_SpritesEnd(void); ModHooks_SpritesEnd(); }
 }
 
 /* ================================================================

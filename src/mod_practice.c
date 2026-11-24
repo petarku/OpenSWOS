@@ -259,8 +259,11 @@ static int32_t shootout_turn(const ModShootout *so)
 #include "mod_hudbox.h"         /* HudBox_ShadeChannel */
 #include "platform_sdl.h"       /* Platform_FrameShown, Platform_PaletteRgb, Platform_NowMs */
 #include "custom_team.h"        /* MY CUSTOM TEAMS for TEAM TRAINING (tr_own_team) */
+#endif
 
-/* ---- its pictures (SWOS 2020's PixelmapAndStrings.h, verbatim; the palette indices as there) ---- */
+/* ---- its pictures (SWOS 2020's PixelmapAndStrings.h, verbatim; the palette indices as there) ----
+ * The marks, arrows and small numbers are both targets' (the Amiga's shoot-out, below); the heads
+ * and kits the PC's (the takers panel and the kits on the band: not on the Amiga). */
 static const char *const kMarkCheck[11] = {
     ".......121.", ".......121.", "......121#.", "......121..", ".....121#..", ".1...121...",
     "121.121#...", "#121121....", ".#1221#....", "..#121.....", "...#1#.....",
@@ -283,12 +286,14 @@ static const char *const kArrowLeftUp[9] = {
     "2FF66....", "FF6888...", "F6F6.....", "68665....", "68.565...", ".8..554..", ".....454.", "......488",
     ".......8.",
 };
+#ifdef SWOS_SDL_BUILD
 static const char *const kHeads[3][8] = {
     { "..333...", ".33333..", "33666338", "36261538", ".6666588", ".5635488", "..55488.", "...888.." },
     { "..656...", ".65545..", "65666458", "56261548", ".6666588", ".5635488", "..55488.", "...888.." },
     { "..333...", ".33333..", "33555338", "35251438", ".5555488", ".4534388", "..44388.", "...888.." },
 };
-static const char *const kUniforms[4][8] = {
+#endif
+static const char *const kUniforms[4][8] = {          /* (both: the Amiga's board shows the kits too) */
     { "........", ".12221..", ".12221+.", "..222++.", "..333+..", "..333+..", "...+++..", "........" },
     { "........", ".21112..", ".21112+.", "..111++.", "..333+..", "..333+..", "...+++..", "........" },
     { "........", ".12121..", ".12121+.", "..212++.", "..333+..", "..333+..", "...+++..", "........" },
@@ -307,6 +312,7 @@ static const char *const kSmallNumbers[10][8] = {     /* (the 9th, blank, row no
     { "........", "2..222..", "2828882.", "2828..28", "2828..28", "28.222.8", ".8.8888.", "........" },
 };
 
+#ifdef SWOS_SDL_BUILD
 static uint8_t *s_fb;
 static int32_t  s_stride, s_w, s_h;
 /* While the board is drawn into its HudBox (board_contents): the box's corner on the picture and
@@ -738,6 +744,404 @@ static void shootout_menu(void)
     const int32_t x = ModApi_MenuMargin();
     for (int32_t r = 1; r <= 10; r++)
         pixmap(kSmallNumbers[10 - r], 8, 8, x, s_orderRowY[r], "28", cols, -1);
+}
+#endif
+
+#ifndef SWOS_SDL_BUILD
+/* ---- PENALTY SHOOTOUT on the Amiga (SWOS United, 2026-11-24: "the same as on the PC, but the
+ * takers panel") -- PLAY MATCH's kick order, the board and the keeper's arrow ----
+ *
+ * The Amiga's match frame keeps what is drawn into it (it undraws only the sprites: matchDrawn is
+ * the PC's), so the board and the arrow are SPRITES here, drawn at the end of the frame's sprites
+ * (spritesEnd) with DrawSpriteClipped, which queues their undraw like any bob's. The way is the
+ * owner's own PENALTY SHOOTOUT's (complete-work, src/penalty_shootout_hud.c, tested on an A1200
+ * 2026-11-01): the board a CANVAS -- an 8-bit picture this file paints, the game's font read pixel
+ * by pixel -- repainted only when what it shows changes and then converted once to sprite planes in
+ * CHIP RAM; shown only while a kick is set up, gone from the strike through the dive (the match's
+ * dearest frames: the canvas is blitted twice a frame over the 8-plane pitch). The takers panel is
+ * left out: more than half the HUD's area, too much for an A1200 (tested there, three builds). */
+#include "display.h"
+#include "sprites.h"
+#include "swos_sections.h"
+#include "text_render.h"        /* GetTextWidth */
+
+extern uint8_t *_spriteGraphicsPtr;
+extern uint8_t _smallCharsTable[];
+extern volatile uintptr_t _frontbufferBasePtr;
+extern int _menu_draw_x_offset;
+
+/* -- PLAY MATCH: the kick order beside the line-up, into the menu's bitplanes -- */
+
+static void menu_put(int32_t x, int32_t y, uint8_t c)
+{
+    if (x < 0 || y < 0 || x >= SCREEN_WIDTH || y >= SCREEN_HEIGHT)
+        return;
+    uint8_t *p = (uint8_t *)_frontbufferBasePtr + _menu_draw_x_offset + (uint32_t)y * ROW_STRIDE_BYTES +
+                 ((uint32_t)x >> 3);
+    const uint8_t bit = (uint8_t)(0x80 >> (x & 7));
+    for (int32_t pl = 0; pl < NUM_PLANES; pl++, p += PLANE_STRIDE)
+        *p = (uint8_t)((c >> pl) & 1 ? (*p | bit) : (*p & ~bit));
+}
+
+static int16_t s_orderRowX;             /* (the row's first cell: the numbers just left of it) */
+
+static void shootout_row(const ModPlayerRow *row)       /* (as the PC's, and its x) */
+{
+    if (row->screen != MODROWS_PLAY_MATCH || !our_shootout() || row->row < 0 || row->row > 10)
+        return;
+    int32_t x = 0, y = 0;
+    ModApi_MenuEntryRect(row->firstCell, &x, &y, NULL, NULL);
+    s_orderRowY[row->row] = (int16_t)y;
+    s_orderRowX = (int16_t)x;
+    if (row->row >= s_orderRows)
+        s_orderRows = (int8_t)(row->row + 1);
+}
+
+static void shootout_menu_drawn(void)
+{
+    static const uint8_t cols[] = { 15, 8 };
+    shootout_test_menu();
+    if (!our_shootout() || !ModApi_IsPlayMatchMenu() || s_orderRows < 11)
+        return;
+    /* (10 by the second man down .. 1 by the 11th; just left of the row -- the PC's x 0, its screen's
+     *  edge, is outside what an Amiga shows: the numbers came out cut, 2026-11-24) */
+    const int32_t x0 = s_orderRowX - 9;
+    for (int32_t r = 1; r <= 10; r++)
+        for (int32_t j = 0; j < 8; j++)
+            for (int32_t i = 0; i < 8; i++) {
+                const char *k = strchr("28", kSmallNumbers[10 - r][j][i]);
+                if (kSmallNumbers[10 - r][j][i] != '.' && k)
+                    menu_put(x0 + i, s_orderRowY[r] + j, cols[k - "28"]);
+            }
+}
+
+/* -- canvases: an 8-bit picture shown as one sprite (the owner's penalty_shootout_hud.c) -- */
+
+typedef struct {
+    int16_t w, h, wq, maxWq, maxH;
+    uint8_t *pix;                       /* w * h, colour 0 see-through */
+    uint16_t *data, *mask;              /* its sprite planes, CHIP RAM */
+    SpriteGraphics g;
+} Canvas;
+
+#define DEPTH_SPRITE 1074               /* the HUD's shirt number: the canvases' plane depth */
+#define PLANES_WORDS(wq, h) ((wq) * (h) * SPRITE_NUM_PLANES + 2)    /* +2: a shifted blit reads on */
+enum { BOARD_WQ = 21, BOARD_H = 40, ARROW_WQ = 1, ARROW_H = 9 };   /* (the board: the 336 width, the PC band's 40) */
+enum { C_WHITE = 2, C_DARK = 8 };       /* (the match palette's first 16: sprites are 16 colours) */
+
+static uint8_t s_boardPix[BOARD_WQ * 16 * BOARD_H];
+SWOS_CHIP_BSS static uint16_t s_boardData[PLANES_WORDS(BOARD_WQ, BOARD_H)];
+SWOS_CHIP_BSS static uint16_t s_boardMask[PLANES_WORDS(BOARD_WQ, BOARD_H)];
+static uint8_t s_arrowPix[4][ARROW_WQ * 16 * ARROW_H];
+SWOS_CHIP_BSS static uint16_t s_arrowData[4][PLANES_WORDS(ARROW_WQ, ARROW_H)];
+SWOS_CHIP_BSS static uint16_t s_arrowMask[4][PLANES_WORDS(ARROW_WQ, ARROW_H)];
+static Canvas s_board, s_arrow[4];
+static int16_t s_canvasesReady;
+
+static void canvas_init(Canvas *c, int16_t wq, int16_t h, uint8_t *pix, uint16_t *data, uint16_t *mask)
+{
+    c->maxWq = c->wq = wq;
+    c->w = (int16_t)(wq * 16);
+    c->maxH = c->h = h;
+    c->pix = pix;
+    c->data = data;
+    c->mask = mask;
+}
+
+/* as small as what it shows: every pixel of it is blitted twice a frame, see-through ones too */
+static void canvas_size(Canvas *c, int16_t w, int16_t h)
+{
+    const int16_t wq = (int16_t)((w + 15) / 16);
+    c->wq = wq < 1 ? 1 : wq > c->maxWq ? c->maxWq : wq;
+    c->w = (int16_t)(c->wq * 16);
+    c->h = h < 1 ? 1 : h > c->maxH ? c->maxH : h;
+}
+
+static void canvas_put(Canvas *c, int32_t x, int32_t y, uint8_t col)
+{
+    if (x >= 0 && y >= 0 && x < c->w && y < c->h)
+        c->pix[y * c->w + x] = col;
+}
+
+static void canvas_fill(Canvas *c, uint8_t col)
+{
+    for (int32_t i = 0; i < (int32_t)c->w * c->h; i++)
+        c->pix[i] = col;
+}
+
+static void canvas_pixmap(Canvas *c, const char *const *rows, int32_t w, int32_t h, int32_t x, int32_t y,
+                          const char *keys, const uint8_t *cols)
+{
+    for (int32_t j = 0; j < h; j++)
+        for (int32_t i = 0; i < w; i++) {
+            const char *k = strchr(keys, rows[j][i]);
+            if (rows[j][i] != '.' && k)
+                canvas_put(c, x + i, y + j, cols[k - keys]);
+        }
+}
+
+/* a sprite's colour at (x, y): one row per plane each line, wquads words wide */
+static uint8_t sprite_pixel(const SpriteGraphics *s, int32_t x, int32_t y)
+{
+    const uint16_t sp = s->type == 0 ? SPRITE_NUM_PLANES : spriteNumPlanes(s->ordinal);
+    const uint16_t *line = (const uint16_t *)s->sprData + (uint32_t)y * sp * s->wquads;
+    const uint16_t bit = (uint16_t)(0x8000u >> (x & 15));
+    uint8_t col = 0;
+    for (uint16_t p = 0; p < sp; p++)
+        if (line[p * s->wquads + (x >> 4)] & bit)
+            col |= (uint8_t)(1u << p);
+    return col;
+}
+
+static SpriteGraphics *game_sprite(uint16_t index) { return ((SpriteGraphics **)_spriteGraphicsPtr)[index]; }
+
+/* the game's font (big: the PC board's, _charTables[1]; else the small one) as DrawMenuText draws
+ * it: its body (bit 1) white, its shadow (bit 3) dark */
+extern void *_charTables[];
+static uint8_t *font_of(int32_t big) { return big ? (uint8_t *)_charTables[1] : _smallCharsTable; }
+
+static int32_t canvas_text(Canvas *c, int32_t x, int32_t y, const char *text, int32_t big)
+{
+    const CharsTableHeader *ct = (const CharsTableHeader *)font_of(big);
+    const uint16_t *conv = (const uint16_t *)(ct + 1);
+    const int32_t x0 = x;
+    for (uint8_t ch; (ch = (uint8_t)*text++) != 0;) {
+        if (ch == ' ') {
+            x += ct->spaceWidth;
+            continue;
+        }
+        const SpriteGraphics *g = game_sprite((uint16_t)(conv[ch - ' '] + ct->spriteIndexOffset));
+        for (int32_t gy = 0; gy < g->nlines; gy++)
+            for (int32_t gx = 0; gx < g->pixWidth; gx++) {
+                const uint8_t v = sprite_pixel(g, gx, gy);
+                if (v & 0x0A)
+                    canvas_put(c, x + gx, y + gy, (v & 0x02) ? C_WHITE : C_DARK);
+            }
+        x += g->pixWidth + ct->charSpacing;
+    }
+    return x - x0;
+}
+
+static int32_t text_width(const char *t, int32_t big) { return (int32_t)GetTextWidth((uint8_t *)t, font_of(big)); }
+
+/* the canvas as linked sprite planes (per line one row per plane, the mask repeated per plane) */
+static void canvas_publish(Canvas *c)
+{
+    SpriteGraphics *g = &c->g;
+    g->type = 1;
+    g->pixWidth = c->w;
+    g->nlines = c->h;
+    g->wquads = c->wq;
+    g->centerX = g->centerY = 0;
+    g->ordinal = game_sprite(DEPTH_SPRITE)->ordinal;
+    const uint16_t sp = spriteNumPlanes(g->ordinal);
+    if (sp > SPRITE_NUM_PLANES) {           /* (the planes would not fit: nothing shown) */
+        g->nlines = 0;
+        return;
+    }
+    for (int32_t y = 0; y < c->h; y++)
+        for (int32_t wd = 0; wd < c->wq; wd++) {
+            uint16_t mask = 0, planes[8] = { 0 };
+            const uint8_t *px = c->pix + y * c->w + wd * 16;
+            for (int32_t b = 0; b < 16; b++) {
+                if (!px[b])
+                    continue;
+                const uint16_t bit = (uint16_t)(0x8000u >> b);
+                mask |= bit;
+                for (uint16_t p = 0; p < sp; p++)
+                    if (px[b] & (1u << p))
+                        planes[p] |= bit;
+            }
+            for (uint16_t p = 0; p < sp; p++) {
+                const uint32_t at = ((uint32_t)y * sp + p) * c->wq + wd;
+                c->data[at] = planes[p];
+                c->mask[at] = mask;
+            }
+        }
+    g->sprData = (uint8_t *)c->data;
+    g->maskPtr = (uint8_t *)c->mask;
+    g->bltsize = (uint16_t)(((c->h * sp) << 6) | c->wq);
+}
+
+/* -- the board: the PC's draw_board (SWOS 2020's showPenaltyGoalsInfo) on a canvas -- */
+
+enum { KICK_STEP = 22 };
+
+/* The tick and the cross, 7x7 with a black edge (the owner's own, penalty_shootout_hud.c): SWOS
+ * 2020's 11x11 marks were too big on the Amiga's board (2026-11-24). */
+static const char *const k_tick7[7] = {
+    "......#", ".....##", "#...##.", "##.##..", ".###...", "..#....", ".......",
+};
+static const char *const k_cross7[7] = {
+    "#.....#", "##...##", ".##.##.", "..###..", ".##.##.", "##...##", "#.....#",
+};
+
+static void canvas_mark(Canvas *c, int32_t x, int32_t y, int32_t missed)
+{
+    const char *const *art = missed ? k_cross7 : k_tick7;
+    for (int32_t ay = 0; ay < 7; ay++)              /* the edge first ... */
+        for (int32_t ax = 0; ax < 7; ax++)
+            if (art[ay][ax] == '#')
+                for (int32_t dy = -1; dy <= 1; dy++)
+                    for (int32_t dx = -1; dx <= 1; dx++)
+                        canvas_put(c, x + ax + dx, y + ay + dy, 3 /* black */);
+    for (int32_t ay = 0; ay < 7; ay++)              /* ... then the mark on it */
+        for (int32_t ax = 0; ax < 7; ax++)
+            if (art[ay][ax] == '#')
+                canvas_put(c, x + ax, y + ay, missed ? 10 /* red */ : 14 /* green */);
+}
+
+/* The PC's board in its "Amiga" layout (layout() mode 1: 336 wide), the whole width at y 230: the
+ * names right-aligned to 141 in the big font, the kits at 148, the score in the middle, the kick
+ * columns from 196 every 25 (the latest five), and the side to kick next marked past them -- on a
+ * solid dark box (the PC's band, shading the picture under it, is not on the Amiga: a sprite cannot
+ * darken what it covers). The owner, 2026-11-24: "the cheap part" of the PC's look. */
+enum { BOARD_Y = 230, BOARD_NAME_RIGHT = 141, BOARD_GOAL_GAP = 10, BOARD_CELL_X0 = 196, BOARD_CELL_GAP = 25,
+       BOARD_KIT_X = 148 };
+
+static void paint_kit(int32_t side, int32_t x, int32_t y)
+{
+    int32_t type, shirt, stripes, shorts;
+    if (!ModApi_MatchKit(side, &type, &shirt, &stripes, &shorts))
+        return;
+    /* (sprites are 16 colours here: the kit's are the match palette's first 16; its outline, the
+     *  PC's 19, the black) */
+    const uint8_t cols[4] = { (uint8_t)(shirt & 15), (uint8_t)(stripes & 15), (uint8_t)(shorts & 15), 3 };
+    const char *const *u = kUniforms[type & 3];
+    for (int32_t j = 0; j < 15; j++)
+        for (int32_t i = 0; i < 15; i++) {
+            const char *k = strchr("123+", u[j / 2][i / 2]);
+            if (u[j / 2][i / 2] != '.' && k)
+                canvas_put(&s_board, x + i, y + j, cols[k - "123+"]);
+        }
+}
+
+/* The box hugs what it shows (the owner, 2026-11-24: slower with the board up): every pixel of it
+ * is blitted twice a frame over the 8-plane pitch, see-through or not, so its AREA is the cost. From
+ * just left of the longer name (word-aligned) to just after the fifth column -- the PC's extra '*'
+ * past the five (the side to kick next) left out: the current kick's '*' says it -- and the rows'
+ * height. Its x on the screen is s_boardX. */
+enum { BOARD_RIGHT = BOARD_CELL_X0 + 4 * BOARD_CELL_GAP + 12, BOARD_ROWS_H = 38 };
+static int16_t s_boardX;
+
+static void paint_board(const ModShootout *so, int32_t turn)
+{
+    ModMatchTeam team[2];
+    char buf[24];
+    /* (the PC's y 233 / 245 / 258 and kits 242 / 255, on the box from 230) */
+    const int32_t y0 = 233 - BOARD_Y, yRow[2] = { 245 - BOARD_Y, 258 - BOARD_Y }, yKit[2] = { 242 - BOARD_Y,
+                                                                                               255 - BOARD_Y };
+    int32_t nameW = 0;
+    for (int32_t t = 0; t < 2; t++) {
+        if (!ModApi_MatchTeam(t, &team[t]))
+            team[t].name[0] = '\0';
+        if (text_width(team[t].name, 1) > nameW)
+            nameW = text_width(team[t].name, 1);
+    }
+    int32_t left = BOARD_NAME_RIGHT - nameW - 4;
+    left = left < 0 ? 0 : left & ~15;
+    s_boardX = (int16_t)left;
+    canvas_size(&s_board, (int16_t)(BOARD_RIGHT - left), BOARD_ROWS_H);
+    canvas_fill(&s_board, C_DARK);
+    /* (everything below in the screen's x, less the box's) */
+    const int32_t start = so->attempts[0] > 5 ? so->attempts[0] - 5 : 0;
+    for (int32_t i = start; i < start + 5; i++) {
+        const int32_t c = i - start, x = BOARD_CELL_X0 + BOARD_CELL_GAP * c - left;
+        snprintf(buf, sizeof buf, "%d", (int)i + 1);
+        canvas_text(&s_board, x, y0, buf, 1);
+        for (int32_t t = 0; t < 2; t++) {
+            const int32_t y = yRow[t], n = so->attempts[t];
+            char cell;
+            if (i < n - 1)
+                cell = s_kicks[t][i] ? '1' : '0';
+            else if (i == n - 1)
+                cell = turn == t && !so->over && so->inProgress ? '*' : s_kicks[t][i] ? '1' : '0';
+            else
+                cell = '-';
+            if (cell == '1' || cell == '0')
+                canvas_mark(&s_board, x, y + 1, cell == '0');
+            else {
+                buf[0] = cell;
+                buf[1] = '\0';
+                canvas_text(&s_board, x, y, buf, 1);
+            }
+        }
+    }
+    for (int32_t t = 0; t < 2; t++) {
+        canvas_text(&s_board, BOARD_NAME_RIGHT - text_width(team[t].name, 1) - left, yRow[t], team[t].name, 1);
+        paint_kit(t, BOARD_KIT_X - left, yKit[t]);
+        snprintf(buf, sizeof buf, "%d", (int)so->goals[t]);
+        canvas_text(&s_board, (SCREEN_WIDTH - text_width(buf, 1)) / 2 + BOARD_GOAL_GAP - left, yRow[t], buf, 1);
+    }
+    canvas_publish(&s_board);
+}
+
+/* -- the keeper's arrow: the PC's (SWOS 2020's showGKIndicator), its four pictures as sprites -- */
+
+static void build_arrows(void)
+{
+    static const uint8_t cols[] = { 2, 15, 6, 5, 4, 8 };
+    static const struct { const char *const *rows; int32_t w, h; } k[4] = {
+        { kArrowRight, 10, 7 }, { kArrowLeft, 10, 7 }, { kArrowRightUp, 9, 9 }, { kArrowLeftUp, 9, 9 },
+    };
+    for (int32_t a = 0; a < 4; a++) {
+        canvas_init(&s_arrow[a], ARROW_WQ, ARROW_H, s_arrowPix[a], s_arrowData[a], s_arrowMask[a]);
+        canvas_size(&s_arrow[a], (int16_t)k[a].w, (int16_t)k[a].h);
+        canvas_fill(&s_arrow[a], 0);
+        canvas_pixmap(&s_arrow[a], k[a].rows, k[a].w, k[a].h, 0, 0, "2F6548", cols);
+        canvas_publish(&s_arrow[a]);
+    }
+}
+
+static void draw_arrow(const ModShootout *so)
+{
+    int16_t cx, cy;
+    const int32_t both = so->side[0] != MODSIDE_CPU && so->side[1] != MODSIDE_CPU;
+    if (so->keeperTurn < 0 || !so->ballOnSpot || both)
+        return;
+    ModApi_Camera(&cx, &cy);
+    const int32_t gx = 336 - cx, yl = 131 - cy - 15;    /* (the PC's places on the goal) */
+    int32_t a = -1, x = 0, y = 0;
+    switch (so->keeperStick) {
+    case 2: case 3: a = 0; x = gx + 7; y = yl + 5; break;
+    case 6: case 5: a = 1; x = gx - 16; y = yl + 5; break;
+    case 1: a = 2; x = gx + 6; y = yl + 1; break;
+    case 7: a = 3; x = gx - 14; y = yl + 1; break;
+    default: return;
+    }
+    if (x > -16 && y > -16 && x < SCREEN_WIDTH && y < SCREEN_HEIGHT && s_arrow[a].g.nlines > 0)
+        DrawSpriteClipped(&s_arrow[a].g, (int16_t)x, (int16_t)y);
+}
+
+/* -- each frame, at the end of its sprites -- */
+
+static void shootout_sprites_end(void)
+{
+    ModShootout so;
+    static uint32_t s_shown = 0xFFFFFFFFu;  /* what the board shows: repainted when it changes */
+    if (!our_shootout() || ModApi_InReplay() || !ModApi_Shootout(&so))
+        return;
+    if (!s_canvasesReady) {
+        canvas_init(&s_board, BOARD_WQ, BOARD_H, s_boardPix, s_boardData, s_boardMask);
+        build_arrows();
+        s_canvasesReady = 1;
+    }
+    const int32_t turn = shootout_turn(&so);    /* (the kick record: every frame) */
+    draw_arrow(&so);
+    /* the board while a kick is set up and at the result, not through the strike and the dive --
+     * nor under MATCH STATS (the statistics are drawn after the sprites: it stood over them) */
+    extern uint16_t _statsTimer, _showStats;
+    if ((!so.ballOnSpot && !so.over) || _statsTimer != 0 || _showStats != 0)
+        return;
+    uint32_t sig = (uint32_t)so.attempts[0] * 7919u + (uint32_t)so.attempts[1] * 104729u +
+                   (uint32_t)so.goals[0] * 31u + (uint32_t)so.goals[1] * 131u + (uint32_t)turn * 3u +
+                   (uint32_t)so.over * 5u + (uint32_t)so.inProgress * 11u;
+    if (sig != s_shown) {
+        s_shown = sig;
+        paint_board(&so, turn);
+    }
+    if (s_board.g.nlines > 0)
+        DrawSpriteClipped(&s_board.g, s_boardX, BOARD_Y);
 }
 #endif
 
@@ -1264,7 +1668,9 @@ const ModDef ModDef_practice = {
     .playerRowDrawn = shootout_row,
     .matchKey = training_key,
 #else
-    .menuDrawn = shootout_test_menu,   /* (the tests are the SDL build's) */
+    .menuDrawn = shootout_menu_drawn,   /* (PLAY MATCH's kick order; the tests are the SDL build's) */
+    .playerRowDrawn = shootout_row,
+    .spritesEnd = shootout_sprites_end, /* (the shoot-out's board and the keeper's arrow, as sprites) */
 #endif
 };
 
