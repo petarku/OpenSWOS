@@ -283,6 +283,15 @@ static void main_refresh(void)
     }
 #ifdef SWOS_NETPLAY
     nav(Main_multi, -1, Main_options, Main_liveCast, Main_compete);
+#elif !defined(SWOS_SDL_BUILD)
+    /* The Amiga (no online play): FRIENDLY in MULTIPLAYER's place, its dark blue and its picture,
+     * out of PRACTICE (the user, 2026-11-25); LIVE CAST goes. */
+    show(Main_multi, 1);
+    show(Main_liveCast, 0);
+    ModApi_MenuText(Main_multi, "  FRIENDLY");
+    nav(Main_multi, -1, Main_options, -1, Main_compete);
+    nav(Main_compete, -1, Main_extras, Main_multi, Main_practice);
+    nav(Main_options, Main_multi, -1, -1, Main_extras);
 #else
     /* No online play in this build: MULTIPLAYER and LIVE CAST go, COMPETE is the top. */
     show(Main_multi, 0);
@@ -873,7 +882,11 @@ static void extras(void)   { open_screen(SLUG "/extrasMenu"); }
 
 /* The game's own handlers, each ending in CommonMenuExit, and then this menu's layout. */
 #define GAME_BUTTON(name, fn) static void name(void) { fn(); main_refresh(); }
+#ifdef SWOS_SDL_BUILD
 GAME_BUTTON(multiplayer, MultiplayerMenuSelected)
+#else
+GAME_BUTTON(multiplayer, FriendlyMenu)      /* (the Amiga: that button is FRIENDLY -- main_refresh) */
+#endif
 GAME_BUTTON(options, OptionsMenuSelected)
 GAME_BUTTON(continueContest, StartContest)
 GAME_BUTTON(saveContest, SaveContest)
@@ -1249,6 +1262,13 @@ static void practiceInit(void)
     nav(Prac_friendly, -1, -1, -1, practice ? Prac_training : Prac_exit);
     nav(Prac_demo, -1, -1, Prac_shootout, Prac_exit);
     nav(Prac_exit, -1, -1, last, -1);
+#ifndef SWOS_SDL_BUILD
+    /* the Amiga: FRIENDLY is the main menu's own button (main_refresh), not here */
+    show(Prac_friendly, 0);
+    nav(Prac_training, -1, -1, -1, Prac_shootout);
+    nav(Prac_exit, -1, -1, practice ? Prac_demo : -1, -1);
+    SetCurrentEntry(practice ? Prac_training : Prac_exit);
+#endif
 }
 
 static void friendly(void) { choose(FriendlyMenu); }

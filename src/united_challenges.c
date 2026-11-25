@@ -1078,7 +1078,9 @@ static void customChallengesMainMenu_exit_onSelect(void) { SetExitMenuFlag(); }
 enum { kScnRows = 15, kScnMax = 600 };
 typedef struct { char file[96], team1[40], score[12], team2[40], creator[32], name[96]; int32_t level, done; } ScnRow;
 static ScnRow *s_scn;
-static int32_t s_numScn, s_scnState, s_infoState, s_scnPage, s_scnSort;   /* sort: 0 date .. 4 level */
+static int32_t s_numScn, s_scnState, s_infoState, s_scnPage;
+static int32_t s_scnSort = 4;   /* sort: 0 date .. 4 level -- by level, lowest first, unless chosen
+                                 * (the user, 2026-11-25) */
 static int32_t s_scnLoad;              /* 1: CREATE -> LOAD, the player's own (OpenSWOS's challenges) */
 #ifdef SWOS_SDL_BUILD
 static char  s_scnList[1 << 16], s_scnInfo[1 << 18];
