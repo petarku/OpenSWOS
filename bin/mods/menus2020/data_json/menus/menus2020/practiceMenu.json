@@ -9,7 +9,7 @@
     "dos_redraw": true
   },
   "onInit": "menus2020.practiceInit",
-  "onReturn": null,
+  "onReturn": "menus2020.practiceReturn",
   "onDraw": null,
   "defaultEntry": 1,
   "exports": {

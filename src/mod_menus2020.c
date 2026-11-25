@@ -1342,7 +1342,9 @@ static void career(void) { choose(CareerMenu); }
 enum { Prac_header, Prac_friendly, Prac_training, Prac_shootout, Prac_demo, Prac_help, Prac_exit,
        Prac_modes };
 
-static void practiceInit(void)
+/* (the rows; again on return -- onReturn: the game unpacks the menu afresh after a screen it
+ *  opened, FRIENDLY shown and the rows where the JSON has them) */
+static void practice_layout(int32_t cursor)
 {
     const int32_t practice = ModApi_FindEntry(MODPOINT_MODES, "practice") >= 0;
     const int32_t last = practice ? Prac_demo : Prac_friendly;
@@ -1369,9 +1371,14 @@ static void practiceInit(void)
     }
     nav(Prac_training, -1, -1, -1, Prac_shootout);
     nav(Prac_exit, -1, -1, practice ? Prac_demo : -1, -1);
-    SetCurrentEntry(practice ? Prac_training : Prac_exit);
+    if (cursor)
+        SetCurrentEntry(practice ? Prac_training : Prac_exit);
+#else
+    (void)cursor;
 #endif
 }
+static void practiceInit(void)   { practice_layout(1); }
+static void practiceReturn(void) { practice_layout(0); }   /* (the cursor stays on the row left by) */
 
 static void friendly(void) { choose(FriendlyMenu); }
 static void modes(void)    { choose(ModesMenuSelected); }
@@ -1730,7 +1737,7 @@ static void init(void)
         { "online", online }, { "diy", diy }, { "preset", preset }, { "career", career },
         { "speedruns", speedruns }, { "challenges", challenges },
 
-        { "practiceInit", practiceInit },
+        { "practiceInit", practiceInit }, { "practiceReturn", practiceReturn },
         { "friendly", friendly }, { "modes", modes },
 
         { "extrasInit", extrasInit }, { "extrasDraw", extrasDraw },
