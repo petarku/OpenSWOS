@@ -111,6 +111,29 @@ SUBMENUS = {
              "editCustomTeams": (2, -1, -1, 5), "editTactics": (2, -1, 4, 6),
              "manual": (3, -1, 5, 8), "exit": (-1, -1, 6, -1)},
     ),
+    # REPLAYS (replaysMain.mnu, replaysMenu.cpp): SWOS GALORE -- the galore2020 mod's screen, what
+    # PRACTICE's MODES opened until 2026-11-15 --, HIGHLIGHTS (the game's own), MATCH REPLAYS (the
+    # game's highlights screen with the last match's whole replay, LATEST.SRP, loaded: SWOS 2020's
+    # full-length match replays) and REPLAY CONTROLS; the line under them says what the chosen one
+    # does (replaysMainMenu_OnDraw).
+    "replaysMain": dict(
+        out="replaysMenu", onInit="replaysInit", onDraw="replaysDraw",
+        handlers={
+            "swosGalore_OnSelect": "galore",
+            "highlights_OnSelect": "highlights",
+            "matchReplays_OnSelect": "matchReplays",
+            "replayControls_OnSelect": "replayControls",
+        },
+        hide=[],
+        deferred=["desc"],
+    ),
+    # REPLAY CONTROLS (replayControls.mnu): the keys and the controller's buttons, the picture its
+    # onDraw draws (drawReplayControlsLayout) above them.
+    "replayControls": dict(
+        out="replayControlsMenu", onInit=None, onDraw="replayControlsDraw",
+        handlers={},
+        hide=[],
+    ),
     # QUIT's screen (menu.cpp showQuitMenu): QUIT TO <the system> / RETURN TO GAME, RETURN chosen;
     # fading out and in as its quitMenuOnInit / quitGame / returnToGame.
     "quit": dict(
@@ -169,12 +192,19 @@ CONTINUE_Y = 154        # (on screen 154..173: 3 under the last row's 150, 4 ove
 # and ConvertMenu's +8 (mod_menus2020.c kCreditsPicX / kCreditsPicY: keep the two the same).
 CREDITS_PICTURE_AT = (293 - 281 - 8, 185 - 182)
 # The banner's size (scripts/make_united_logo.py writes it): 31 high, in the band above the buttons
-# (0..40) right of the TV (4..37).
-LOGO_SIZE = (262, 31)
-LOGO_INK_RIGHT = 260        # (the D's last column in it: the banner ends where the right buttons do)
-# The LIVE CAST TV's size (scripts/make_menus2020_icons.py TV_SIZE: SWOS 2020's 42x38, smaller --
-# Playa 2026-11-20 -- so it stands clear of the banner, 4..37).
-TV_SIZE = (34, 31)
+# (0..40) right of the TV (1..42).
+LOGO_SIZE = (258, 31)
+LOGO_INK_RIGHT = 256        # (the D's last column in it: the banner ends where the right buttons do)
+# The LIVE CAST TV's size (scripts/make_menus2020_icons.py TV_SIZE): SWOS 2020's 42x38, pixel for
+# pixel, at the left buttons' edge (x 1) in the band above them (y 1..38). It was four fifths as big
+# from 2026-11-20 (Playa: clear of the banner); the banner is narrower instead.
+TV_SIZE = (42, 38)
+TV_AT = (-4, 4)             # (2026-11-25: standing on MULTIPLAYER, 5 px left of its edge)
+# Inside its housing's outline (rows 9..34, columns 1..40: the antenna above, the feet below): the
+# entry's box, so the frame of a chosen entry lies on the housing's edge, as SWOS 2020's does; the
+# picture reaches out over it.
+TV_HOUSING = (9, 26)        # (first row, rows)
+TV_HOUSING_X = (1, 40)      # (first column, columns)
 # (button slot, its picture, the icon's column on it): its onDraw's drawMapEx256_8sets columns
 # under MULTIPLAYER_MENU, y + 7.
 ICON_COLUMNS = [("competition", "multiplayer", 15), ("practice", "compete", 30),
@@ -393,13 +423,15 @@ def build_main(doc):
     # UP from COMPETE opens the live matches. Hidden by mod_menus2020.c without netplay.
     tv = ordered[filler + 1][0]
     tv["name"] = "liveCast"
-    tv["coords"] = {"x": 4, "y": 5, "w": TV_SIZE[0], "h": TV_SIZE[1]}
+    tv["coords"] = {"x": TV_AT[0] + TV_HOUSING_X[0], "y": TV_AT[1] + TV_HOUSING[0],
+                    "w": TV_HOUSING_X[1], "h": TV_HOUSING[1]}
     tv["image"] = "grafs_2020/menus2020/tv_idle.bmp"
+    tv["image_x"], tv["image_y"] = -TV_HOUSING_X[0], -TV_HOUSING[0]
     tv["commands"] = [{"op": "colors", "frame_color": 0, "background_color": 0},   # (a frame when chosen)
                       {"op": "nav", "left": -1, "right": -1, "up": -1, "down": MAIN_ORDER.index("competition")},
                       {"op": "onselect_fire", "func": mod("liveCast")}]
 
-    # SWOS United's banner across the top, right of the TV (4..37) in the band above the buttons
+    # SWOS United's banner across the top, right of the TV (1..42) in the band above the buttons
     # (they start at 41), centred in x 50..311 (the menu's right edge: SWOS 2020's screen 319, our
     # 4:3 screen's 335), y 0..40: the third filler, never chosen (no handler,
     # nothing leads to it). Its picture is ours, not SWOS 2020's -- committed, grafs_united/logo.bmp
@@ -431,6 +463,8 @@ def build_sub(doc, spec):
             hide(it)
     for name, text in spec.get("text", {}).items():
         set_text(by_name[name], text)
+    for name in spec.get("deferred", []):      # (a line its onDraw fills in: text_no_ptr)
+        set_text(by_name[name], deferred=True)
     for name, (x, y, w, h) in spec.get("move", {}).items():
         by_name[name]["coords"] = {"x": x, "y": y, "w": w, "h": h}
     for name, (picture, dx, dy) in spec.get("image", {}).items():

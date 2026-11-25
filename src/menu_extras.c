@@ -7,9 +7,12 @@
  *   "description": "..."          (an entry) that line
  *   "image": "<path>"             (an entry) a .bmp under the data folder (a mod's overlay first),
  *                                 drawn in the entry's box -- centred, or at "image_x" / "image_y"
- *                                 from its top left -- each colour the nearest in the palette on
- *                                 screen (mapped again when it changes: a menu fades in); black /
- *                                 magenta (255, 0, 255) transparent. Drawn every menu frame.
+ *                                 from its top left (negative: out over its edge; the box is what
+ *                                 is chosen and framed, the picture may be bigger) -- each colour the nearest in the palette on
+ *                                 screen (mapped again when it changes: a menu fades in), and
+ *                                 shown in its own colour (Platform_TrueColourPixel); black /
+ *                                 magenta (255, 0, 255) transparent. Drawn every menu frame, over
+ *                                 the box but not the chosen entry's frame line (DrawSelectedMenuItemFrame).
  *
  * The packed format has no room for them, so the loader (menu_load_json.c) gives them here as it
  * builds, filed under the menu's final packed bytes: the pointer ShowMenu is given and
@@ -27,12 +30,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-enum { kMaxMenus = 64, kMaxEntries = 128 };
+enum { kMaxMenus = 64, kMaxEntries = 128, kCentred = -32768 };
 
 typedef struct {
     char    *description;
     char    *imagePath;
-    int32_t  imageX, imageY;    /* its place in the box (-1: centred) */
+    int32_t  imageX, imageY;    /* its place in the box (kCentred: centred) */
     uint32_t *rgb;              /* the image, 0xRRGGBB, 0xFF000000 transparent; NULL until drawn */
     uint8_t *pixels;            /* ... as palette indices (0xFF transparent), for `paletteHash` */
     uint32_t paletteHash;
@@ -153,7 +156,7 @@ void ModApi_SetMenuImage(int32_t entry, const char *path)
         m->menu = (const uint8_t *)_currentMenuPtr;
         m->descEntry = m->tickerEntry = -1;
         for (int32_t i = 0; i < kMaxEntries; i++)
-            m->entry[i].imageX = m->entry[i].imageY = -1;
+            m->entry[i].imageX = m->entry[i].imageY = kCentred;
     }
     Extra *e = &m->entry[entry];
     if (e->imagePath && path && strcmp(e->imagePath, path) == 0)
@@ -260,6 +263,7 @@ void MenuExtras_Drawn(void)
     uint8_t *frame = (uint8_t *)(uintptr_t)_frontbufferBasePtr;
     const int32_t sw = _screen_width, sh = _screen_height;
     uint32_t hash = 0;
+    Platform_TrueColourBegin();         /* (each picture's own colours on screen, not only the nearest) */
     for (int32_t i = 0; i < kMaxEntries && frame; i++) {
         Extra *e = &m->entry[i];
         if (!e->imagePath)
@@ -276,8 +280,13 @@ void MenuExtras_Drawn(void)
         if (e->paletteHash != hash)
             map_image(e, hash);
         const int32_t x0 = ent->x + _menu_draw_x_offset +
-                           (e->imageX >= 0 ? e->imageX : ((int32_t)ent->dwWidth - e->w) / 2);
-        const int32_t y0 = ent->y + (e->imageY >= 0 ? e->imageY : ((int32_t)ent->dwHeight - e->h) / 2);
+                           (e->imageX != kCentred ? e->imageX : ((int32_t)ent->dwWidth - e->w) / 2);
+        const int32_t y0 = ent->y + (e->imageY != kCentred ? e->imageY : ((int32_t)ent->dwHeight - e->h) / 2);
+        /* The chosen entry's frame line (drawn before the pictures) stays: SWOS 2020's TV. */
+        extern uint8_t _currentMenu[];
+        const int32_t chosen = ent == ((const Menu *)(void *)_currentMenu)->selectedEntry && ent->dwWidth && ent->dwHeight;
+        const int32_t bx0 = ent->x + _menu_draw_x_offset, bx1 = bx0 + ent->dwWidth - 1;
+        const int32_t by0 = ent->y, by1 = by0 + ent->dwHeight - 1;
         for (int32_t y = 0; y < e->h; y++) {
             const int32_t fy = y0 + y;
             if (fy < 0 || fy >= sh)
@@ -285,8 +294,13 @@ void MenuExtras_Drawn(void)
             for (int32_t x = 0; x < e->w; x++) {
                 const int32_t fx = x0 + x;
                 const uint8_t c = e->pixels[y * e->w + x];
-                if (c != 0xFF && fx >= 0 && fx < sw)
+                if (chosen && (((fx == bx0 || fx == bx1) && fy >= by0 && fy <= by1) ||
+                               ((fy == by0 || fy == by1) && fx >= bx0 && fx <= bx1)))
+                    continue;
+                if (c != 0xFF && fx >= 0 && fx < sw) {
                     frame[(size_t)fy * FRONTBUFFER_ROW_STRIDE_BYTES + (size_t)fx] = c;
+                    Platform_TrueColourPixel(fx, fy, c, e->rgb[y * e->w + x]);
+                }
             }
         }
     }

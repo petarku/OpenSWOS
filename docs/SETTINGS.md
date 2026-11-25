@@ -63,7 +63,7 @@ render_driver=auto    ; auto | opengl | direct3d11 | direct3d | software-backend
                       ; auto = SDL default (D3D11 on Windows). Use opengl if
                       ; replays/attract run in slow motion on Windows.
 fullscreen=off        ; off | desktop | exclusive
-scale=3               ; 1..4 window scale (windowed only)
+scale=auto            ; auto | 1x..8x window scale (windowed only): auto the most whole times the monitor takes
 resolution=auto       ; WxH (e.g. 2560x1080) drives the render aspect, or
                       ; auto for the desktop. Need not match the monitor.
 screen=0              ; monitor index to open on, 0 = primary. Auto-clamped.
@@ -92,7 +92,7 @@ clash_kits=true       ; SWOS 2020's GK/REF CLASH KITS (src/clash_kits.c): when e
                       ; wears a dark kit (black, blue, burgundy), both keepers wear green
                       ; (grey if a team wears green) and the referee yellow (light blue if a
                       ; team wears yellow). Drawing only: no effect online. On by default, as
-                      ; in SWOS 2020 (false: the original's colours); DISPLAY OPTIONS ->
+                      ; in SWOS 2020 (false: the original's colours); APPEARANCE OPTIONS ->
                       ; GK/REF CLASH KITS. Not with the Jaguar's sprites; SDL only
 
 [dos]                 ; PC-only extras (Amiga is the definitive version)
@@ -163,7 +163,7 @@ keeps MULTIPLAYER off. Every tweak is off online and in the test rigs.
                           mode change. Always covers the taskbar (the
                           XP fix). Slower toggle, may flicker on
                           multi-monitor rigs.
---scale=<1|2|3|4>         Windowed pixel scale at startup. Default: 3.
+--scale=<auto|1..8>       Windowed pixel scale at startup. Default: auto.
                           Adjust at runtime with the + and - keys.
 --renderer=<accel|sdl|software>
                           Choose the renderer. Default: accel.
@@ -285,21 +285,54 @@ flags; each is now a `SWOS.ini` key and a row on a settings page (OPTIONS -> SET
 canonical mod's setting, so the launcher is not needed. SWOS 2020's flags still work, as it
 passed them (`--help`).
 
+WINDOW SCALE (`[video] scale`) is AUTO by default: the most whole times the picture, title bar and
+borders included, fits the usable area of the monitor the window is on -- 3X for 484 x 272 on a
+1920 x 1080 screen with a taskbar -- worked out again when the window moves to another monitor or
+the picture changes size. VIDEO OPTIONS' row goes AUTO, 1X .. that most; a number bigger than the
+monitor takes is never shown or used. Written `auto` or `2x`: a bare number is an older file's
+(the game wrote the window's scale at every save), taken as AUTO once (2026-11-25).
+
+On the OPTIONS pages, as in the original game, only fire changes a value: a press one step on,
+held it runs on (after 0.4 s, then every 0.15 s; not on the rows that open a screen or move the
+window). The stick only moves between rows -- left and right do nothing there, so a shaky stick
+cannot change a value (2026-11-25). Each change is logged with its value before and after.
+
+MONITOR (VIDEO) shows the monitor the game is on, its number and size ("2: 1920X1080"), and moves
+the window there at once -- centred, fullscreen staying fullscreen, AUTO's scale that monitor's --
+and the game opens there from then on (`[video] screen`, 0 the first). A window dragged to another
+monitor is remembered the same way. With one monitor there is nothing to pick. The start's log
+lists the monitors (`[video] monitor N: "name" WxH at x,y`).
+
+SCALING SHARP shows the picture only ever a whole number of times its size (the biggest the window
+or screen takes), so every pixel is square and as big as the next; what it does not fill is
+border, the menus' backdrop behind it. SMOOTH fills the window, resampled evenly (2026-11-25).
+
+Taken at once: SMOOTH SCROLLING, SCALING and OUTPUT (each read at every frame or audio tick).
+Only at a start: VSYNC (the pacing is set up by it), WIDESCREEN (the picture's width), RENDERER,
+GAME GRAPHICS (the artwork) -- and SKIP INTRO, which is about the start itself, so it asks for no
+restart. AUTO SAVE REPLAYS is taken at once too. PC TITLE MUSIC and INTRO PICTURES, like SKIP INTRO, are
+about the start itself: the next start's, no restart asked for. A change "from the next start"
+(the note says FROM THE NEXT START) -- here, OPTIONS' LANGUAGE and WORLD, a mod in MODS -- is
+remembered: leaving that screen by its EXIT then asks RESTART NOW / LATER, the same question
+everywhere, and RESTART NOW starts the game again at once
+(`Main_Relaunch`) where it can; where it cannot (the browser, phones),
+nothing is asked.
+
 | launcher option | `SWOS.ini` | in the game | |
 |---|---|---|---|
-| Resolution | `[video] resolution = auto \| WxH` | VIDEO: RESOLUTION (AUTO, 4:3, 16:10, 16:9, 21:9, 32:9) | the render's SHAPE, not its size; with widescreen on it is taken at once |
+| Resolution | `[video] resolution = auto \| WxH` | VIDEO: ASPECT RATIO (AUTO, 4:3, 16:10, 16:9, 21:9, 32:9) | the render's SHAPE, not its size; with widescreen on it is taken at once |
 | Auto centering | `[video] auto_centering` | VIDEO: AUTO CENTERING | a window resized, maximized or moved goes back to the middle of the display it is on (SWOS 2020's controls.cpp); windowed only |
 | Show FPS | `[video] show_fps` | VIDEO: SHOW FPS | the frames presented a second, top right, drawn over the picture (`src/fps_overlay.c`), never into the game's frame |
-| Mouse cursor | `[input] mouse_cursor = system \| workbench2 \| workbench1` | DISPLAY OPTIONS: MOUSE POINTER | SWOS 2020's `cursor1.bmp` / `cursor2.bmp` as the launcher numbered them, as pixel maps in `src/mouse_cursors.c` |
-| Graphics | `[graphics] style = amiga \| dos \| 2020` | GAMEPLAY: ARTWORK | from the next start (the artwork is loaded at start-up) |
-| Menu style | `[mod.dosmenus] look = amiga \| pc` | GAMEPLAY: MENU LOOK, and the PC menu shading mod's page | the look each start shows; F5 still flips it for the run. Unset: `PROJECT_MENU_LOOK_AMIGA` |
+| Mouse cursor | `[input] mouse_cursor = system \| workbench2 \| workbench1` | APPEARANCE: MOUSE POINTER | SWOS 2020's `cursor1.bmp` / `cursor2.bmp` as the launcher numbered them, as pixel maps in `src/mouse_cursors.c` |
+| Graphics | `[graphics] style = amiga \| dos \| 2020` | APPEARANCE: GAME GRAPHICS | from the next start (the artwork is loaded at start-up) |
+| Menu style | `[mod.dosmenus] look = amiga \| pc` | APPEARANCE: MENU LOOK, and the PC menu shading mod's page | the look each start shows; F5 still flips it for the run. Unset: `PROJECT_MENU_LOOK_AMIGA` |
 | Background image | `[mod.backgrounds] image = auto \| random \| off \| <file>` | the Menu backgrounds mod's page | `auto` the mod's own first picture, `random` one of every picture it lists, once a start. The launcher's "PC DOS" and "Amiga" were SWOS 2020's bg-images, not shipped: put them in `backgrounds/` |
 | Stronger goalkeeper AI | `[tweaks] stronger_goalkeeper_ai` | GAMEPLAY: STRONGER KEEPERS | off line only; built with `PROJECT_TWEAK_STRONGER_GK` (project_identity.h) even when `PROJECT_TWEAKS` is 0 |
 | Improved CPU tactics | `[gameplay] cpu_tactics = normal \| expert` | GAMEPLAY: CPU TACTICS | off line only (below) |
-| Skip intro | `[general] skip_intro` | GAMEPLAY: SKIP INTRO | from the next start |
-| Skip image reels | `[general] skip_image_reels` | GAMEPLAY: INTRO PICTURES (ALL / TITLE ONLY) | the intro is its title picture and tune alone, until fire |
-| No pause while loading | `[general] no_load_pause` | GAMEPLAY: PRE-MATCH PAUSE | the stadium screen's 3 seconds before a match left out; off line only |
-| Game style, VSync, window mode, monitor, menu cursor | as before | VIDEO / GAMEPLAY | (they were there already) |
+| Skip intro | `[general] skip_intro` | GENERAL: SKIP INTRO | from the next start |
+| Skip image reels | `[general] skip_image_reels` | GENERAL: INTRO PICTURES (ALL / TITLE ONLY) | the intro is its title picture and tune alone, until fire |
+| No pause while loading | `[general] no_load_pause` | GENERAL: PRE-MATCH PAUSE | the stadium screen's 3 seconds before a match left out; off line only |
+| Game style, VSync, window mode, monitor, menu cursor | as before | VIDEO / GAMEPLAY / APPEARANCE (menu cursor) | (they were there already) |
 | PC DOS screen / Amiga screen | none of its own | GAMEPLAY: GAME STYLE | the 320 x 200 view is part of the PC DOS style (below) |
 
 **CPU TACTICS = EXPERT** is SWOS 2020's `--improved-cpu-tactics` (options.cpp
@@ -330,13 +363,16 @@ and `random`.
 `SWOS_MOD_PAGE_TEST=<slug>` (a mod page's choices), and `--settings-menus-selftest` (every row
 shows a value).
 
-### DISPLAY OPTIONS: the SWOS United Launcher's look options (launcher options, agent B)
+### APPEARANCE OPTIONS (DISPLAY until 2026-11-25): the SWOS United Launcher's look options (launcher options, agent B)
 
 The launcher set these with SWOS 2020's command-line flags; they are now in the game:
-OPTIONS -> SETTINGS -> **DISPLAY** (`src/settings_menus.c`, `k_displayRows`), each saved to
+OPTIONS -> SETTINGS -> **APPEARANCE** (`src/settings_menus.c`, `k_displayRows`), each saved to
 `SWOS.ini` at once and in force at once (`Platform_SetDisplayOptions`). All of them are drawing
 only: no match state, no recording, no replay changes (`scripts/check_netplay_compat.sh`
-unchanged), and an online match plays the same whatever either player has set.
+unchanged), and an online match plays the same whatever either player has set. KIT COLOURS,
+below, is the exception -- it decides which kits clash, and online both players' count -- so it is on
+the RULES page as well (the same setting); GAME GRAPHICS, MENU LOOK and MENU CURSOR moved here on
+2026-11-24, PIXEL FILTER to VIDEO (beside SCALING).
 
 | row | SWOS.ini | SWOS 2020 / the launcher | what |
 |---|---|---|---|

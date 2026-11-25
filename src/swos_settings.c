@@ -44,6 +44,10 @@
 
 #include <ctype.h>
 #include <errno.h>
+#if !defined(SWOS_SWITCH_BUILD) && !defined(SWOS_WASM_BUILD)
+#include <unistd.h>     /* getpid: the log's writer */
+#define SETTINGS_ATOMIC 1
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -77,6 +81,13 @@ static const char *const kQuickNames[10] = {
 /* [input] call_bench_p1 / call_bench_p2 read: the old call_bench (one for both) only fills what
  * they do not say, wherever its line stands in the file (a save keeps a key it no longer writes). */
 static int s_benchSeen[2];
+static int s_scaleBare;         /* [video] scale was a bare number: an older file's (Settings_Load) */
+static int s_scaleMoved;        /* ... so it is AUTO now, to save */
+int Settings_ScaleMoved(void) { return s_scaleMoved; }
+static int s_kitColoursSeen;    /* [graphics] kit_colours was in the file (Settings_Load) */
+static int s_kitColoursMoved;   /* ... and was not: moved to extended + clash kits on, to save */
+
+int Settings_KitColoursMoved(void) { return s_kitColoursMoved; }
 
 /* ---- SWOS 2020's CONTROLS MENU, menu look and MULTIPLAYER SETTINGS (SWOS 2020 port, agent A) ----
  * Read before the sections below; 1 when it was one of these keys. */
@@ -236,8 +247,16 @@ static int handler(void *user, const char *section,
             else if (eqi(value, "desktop"))   opts->fullscreen = PLATFORM_FULLSCREEN_DESKTOP;
             else if (eqi(value, "exclusive")) opts->fullscreen = PLATFORM_FULLSCREEN_EXCLUSIVE;
         } else if (eqi(name, "scale")) {
+            /* auto | 1x..8x. A bare number is an older file's: the game wrote the window's scale
+             * there at every save, chosen or not, so it becomes AUTO (Settings_Load). */
             int n = atoi(value);
-            if (n >= 1 && n <= 4) opts->win_scale = n;
+            if (eqi(value, "auto"))
+                opts->win_scale = 0;
+            else if (n >= 1 && n <= 8) {
+                opts->win_scale = n;
+                if (!strchr(value, 'x') && !strchr(value, 'X'))
+                    s_scaleBare = 1;
+            }
         } else if (eqi(name, "widescreen")) {
             int b;
             if (eqi(value, "stretch"))       opts->widescreen = 2;
@@ -415,6 +434,7 @@ static int handler(void *user, const char *section,
         else if (eqi(name, "clash_kits") && parse_bool(value, &b))   /* (SWOS 2020 port, agent D) */
             opts->clash_kits = b;
         else if (eqi(name, "kit_colours")) {                           /* (kit_variants.h) */
+            s_kitColoursSeen = 1;                                       /* (Settings_Load: no move to it) */
             if      (eqi(value, "extended")) opts->kit_colours = 1;
             else if (eqi(value, "original")) opts->kit_colours = 0;
         }
@@ -526,6 +546,12 @@ static int handler(void *user, const char *section,
 static PlatformInitOptions s_baseline;
 static int                 s_haveBaseline;
 static char                s_baselinePath[1024];   /* (it is that file's: a save to another writes all) */
+/* What the file holds after this game's last save, key by key (SETTINGS_MAX entries in
+ * settings_build's order): the baseline from then on. Compared with the values at the start
+ * instead, a setting changed and changed back (AUTO -> 32:9 -> AUTO, AMIGA -> .. MOON -> AMIGA)
+ * counted as untouched and the file kept the last value saved in between (2026-11-25). */
+static char                s_savedVal[192][300];   /* (SETTINGS_MAX, below) */
+static int                 s_haveSaved;
 
 void Settings_Load(PlatformInitOptions *opts, const char *path)
 {
@@ -534,6 +560,8 @@ void Settings_Load(PlatformInitOptions *opts, const char *path)
      * file can't be opened. Missing file is fine — we'll create it on
      * Settings_Save. Parse errors don't abort load; the keys before
      * the bad line still apply. */
+    s_kitColoursSeen = 0;
+    s_scaleBare = 0;
     int rc = ini_parse(path, handler, opts);
     if (rc > 0) {
         fprintf(stderr, "[settings] %s: parse error at line %d (continuing)\n",
@@ -541,7 +569,27 @@ void Settings_Load(PlatformInitOptions *opts, const char *path)
     }
     s_baseline = *opts;
     s_haveBaseline = 1;
+    s_haveSaved = 0;
     snprintf(s_baselinePath, sizeof s_baselinePath, "%s", path);
+    /* A SWOS.ini from before KIT COLOURS (2026-11-24): the player never had the choice, so the
+     * kits and their officials as they are meant -- extended, and GK/REF CLASH KITS on even where
+     * an older build's switch had it off. After the baseline, so the next save writes both
+     * (Settings_AppendMissing at start-up). A file that has kit_colours, whatever it says, is
+     * the player's: left alone. A new file has both on already. */
+    if (rc != -1 && !s_kitColoursSeen) {
+        if (!opts->clash_kits || !opts->kit_colours)
+            fprintf(stderr, "[settings] no kit_colours yet: kit colours extended, GK/REF clash kits on\n");
+        opts->kit_colours = 1;
+        opts->clash_kits = 1;
+        s_kitColoursMoved = 1;
+    }
+    /* WINDOW SCALE AUTO (2026-11-25): an older file's number was the window's size at its last
+     * save, not a choice -- AUTO from now; a number chosen since is written "2x" and kept. */
+    if (rc != -1 && s_scaleBare) {
+        fprintf(stderr, "[settings] [video] scale %d from an older SWOS.ini: AUTO now\n", opts->win_scale);
+        opts->win_scale = 0;
+        s_scaleMoved = 1;
+    }
 }
 
 static const char *renderer_str(PlatformRendererMode m)
@@ -585,6 +633,7 @@ static const char *crt_mask_str(int m)
  * which checks its stack, and corrupted it quietly everywhere else (2026-10-05). Every
  * append is bounded now (SETTING), and a full table says so. */
 #define SETTINGS_MAX 192
+_Static_assert(sizeof s_savedVal / sizeof s_savedVal[0] == SETTINGS_MAX, "s_savedVal holds every key");
 #define SETTING(n)  if ((n) < SETTINGS_MAX) items[(n)++]
 
 /* Inline comment appended to a section-header line in a freshly-created file. */
@@ -603,15 +652,18 @@ static const char *section_intro(const char *sec)
  * file's, for Settings_Save's baseline). */
 static int settings_build(const PlatformInitOptions *opts, IniEntry *items, char vbuf[10][24], int live)
 {
-    int scale_now = live ? Platform_GetWindowScale() : opts->win_scale;
+    int scale_now = !live ? opts->win_scale : Platform_WindowScaleAuto() ? 0 : Platform_GetWindowScale();
     PlatformFullscreenMode fs_now = live ? Platform_GetFullscreenMode() : opts->fullscreen;
-    if (scale_now < 1 || scale_now > 4) scale_now = opts->win_scale;
+    if (scale_now < 0 || scale_now > 8) scale_now = opts->win_scale;
 
     if (opts->res_w > 0 && opts->res_h > 0)
         snprintf(vbuf[0], 24, "%dx%d", opts->res_w, opts->res_h);
     else
         snprintf(vbuf[0], 24, "auto");
-    snprintf(vbuf[1], 24, "%d", scale_now);
+    if (scale_now > 0)
+        snprintf(vbuf[1], 24, "%dx", scale_now);
+    else
+        snprintf(vbuf[1], 24, "auto");
     snprintf(vbuf[2], 24, "%d", opts->arcade_game_seconds > 0 ? opts->arcade_game_seconds : 45);
     snprintf(vbuf[3], 24, "%d", opts->screen > 0 ? opts->screen : 0);
     snprintf(vbuf[4], 24, "%d", opts->crt_mask_strength);
@@ -625,14 +677,14 @@ static int settings_build(const PlatformInitOptions *opts, IniEntry *items, char
     SETTING(n) = (IniEntry){ "video",  "renderer",   "; renderer: accel (the GPU presenter, else SDL's) | sdl (SDL's renderer) | software", renderer_str(opts->renderer) };
     SETTING(n) = (IniEntry){ "video",  "vsync",      "; vsync: true | false  (accel renderer only)", opts->vsync ? "true" : "false" };
     SETTING(n) = (IniEntry){ "video",  "subpixel_scroll", "; subpixel_scroll: true | false. Smooths scrolling by shifting the frame by the camera's sub-pixel remainder. Never blurs. Off = compare", opts->subpixel_scroll ? "true" : "false" };
-    SETTING(n) = (IniEntry){ "video",  "scaling",    "; scaling: sharp | smooth. A fullscreen scale is rarely a whole number (1080/272 = 3.97), so a plain nearest copy makes some pixels bigger than others. smooth evens them", opts->scaling_smooth ? "smooth" : "sharp" };
+    SETTING(n) = (IniEntry){ "video",  "scaling",    "; scaling: sharp | smooth. sharp: the picture only ever a whole number of times its size, every pixel square and as big as the next -- a window or screen it does not fill leaves a border. smooth: it fills the window (1080/272 = 3.97), resampled evenly, a little soft", opts->scaling_smooth ? "smooth" : "sharp" };
     SETTING(n) = (IniEntry){ "video",  "crt_mask",   "; crt_mask: off | aperture | slot | scanlines. Synthetic CRT shadow-mask drawn over the finished frame. Costs one full-screen draw however many effects are on", crt_mask_str(opts->crt_mask) };
     SETTING(n) = (IniEntry){ "video",  "crt_mask_strength", "; crt_mask_strength: 0-100. How dark the grille's off-phase gets. 0 = invisible, 100 = black between phosphors", vbuf[4] };
     SETTING(n) = (IniEntry){ "video",  "crt_vignette", "; crt_vignette: 0-100. Darkens towards the corners like a tube's edges. 0 = off", vbuf[5] };
     SETTING(n) = (IniEntry){ "video",  "crt_corners", "; crt_corners: 0-100. Rounded-glass corner size. 0 = square screen", vbuf[6] };
     SETTING(n) = (IniEntry){ "video",  "render_driver", "; render_driver: auto | opengl | direct3d11 | direct3d | software-backend. auto = SDL default (D3D11 on Windows). Use opengl if replays/attract run in slow motion on Windows", opts->render_driver[0] ? opts->render_driver : "auto" };
     SETTING(n) = (IniEntry){ "video",  "fullscreen", "; fullscreen: off | desktop | exclusive", fullscreen_str(fs_now) };
-    SETTING(n) = (IniEntry){ "video",  "scale",      "; scale: window scale 1-4 (windowed only)", vbuf[1] };
+    SETTING(n) = (IniEntry){ "video",  "scale",      "; scale: auto | 1x .. 8x. The window's size, windowed only: auto the most whole times the picture fits the monitor, again when it moves to another; a number that, or the most that fits", vbuf[1] };
     SETTING(n) = (IniEntry){ "video",  "widescreen",
         "; widescreen: true | false | stretch. true fills the display's shape, showing\n"
         "; more of the pitch at the sides; false draws the view's own width -- 336 the\n"
@@ -642,7 +694,7 @@ static int settings_build(const PlatformInitOptions *opts, IniEntry *items, char
         opts->widescreen == 2 ? "stretch" : opts->widescreen ? "true" : "false" };
 
     SETTING(n) = (IniEntry){ "video",  "resolution", "; resolution: WxH (e.g. 2560x1080) drives the render ASPECT, or 'auto' for the desktop.\n; It is not the render SIZE: the picture is always 272 lines tall and 336..672 wide,\n; so a wider shape shows more pitch and a small one (320x200) just clamps to 336x272", vbuf[0] };
-    SETTING(n) = (IniEntry){ "video",  "screen",     "; screen: monitor index to open on, 0 = primary. Auto-clamped if out of range; window size auto-fits that screen", vbuf[3] };
+    SETTING(n) = (IniEntry){ "video",  "screen",     "; screen: the monitor the game opens on, 0 the first (VIDEO OPTIONS' MONITOR shows it + 1). Set by MONITOR, and when the window is moved to another; one no longer there: the first", vbuf[3] };
     SETTING(n) = (IniEntry){ "video",  "menu_cursor", "; menu_cursor: flashing | steady. The menus' cursor frame (SWOS 2020's flashing menu cursor)",
         opts->menu_cursor ? "steady" : "flashing" };   /* (SWOS 2020 port, agent A) */
     SETTING(n) = (IniEntry){ "audio",  "mode",       "; mode: mono | stereo", opts->audio_mono ? "mono" : "stereo" };
@@ -912,13 +964,13 @@ static int settings_build(const PlatformInitOptions *opts, IniEntry *items, char
         "; black, each changing to the colour that differs most when a team is too alike; with\n"
         "; original: against a dark kit, keepers green (or grey), referee yellow (or light blue).\n"
         "; Only how they look.\n"
-        "; On by default, as in SWOS 2020 (DISPLAY OPTIONS: GK/REF CLASH KITS).",
+        "; On by default, as in SWOS 2020 (APPEARANCE OPTIONS: GK/REF CLASH KITS).",
         opts->clash_kits ? "true" : "false" };
     SETTING(n) = (IniEntry){ "graphics", "kit_colours",
         "; kit_colours: extended | original -- which kits are too alike, so that one team changes.\n"
         "; extended: judged by how alike the colours look (CIEDE2000), for every kit colour; original:\n"
         "; the original's own tables. A net game plays extended only if both players do. Default extended\n"
-        "; (DISPLAY OPTIONS: KIT COLOURS).",
+        "; (APPEARANCE OPTIONS: KIT COLOURS).",
         opts->kit_colours ? "extended" : "original" };
     SETTING(n) = (IniEntry){ "graphics", "kit_art",
         "; kit_art: amiga | jaguar. The shirts, shorts and socks drawn on the UNIFORM\n"
@@ -1128,17 +1180,63 @@ static int settings_build(const PlatformInitOptions *opts, IniEntry *items, char
 }
 
 /* Create a full default file. Only used when SWOS.ini doesn't exist yet. */
+/* SWOS.ini written whole, then put in place in one step (rename): a reader -- another copy of the
+ * game, one starting again (Main_Relaunch) -- never sees a half-written file. The old way wrote it
+ * in place, and a reader of a part filled the missing keys from its own memory, stale. */
+static FILE *ini_open_write(const char *path, char *tmp, size_t cap)
+{
+#ifdef SETTINGS_ATOMIC
+    snprintf(tmp, cap, "%s.%d.tmp", path, (int)getpid());
+    return fopen(tmp, "w");
+#else
+    snprintf(tmp, cap, "%s", path);
+    return fopen(path, "w");
+#endif
+}
+
+static int ini_commit(FILE *f, const char *tmp, const char *path)
+{
+    if (fclose(f) != 0) {
+        fprintf(stderr, "[settings] cannot write %s: %s\n", tmp, strerror(errno));
+        return -1;
+    }
+#ifdef SETTINGS_ATOMIC
+    if (rename(tmp, path) != 0) {
+        remove(path);                   /* (a rename that will not replace a file: Windows' own) */
+        if (rename(tmp, path) != 0) {
+            fprintf(stderr, "[settings] cannot put %s in place: %s\n", path, strerror(errno));
+            remove(tmp);
+            return -1;
+        }
+    }
+#else
+    (void)tmp; (void)path;
+#endif
+    return 0;
+}
+
+static int settings_pid(void)
+{
+#ifdef SETTINGS_ATOMIC
+    return (int)getpid();
+#else
+    return 0;
+#endif
+}
+
 static void settings_write_full(const PlatformInitOptions *opts, const char *path)
 {
     IniEntry items[SETTINGS_MAX];
     char vbuf[10][24];
     int n = settings_build(opts, items, vbuf, 1);
 
-    FILE *f = fopen(path, "w");
+    char tmp[1100];
+    FILE *f = ini_open_write(path, tmp, sizeof tmp);
     if (!f) {
         fprintf(stderr, "[settings] cannot create %s: %s\n", path, strerror(errno));
         return;
     }
+    fprintf(stderr, "[settings] SWOS.ini written whole (game %d)\n", settings_pid());
     fprintf(f,
         "; SWOS — display, audio and gameplay settings.\n"
         "; Hand-edit freely: SWOS only updates values you change and adds missing\n"
@@ -1160,7 +1258,7 @@ static void settings_write_full(const PlatformInitOptions *opts, const char *pat
             fprintf(f, "%s=%s\n", items[j].key, items[j].value);
         }
     }
-    fclose(f);
+    ini_commit(f, tmp, path);
     swos_save_commit();   /* as Settings_Save does -- a fresh ini must survive the launch */
 }
 
@@ -1200,6 +1298,59 @@ static void flush_section_missing(FILE *out, const char *sec,
  * keys, unknown keys, ordering) verbatim. If nothing changed, nothing is missing
  * and nothing is duplicated, the file is left untouched.
  */
+/* The whole file, a line each -- each with its '\n' when it had one -- however many lines and
+ * however long they are; NULL (count 0) when it cannot be read. The writers here and in mod_api.c
+ * read SWOS.ini into fixed tables before (400 lines here, 512 there, 255 characters a line) and
+ * wrote back only what fitted: a SWOS.ini past 400 lines lost its end -- the mods' sections, the
+ * PC menu look's among them -- at every save. Settings_FreeLines gives it back. */
+char **Settings_ReadLines(const char *path, int *count)
+{
+    FILE *f = fopen(path, "r");
+    char **lines = NULL, *cur = NULL;
+    size_t len = 0, cap = 0;
+    int n = 0, nCap = 0, c;
+    *count = 0;
+    if (!f)
+        return NULL;
+    for (;;) {
+        c = fgetc(f);
+        if (c != EOF) {
+            if (len + 2 > cap) {
+                char *grown = (char *)realloc(cur, cap = cap ? cap * 2 : 128);
+                if (!grown) break;
+                cur = grown;
+            }
+            cur[len++] = (char)c;
+        }
+        if ((c == '\n' || c == EOF) && len) {
+            if (n + 1 > nCap) {
+                char **grown = (char **)realloc(lines, (size_t)(nCap = nCap ? nCap * 2 : 256) * sizeof *lines);
+                if (!grown) break;
+                lines = grown;
+            }
+            cur[len] = '\0';
+            lines[n++] = cur;
+            cur = NULL;
+            len = cap = 0;
+        }
+        if (c == EOF)
+            break;
+    }
+    free(cur);
+    fclose(f);
+    *count = n;
+    if (!lines)
+        lines = (char **)calloc(1, sizeof *lines);  /* (an empty file: read, no lines) */
+    return lines;
+}
+
+void Settings_FreeLines(char **lines, int count)
+{
+    for (int i = 0; i < count; i++)
+        free(lines[i]);
+    free(lines);
+}
+
 void Settings_Save(const PlatformInitOptions *opts, const char *path)
 {
     if (!opts || !path) return;
@@ -1212,7 +1363,10 @@ void Settings_Save(const PlatformInitOptions *opts, const char *path)
      * (s_baseline). Built from the same table, so entry k is the same key in both. */
     unsigned char keep[SETTINGS_MAX];
     memset(keep, 0, sizeof keep);
-    if (s_haveBaseline && strcmp(s_baselinePath, path) == 0) {
+    if (s_haveBaseline && strcmp(s_baselinePath, path) == 0 && s_haveSaved) {
+        for (int k = 0; k < n; k++)
+            keep[k] = strcmp(s_savedVal[k], items[k].value) == 0;
+    } else if (s_haveBaseline && strcmp(s_baselinePath, path) == 0) {
         IniEntry was[SETTINGS_MAX];
         char wbuf[10][24];
         const int nw = settings_build(&s_baseline, was, wbuf, 0);
@@ -1222,17 +1376,16 @@ void Settings_Save(const PlatformInitOptions *opts, const char *path)
     }
 
     /* Slurp the existing file. */
-    static char lines[400][256];
     int n_lines = 0;
-    FILE *f = fopen(path, "r");
-    if (!f) {                                               /* absent -> create it */
+    char **lines = Settings_ReadLines(path, &n_lines);
+    if (!lines) {                                           /* absent -> create it */
         settings_write_full(opts, path);
+        for (int k = 0; k < n; k++)                         /* (the file is ours, whole) */
+            snprintf(s_savedVal[k], sizeof s_savedVal[k], "%s", items[k].value);
+        s_haveSaved = strcmp(s_baselinePath, path) == 0;
         swos_save_commit();     /* as below: the web's localStorage copy, the Switch's commit */
         return;
     }
-    while (n_lines < 400 && fgets(lines[n_lines], (int)sizeof lines[0], f))
-        n_lines++;
-    fclose(f);
 
     /* Pass 1: detect whether anything actually needs writing, and which keys
      * the file already has. This keeps an unchanged file (the common case)
@@ -1276,13 +1429,19 @@ void Settings_Save(const PlatformInitOptions *opts, const char *path)
         }
         for (int k = 0; k < n; k++) if (!seen[k]) { dirty = 1; break; }
     }
-    if (!dirty) return;   /* nothing to change — leave the file exactly as it is */
+    if (!dirty) {         /* nothing to change — leave the file exactly as it is */
+        Settings_FreeLines(lines, n_lines);
+        return;
+    }
+    char (*finalVal)[300] = (char (*)[300])calloc((size_t)SETTINGS_MAX, 300);  /* (each key's, as written) */
 
     /* Pass 2: rewrite, updating changed values and preserving everything else. */
     memset(seen, 0, sizeof seen);
-    FILE *out = fopen(path, "w");
+    char tmp[1100];
+    FILE *out = ini_open_write(path, tmp, sizeof tmp);
     if (!out) {
         fprintf(stderr, "[settings] cannot write %s: %s\n", path, strerror(errno));
+        Settings_FreeLines(lines, n_lines);
         return;
     }
     char cur_sec[32] = "";
@@ -1327,12 +1486,16 @@ void Settings_Save(const PlatformInitOptions *opts, const char *path)
         seen[idx] = 1;
         char fileval[300];
         copy_value(eq + 1, fileval, sizeof fileval);
+        if (finalVal)
+            snprintf(finalVal[idx], 300, "%s", keep[idx] ? fileval : items[idx].value);
         if (keep[idx] || strcmp(fileval, items[idx].value) == 0) {
             fputs(ln, out);                                /* unchanged (or not ours) -> verbatim */
         } else {
             size_t prefix = (size_t)(eq - ln) + 1;         /* keep "key=" verbatim */
             fwrite(ln, 1, prefix, out);
             fprintf(out, "%s\n", items[idx].value);        /* ...replace the value */
+            fprintf(stderr, "[settings] saved [%s] %s: %s -> %s (game %d)\n", items[idx].section,
+                    items[idx].key, fileval, items[idx].value, settings_pid());
         }
     }
     /* EOF: flush the final section's still-missing keys into its block. */
@@ -1344,6 +1507,7 @@ void Settings_Save(const PlatformInitOptions *opts, const char *path)
     int missing = 0;
     for (int k = 0; k < n; k++) if (!seen[k]) missing++;
     if (missing) {
+        fprintf(stderr, "[settings] %d keys added to SWOS.ini (game %d)\n", missing, settings_pid());
         fputs("\n; --- keys added by a newer SWOS build (defaults; edit as you like) ---\n", out);
         const char *cur = NULL;
         for (int k = 0; k < n; k++) {
@@ -1356,7 +1520,13 @@ void Settings_Save(const PlatformInitOptions *opts, const char *path)
             fprintf(out, "%s=%s\n", items[k].key, items[k].value);
         }
     }
-    fclose(out);
+    if (ini_commit(out, tmp, path) == 0 && finalVal && strcmp(s_baselinePath, path) == 0) {
+        for (int k = 0; k < n; k++)             /* (the file as it is now: the next save's baseline) */
+            snprintf(s_savedVal[k], sizeof s_savedVal[k], "%s", seen[k] && finalVal[k][0] ? finalVal[k] : items[k].value);
+        s_haveSaved = 1;
+    }
+    free(finalVal);
+    Settings_FreeLines(lines, n_lines);
     /* Closed first — the Switch's save commit requires it, and without the
      * commit SWOS.ini reads back fine all session and is gone next launch.
      * Nothing on any other target (swos_io.h). */
@@ -1422,6 +1592,41 @@ int Settings_GameOptionsSelfTest(void)
     }
     remove(in);
     remove(out);
+    {   /* A setting changed and changed back in one run: the file has it back (2026-11-25: AUTO ->
+         * 32:9 -> AUTO left 32:9 there, AMIGA -> .. MOON -> AMIGA left MOON). */
+        PlatformInitOptions o;
+        FILE *f = fopen(in, "w");
+        char line[256];
+        int back = 0;
+        if (f) {
+            fputs("[gameplay]\nstyle=amiga\n[video]\nresolution=auto\n", f);
+            fclose(f);
+            memset(&o, 0, sizeof o);
+            Settings_Load(&o, in);
+            o.dos_gameplay = GAMEPLAY_MOON;
+            o.res_w = 3840; o.res_h = 1080;
+            Settings_Save(&o, in);
+            o.dos_gameplay = GAMEPLAY_AMIGA;
+            o.res_w = o.res_h = 0;
+            Settings_Save(&o, in);
+            if ((f = fopen(in, "r")) != NULL) {
+                char sec[32] = "";
+                while (fgets(line, sizeof line, f)) {
+                    if (line[0] == '[')
+                        sscanf(line, "[%31[^]]", sec);
+                    back += (!strcmp(sec, "gameplay") && !strncmp(line, "style=amiga", 11)) ||
+                            (!strcmp(sec, "video") && !strncmp(line, "resolution=auto", 15));
+                }
+                fclose(f);
+            }
+            remove(in);
+        }
+        checked += 2;
+        if (back != 2) {
+            bad += 2 - back;
+            fprintf(stderr, "game-options: a setting changed and changed back is not back in the file\n");
+        }
+    }
     printf("game-options self-test: %d of %d values come back%s\n", (int)(checked - bad), (int)checked,
            bad ? " -- FAILED" : "");
     return bad ? 1 : 0;

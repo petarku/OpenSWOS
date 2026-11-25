@@ -2408,11 +2408,11 @@ void ChangeWorld(MenuEntry *entry)
     }
     CallDrawMenuItem(entry);
     if ((int32_t)World_Current() != want) {
-        static const char *const ok[] = { "OK" };
-        char text[200];
-        snprintf(text, sizeof text, "%s is played from the next time " PROJECT_NAME " starts.|"
-                 "Close it and start it again. Saves stay in the world they were made in.", kWorldNames[want]);
-        MenuDialog_Show("World", text, ok, 1, 0);
+        /* (the next start's: leaving OPTIONS asks RESTART NOW / LATER, as every such setting;
+         *  saves stay in the world they were made in) */
+        extern void Options_RestartNeeded(void);
+        Options_RestartNeeded();
+        fprintf(stderr, "[world] %s from the next start\n", kWorldNames[want]);
     }
 #else
     (void)entry;
@@ -2448,7 +2448,6 @@ void ChangeLanguage(MenuEntry *entry)
     extern uint16_t _languageOption;
     extern PlatformInitOptions *g_arcadeOpts;
     extern const char *g_arcadeIniPath;
-    static int told;
     const int32_t n = (int32_t)(sizeof kLanguageCodes / sizeof kLanguageCodes[0]);
     _languageOption = (uint16_t)((_languageOption + 1) % n);
     if (g_arcadeOpts) {
@@ -2457,11 +2456,9 @@ void ChangeLanguage(MenuEntry *entry)
             Settings_Save(g_arcadeOpts, g_arcadeIniPath);
     }
     CallDrawMenuItem(entry);
-    if (!told) {
-        told = 1;
-        static const char *const ok[] = { "OK" };
-        MenuDialog_Show("Language", "The new language is used from the next time " PROJECT_NAME
-                        " starts.|Close it and start it again.", ok, 1, 0);
+    {   /* (the next start's: leaving OPTIONS asks RESTART NOW / LATER, as every such setting) */
+        extern void Options_RestartNeeded(void);
+        Options_RestartNeeded();
     }
 #else
     (void)entry;
@@ -3030,6 +3027,13 @@ extern void PrintFormatted(const uint8_t *fmt, uint8_t *out,
  * once the buttons are where they will be drawn. */
 static void main_menu_fit_lower_left(void)
 {
+    /* (only a main menu that HAS an entry 17 -- the original's: SWOS 2020's (menus2020) has 0..16,
+     *  and _menuEntries[17] is then what the menu shown before left there. After SWOS GALORE its
+     *  17th sat on the CLASSIC CAREER row, and CLASSIC CAREER was cut short from the left; Playa,
+     *  2026-11-24) */
+    extern uint8_t _currentMenu[];
+    if (((const Menu *)_currentMenu)->numEntries <= 17)
+        return;
     const MenuEntry *w = &_menuEntries[17];
     if (w->isInvisible)
         return;
@@ -3047,6 +3051,11 @@ static void main_menu_fit_lower_left(void)
 static void main_menu_fit_lower_right(void)
 {
     main_menu_fit_lower_left();
+    {   /* (15 and 16 must be this menu's too) */
+        extern uint8_t _currentMenu[];
+        if (((const Menu *)_currentMenu)->numEntries <= 16)
+            return;
+    }
     int32_t left = 0x7FFF, overlap = 0;
     for (int32_t s = 15; s <= 16; s++) {
         const MenuEntry *small = &_menuEntries[s];
@@ -6125,6 +6134,11 @@ __attribute__((used, externally_visible))
 void ExitOptions(void)
 {
     if (_controlMask == 0x20) {
+#ifdef SWOS_SDL_BUILD
+        extern int32_t Options_AskRestart(void);
+        if (Options_AskRestart())
+            return;                     /* (the game closes; the new one is starting) */
+#endif
         SetExitMenuFlag();
         return;
     }

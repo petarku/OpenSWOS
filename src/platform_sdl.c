@@ -615,7 +615,9 @@ extern void Platform_PreArmIsrGlobals(void);
 
 /* ---- Lifecycle ----------------------------------------------------- */
 /* Persisted across the run so Alt+Enter / +/- keys can read them. */
-static int                    s_win_scale_current = 1;   /* clamp 1..4 */
+static int                    s_win_scale_current = 1;   /* 1..kWinScaleMax: what the window is */
+static int                    s_win_scale_auto;          /* WINDOW SCALE AUTO: s_win_scale_current follows the monitor */
+enum { kWinScaleMax = 8 };
 /* The client area [video] resolution=WxH asked for, 0 when it said 'auto'.
  * Kept so leaving fullscreen restores the size the file named: the restore used
  * to always recompute it from the scale, so an Alt-Tab round trip silently threw
@@ -639,8 +641,12 @@ static void apply_picture_scaling(void)
         return;
     if (!s_stretch) {
         SDL_RenderSetLogicalSize(s_renderer, _screen_width, _screen_height);
+        /* SCALING SHARP: whole multiples only, so every pixel stays square (the GPU presenter's
+         * picture_rect does the same) */
+        SDL_RenderSetIntegerScale(s_renderer, s_scaling_smooth ? SDL_FALSE : SDL_TRUE);
         return;
     }
+    SDL_RenderSetIntegerScale(s_renderer, SDL_FALSE);
     SDL_RenderSetLogicalSize(s_renderer, 0, 0);
     if (SDL_GetRendererOutputSize(s_renderer, &ow, &oh) == 0 && ow > 0 && oh > 0)
         SDL_RenderSetScale(s_renderer, (float)ow / (float)_screen_width,
@@ -672,8 +678,9 @@ int Platform_Init(const PlatformInitOptions *opts)
         opts ? opts->renderer : PLATFORM_RENDERER_ACCEL;
     int vsync = opts ? opts->vsync : 0;
 
-    if (win_scale < 1) win_scale = 1;
-    if (win_scale > 4) win_scale = 4;
+    s_win_scale_auto = win_scale <= 0;
+    if (win_scale < 1) win_scale = kWinScaleMax;       /* (AUTO: the most that fits, below) */
+    if (win_scale > kWinScaleMax) win_scale = kWinScaleMax;
 
     /* Which monitor to open on ([video] screen=N, 0 = primary). */
     int screen = opts ? opts->screen : 0;
@@ -688,6 +695,13 @@ int Platform_Init(const PlatformInitOptions *opts)
     {
         int nd = SDL_GetNumVideoDisplays();
         if (nd < 1) nd = 1;
+        for (int d = 0; d < nd; d++) {  /* (the monitors, for a report: MONITOR's numbers are these + 1) */
+            SDL_Rect b = { 0, 0, 0, 0 };
+            const char *name = SDL_GetDisplayName(d);
+            SDL_GetDisplayBounds(d, &b);
+            fprintf(stderr, "[video] monitor %d: \"%s\" %dx%d at %d,%d%s\n", d + 1, name ? name : "?",
+                    b.w, b.h, b.x, b.y, d == screen ? " (opening here: [video] screen)" : "");
+        }
         if (screen >= nd) screen = 0;
         if (fs_mode == PLATFORM_FULLSCREEN_NONE) {
             SDL_Rect ub;
@@ -771,57 +785,15 @@ int Platform_Init(const PlatformInitOptions *opts)
     static char s_title[96];
     snprintf(s_title, sizeof s_title, PROJECT_NAME " %s (%s)", Build_Id(), Build_Platform());
 
-    /* [video] resolution=WxH IS THE CLIENT AREA, when one is named.
-     *
-     * It used to set only the render ASPECT, so "resolution=320x200, scale=1" opened a
-     * 436x272 window -- the number in the file appeared nowhere on screen, which is what a
-     * tester reported. A resolution the game never shows you is a strange thing to ask a
-     * player to set, so now it is exactly the size of the client rect and `scale` applies
-     * only to 'auto'. The render is letterboxed inside it by SDL_RenderSetLogicalSize,
-     * which is already how fullscreen works. */
+    /* [video] resolution is the picture's SHAPE (VIDEO OPTIONS' ASPECT RATIO: 21:9 is written
+     * 2560x1080), never the window's size: the window is the picture times a whole number, so
+     * every pixel is as big as the next. From 2026-09-22 a WxH there was the client area -- 21:9
+     * on a 1920 wide monitor became a 1920x810 window, 2.98 times the picture, its rows of
+     * pixels unequal (2026-11-25). */
     int client_w = (int)_screen_width * win_scale;
     int client_h = _screen_height * win_scale;
     int pinned = 0;
     s_pinned_w = s_pinned_h = 0;
-    if (opts && opts->res_w > 0 && opts->res_h > 0 && fs_mode == PLATFORM_FULLSCREEN_NONE) {
-        client_w = opts->res_w;
-        client_h = opts->res_h;
-        pinned = 1;
-        s_pinned_w = client_w;
-        s_pinned_h = client_h;
-        /* A client area SMALLER than the picture shrinks it to fit, which is
-         * almost never what was meant: "resolution=320x200" reads like "run at
-         * the DOS size" but the picture is 336x272, so it comes out at 0.73x --
-         * blurry, non-integer, and smaller than 1:1 (reported 2026-09-22). Say
-         * so, and name the setting that does what they wanted. */
-        if (client_w < (int)_screen_width || client_h < _screen_height)
-            fprintf(stderr,
-                "[video] %dx%d is smaller than the %dx%d picture, so it is being shrunk "
-                "to fit (%.2fx). For a crisp window use 'resolution=auto' with 'scale=N'; "
-                "the picture is always %d lines tall -- the render SIZE is not settable\n",
-                client_w, client_h, (int)_screen_width, _screen_height,
-                (double)client_w / (double)_screen_width < (double)client_h / (double)_screen_height
-                    ? (double)client_w / (double)_screen_width
-                    : (double)client_h / (double)_screen_height,
-                _screen_height);
-#ifndef SWOS_WASM_BUILD
-        /* A window bigger than the monitor is not a setting, it is a mistake nobody can
-         * undo from inside the game -- the title bar ends up off-screen. Clamp to the
-         * usable area, keeping the shape asked for. */
-        {
-            SDL_Rect ub;
-            if (SDL_GetDisplayUsableBounds(screen, &ub) == 0 && ub.w > 0 && ub.h > 0 &&
-                (client_w > ub.w || client_h > ub.h)) {
-                int fit_w = ub.w, fit_h = (int)((long)ub.w * client_h / client_w);
-                if (fit_h > ub.h) { fit_h = ub.h; fit_w = (int)((long)ub.h * client_w / client_h); }
-                fprintf(stderr, "[video] %dx%d does not fit this display, using %dx%d\n",
-                        client_w, client_h, fit_w, fit_h);
-                client_w = fit_w; client_h = fit_h;
-                s_pinned_w = client_w; s_pinned_h = client_h;
-            }
-        }
-#endif
-    }
     s_window = SDL_CreateWindow(
         s_title,
         SDL_WINDOWPOS_CENTERED_DISPLAY(screen),
@@ -1237,6 +1209,7 @@ void Platform_Shutdown(void)
  * (a 16:10 laptop's picture on a 21:9 monitor, even fullscreen: a tester, macOS, 2026-10-31).
  * Checked on every window event: SDL_WINDOWEVENT_DISPLAY_CHANGED where SDL has it (2.0.18+),
  * a move or resize anywhere. */
+static int window_is_fullscreen(void);
 static void check_display(void)
 {
 #ifndef SWOS_WASM_BUILD
@@ -1251,12 +1224,26 @@ static void check_display(void)
     if (first || SDL_GetDesktopDisplayMode(d, &dm) != 0)
         return;
     fprintf(stderr, "[video] the window is on display %d now: %dx%d @%dHz\n", d, dm.w, dm.h, dm.refresh_rate);
+    {   /* (the next start opens there: [video] screen, MONITOR) */
+        extern PlatformInitOptions *g_arcadeOpts;
+        extern const char *g_arcadeIniPath;
+        if (g_arcadeOpts && g_arcadeOpts->screen != d) {
+            g_arcadeOpts->screen = d;
+            if (g_arcadeIniPath)
+                Settings_Save(g_arcadeOpts, g_arcadeIniPath);
+        }
+    }
     if (dm.refresh_rate > 0)
         s_display_hz = dm.refresh_rate;
     {
         extern void Video_DisplayChanged(int dw, int dh);
         Video_DisplayChanged(dm.w, dm.h);
     }
+    /* AUTO: the scale this monitor takes (a window moved from a laptop to a big screen). */
+    if (s_win_scale_auto && s_pinned_w <= 0 && !window_is_fullscreen() &&
+        !(SDL_GetWindowFlags(s_window) & SDL_WINDOW_MAXIMIZED) &&
+        Platform_WindowScaleMax() != s_win_scale_current)
+        Platform_SetWindowScale(0);
 #endif
 }
 
@@ -1430,6 +1417,83 @@ int Platform_GetWindowScale(void)
     return s_win_scale_current;
 }
 
+int Platform_WindowScaleAuto(void) { return s_win_scale_auto; }
+
+/* SMOOTH SCROLLING and SCALING at once: both are read at every frame presented. */
+void Platform_SetSubpixelScroll(int on) { s_subpixel_scroll = on ? 1 : 0; }
+void Platform_SetScalingSmooth(int on)  { s_scaling_smooth = on ? 1 : 0; apply_picture_scaling(); }
+
+int Platform_DisplayCount(void)
+{
+#ifndef SWOS_WASM_BUILD
+    const int n = SDL_GetNumVideoDisplays();
+    return n > 0 ? n : 1;
+#else
+    return 1;
+#endif
+}
+
+int Platform_WindowDisplay(void)
+{
+    const int d = s_window ? SDL_GetWindowDisplayIndex(s_window) : 0;
+    return d > 0 ? d : 0;
+}
+
+void Platform_DisplayDesc(int display, char *out, int cap)
+{
+    SDL_DisplayMode dm;
+    if (SDL_GetDesktopDisplayMode(display, &dm) == 0)
+        snprintf(out, (size_t)cap, "%dX%d", dm.w, dm.h);
+    else
+        snprintf(out, (size_t)cap, "?");
+}
+
+void Platform_MoveToDisplay(int display)
+{
+#ifndef SWOS_WASM_BUILD
+    if (!s_window || display < 0 || display >= Platform_DisplayCount())
+        return;
+    const Uint32 fsFlags = SDL_GetWindowFlags(s_window) & (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP);
+    if (fsFlags)
+        SDL_SetWindowFullscreen(s_window, 0);           /* (a fullscreen window cannot be moved) */
+    if (SDL_GetWindowFlags(s_window) & SDL_WINDOW_MAXIMIZED)
+        SDL_RestoreWindow(s_window);
+    SDL_SetWindowPosition(s_window, SDL_WINDOWPOS_CENTERED_DISPLAY(display), SDL_WINDOWPOS_CENTERED_DISPLAY(display));
+    if (fsFlags)
+        SDL_SetWindowFullscreen(s_window, fsFlags);
+    else if (s_win_scale_auto && s_pinned_w <= 0)
+        Platform_SetWindowScale(0);                     /* (that monitor's scale, centred there) */
+    fprintf(stderr, "[video] window moved to monitor %d\n", display + 1);
+    check_display();
+#else
+    (void)display;
+#endif
+}
+
+/* The most whole times the picture, framed (title bar and borders), fits the usable area of the
+ * monitor the window is on -- what Platform_Init's fit does at the start, for any time after. */
+int Platform_WindowScaleMax(void)
+{
+#ifndef SWOS_WASM_BUILD
+    SDL_Rect ub, db;
+    int s = kWinScaleMax, bt = 0, bl = 0, bb = 0, br = 0;
+    const int d = s_window ? SDL_GetWindowDisplayIndex(s_window) : 0;
+    if (d < 0 || SDL_GetDisplayUsableBounds(d, &ub) != 0 || ub.w <= 0 || ub.h <= 0)
+        return s_win_scale_current;
+    if (SDL_GetDisplayBounds(d, &db) == 0 && db.w > 0 && db.h > 0) {
+        if (ub.w > db.w) ub.w = db.w;   /* (a driver's whole virtual desktop: Platform_Init) */
+        if (ub.h > db.h) ub.h = db.h;
+    }
+    if (s_window)
+        SDL_GetWindowBordersSize(s_window, &bt, &bl, &bb, &br);
+    while (s > 1 && ((int)_screen_width * s + bl + br > ub.w || _screen_height * s + bt + bb > ub.h))
+        s--;
+    return s;
+#else
+    return s_win_scale_current;
+#endif
+}
+
 PlatformFullscreenMode Platform_GetFullscreenMode(void)
 {
     /* Return the *current* mode, not the launch one — Alt+Enter at
@@ -1464,6 +1528,11 @@ void Platform_ViewChanged(void)
      * Not when fullscreen (SDL letterboxes, which is right), and not when
      * [video] resolution pinned a client area -- that was asked for by name. */
     if (!s_window || s_pinned_w > 0 || window_is_fullscreen()) return;
+    {   /* (a picture of another size: AUTO's scale for it, a chosen one no bigger than fits) */
+        const int most = Platform_WindowScaleMax();
+        if (s_win_scale_auto || s_win_scale_current > most)
+            s_win_scale_current = most;
+    }
     SDL_SetWindowSize(s_window,
                       _screen_width  * s_win_scale_current,
                       _screen_height * s_win_scale_current);
@@ -1472,9 +1541,13 @@ void Platform_ViewChanged(void)
 void Platform_SetWindowScale(int scale)
 {
     if (!s_window) return;
-    if (scale < 1) scale = 1;
-    if (scale > 4) scale = 4;
+    const int most = Platform_WindowScaleMax();
+    s_win_scale_auto = scale <= 0;
+    if (scale < 1 || scale > most)      /* (AUTO, or more than the monitor takes) */
+        scale = most;
     s_win_scale_current = scale;
+    fprintf(stderr, "[video] window scale %s%dx (the monitor takes %dx)\n",
+            s_win_scale_auto ? "AUTO: " : "", scale, most);
     /* Choosing a scale by hand overrides whatever [video] resolution pinned, and
      * keeps it overridden for the rest of the session -- otherwise the next
      * fullscreen round trip would undo what the player just pressed. */
@@ -1482,13 +1555,19 @@ void Platform_SetWindowScale(int scale)
     /* Only resize when actually windowed — fullscreen ignores the size
      * (SDL_RenderSetLogicalSize handles letterboxing for us). */
     if (!window_is_fullscreen()) {
+        /* A maximized window keeps its size whatever is asked: back to a plain one first. */
+        if (SDL_GetWindowFlags(s_window) & SDL_WINDOW_MAXIMIZED)
+            SDL_RestoreWindow(s_window);
         SDL_SetWindowSize(s_window,
             _screen_width * scale,
             _screen_height * scale);
         /* Re-centre on the desktop after a size change so a 4× window
          * doesn't end up clipped against the bottom-right of the screen. */
-        SDL_SetWindowPosition(s_window,
-            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+        {   /* (on the monitor it is on: SDL_WINDOWPOS_CENTERED is the first monitor's) */
+            int d = SDL_GetWindowDisplayIndex(s_window);
+            if (d < 0) d = 0;
+            SDL_SetWindowPosition(s_window, SDL_WINDOWPOS_CENTERED_DISPLAY(d), SDL_WINDOWPOS_CENTERED_DISPLAY(d));
+        }
     }
 }
 
@@ -1785,11 +1864,15 @@ static uint32_t       s_bdSmallSerial;
 
 void Platform_SetMenuBackdrop(const uint8_t *rgba, int w, int h)
 {
+    if (s_render_mtx)
+        SDL_LockMutex(s_render_mtx);    /* (the timer thread's fallback render reads it too) */
     if (rgba != s_bd || w != s_bdW || h != s_bdH)
         s_bdSerial++;
     s_bd = rgba && w > 0 && h > 0 ? rgba : NULL;
     s_bdW = w;
     s_bdH = h;
+    if (s_render_mtx)
+        SDL_UnlockMutex(s_render_mtx);
 }
 
 int Platform_MenuBackdropOn(void)
@@ -1807,6 +1890,13 @@ static uint8_t       *s_introFaded;
 
 void Platform_SetIntroBackdrop(const uint8_t *rgba, int w, int h)
 {
+    /* Under the render lock: during the intro the TIMER thread draws (its wait loops never reach
+     * WaitForVSync), and its backdrop_shown() reads and remakes s_introFaded -- freed here at the
+     * intro's end. Unlocked, a frame drawn as the intro ended read the freed picture: SWOS United
+     * crashed at the end of POWERED BY on testers' Windows PCs (2026-11-24). (SDL's mutex is
+     * recursive: Platform_SetMenuBackdrop takes it again.) */
+    if (s_render_mtx)
+        SDL_LockMutex(s_render_mtx);
     s_introSrc = rgba && w > 0 && h > 0 ? rgba : NULL;
     s_introW = w;
     s_introH = h;
@@ -1816,6 +1906,8 @@ void Platform_SetIntroBackdrop(const uint8_t *rgba, int w, int h)
         free(s_introFaded);
         s_introFaded = NULL;
     }
+    if (s_render_mtx)
+        SDL_UnlockMutex(s_render_mtx);
 }
 
 static void intro_backdrop_update(void)
@@ -1848,7 +1940,8 @@ static int backdrop_shown(void)
         intro_backdrop_update();
         return s_bd != NULL && !s_cut_on;
     }
-    return s_bd && !_gArcadeMode && ModApi_InMenus() && !s_cut_on;
+    extern int32_t ReplayMenu_ExitMenuUp(void);
+    return s_bd && !_gArcadeMode && (ModApi_InMenus() || ReplayMenu_ExitMenuUp()) && !s_cut_on;
 }
 
 /* The backdrop at w x h, covering it (cropped to its aspect, centred): ARGB, for SDL's renderer. */
@@ -1960,6 +2053,45 @@ const uint8_t *Platform_FrameShown(void)
  * SDL texture. Same shape as swos-port-c's `updateScreen`. */
 static const uint8_t *frame_source(void);
 
+/* ---- the menus' pictures in their own colours (Platform_TrueColourPixel) ----
+ * A menu's picture (menu_extras.c: the main menu's logo, its TV, the icons) is drawn into the
+ * 8bpp frame as each colour's nearest palette entry -- the menu palette has 16 steps a channel
+ * and few greys, so a picture of many colours lost them (the TV's fifteen greys came out as a
+ * few brownish ones). Beside that, each of its pixels gives its own colour here; the frame is
+ * shown with it wherever the pixel still holds the entry it was drawn with (anything drawn on
+ * top afterwards wins), darkened with the menus' fade. Given again every menu frame: a picture
+ * not given for 100 ms (a match, another screen) is gone. */
+static uint32_t *s_tc;                  /* 0xRRGGBB | 0xFF000000 when set, per frame pixel */
+static uint8_t  *s_tcIdx;               /* the palette entry the frame got there */
+static int       s_tcW, s_tcH, s_tcCount;
+static Uint64    s_tcStamp;
+
+void Platform_TrueColourBegin(void)
+{
+    const int w = _screen_width, h = _screen_height;
+    if (w != s_tcW || h != s_tcH || !s_tc) {
+        SDL_free(s_tc);
+        SDL_free(s_tcIdx);
+        s_tc = (uint32_t *)SDL_calloc((size_t)w * (size_t)h, sizeof *s_tc);
+        s_tcIdx = (uint8_t *)SDL_calloc((size_t)w * (size_t)h, 1);
+        s_tcW = s_tc && s_tcIdx ? w : 0;
+        s_tcH = s_tc && s_tcIdx ? h : 0;
+    } else if (s_tcCount) {
+        SDL_memset(s_tc, 0, (size_t)w * (size_t)h * sizeof *s_tc);
+    }
+    s_tcCount = 0;
+    s_tcStamp = Platform_NowMs();
+}
+
+void Platform_TrueColourPixel(int x, int y, uint8_t index, uint32_t rgb)
+{
+    if (!s_tc || x < 0 || y < 0 || x >= s_tcW || y >= s_tcH)
+        return;
+    s_tc[(size_t)y * s_tcW + x] = 0xFF000000u | (rgb & 0xFFFFFFu);
+    s_tcIdx[(size_t)y * s_tcW + x] = index;
+    s_tcCount++;
+}
+
 static void chunky_to_rgba(uint32_t *dst, int dst_pitch_pixels)
 {
     /* Double-buffer semantics — read the *completed* frame, not the
@@ -1998,11 +2130,23 @@ static void chunky_to_rgba(uint32_t *dst, int dst_pitch_pixels)
     const int keyed = backdrop_shown();
     const int alpha = menu_alpha_now();     /* (launcher options, agent B: the menus' opacity) */
     const uint8_t *under = alpha < 255 && fb != _frontbufferMaskBuffer ? _frontbufferMaskBuffer : NULL;
+    extern int g_fadeLevel;
+    const int tcOn = s_tcCount && s_tcW == _screen_width && s_tcH == _screen_height &&
+                     Platform_NowMs() - s_tcStamp < 100;
+    const int tcFade = g_fadeLevel < 0 ? 0 : g_fadeLevel > 0x80 ? 0x80 : g_fadeLevel;
     for (int y = 0; y < _screen_height; ++y) {
         const uint8_t *line = fb + (size_t)y * FRONTBUFFER_ROW_STRIDE_BYTES;
         const uint8_t *uline = under ? under + (size_t)y * FRONTBUFFER_ROW_STRIDE_BYTES : NULL;
         uint32_t      *out  = dst + (size_t)y * dst_pitch_pixels;
+        const uint32_t *tc = tcOn ? s_tc + (size_t)y * s_tcW : NULL;
+        const uint8_t  *tci = tcOn ? s_tcIdx + (size_t)y * s_tcW : NULL;
         for (int x = 0; x < _screen_width; ++x) {
+            if (tc && tc[x] && tci[x] == line[x]) {     /* a menu picture's own colour */
+                const uint32_t c = tc[x];
+                out[x] = 0xFF000000u | ((((c >> 16) & 0xFF) * (uint32_t)tcFade >> 7) << 16) |
+                         ((((c >> 8) & 0xFF) * (uint32_t)tcFade >> 7) << 8) | ((c & 0xFF) * (uint32_t)tcFade >> 7);
+                continue;
+            }
             if (keyed && line[x] == MENU_BACKDROP_KEY) {   /* the menus' true-colour backdrop */
                 out[x] = bd ? bd[(size_t)y * _screen_width + x] : 0u;    /* (s_key_clear: the GPU's) */
                 continue;

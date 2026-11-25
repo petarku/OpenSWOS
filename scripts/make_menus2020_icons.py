@@ -89,7 +89,7 @@ def write_bmp(path, pixels):
         f.write(head + info + body)
 
 
-TV_SIZE = (34, 31)          # (SWOS 2020's 42x38, about four fifths; make_menus2020.py TV_SIZE)
+TV_SIZE = (42, 38)          # (SWOS 2020's own, pixel for pixel: not shrunk; make_menus2020.py TV_SIZE)
 
 
 def shrink(pixels, w, h):
@@ -174,9 +174,10 @@ def main():
     # (src/mod_menu_tools.c: per map "name width height", then its rows).
     with open(os.path.join(REPO, "bin", "mods", "menus2020", "pixmaps.txt"), "w", newline="\n") as f:
         f.write("# SWOS 2020's pictures (src/PixelmapAndStrings.h): scripts/make_menus2020_icons.py\n")
-        for name in ("rightArrow", "leftArrow"):
-            rows = [row[:10] for row in char_map(name, 7)[:7]]
-            f.write("%s 10 7\n" % name)
+        # (and REPLAY CONTROLS' keys: replaysControlsMenu_OnDraw's replay_controls_300x56_1x1_map)
+        for name, w, h in (("rightArrow", 10, 7), ("leftArrow", 10, 7), ("replay_controls_300x56_1x1_map", 300, 56)):
+            rows = [row[:w] for row in char_map(name, h)[:h]]
+            f.write("%s %d %d\n" % (name, w, h))
             f.write("".join(row + "\n" for row in rows))
         # REPLAY CONTROLS' keyboard and pad (replaysControlsMenu_OnDraw: drawReplayControlsLayout)
         rows = [row[:300].ljust(300, ".") for row in char_map("replay_controls_300x56_1x1_map", 56)[:56]]
@@ -196,8 +197,8 @@ def main():
 
     # The LIVE CAST TV (game.cpp, SWOS::drawTvIcon): a 42x38 housing over one of two screens
     # (idle / live), indices into the in-game palette its developer icons carry (0 = see-through),
-    # drawn smaller on SWOS United's main menu (TV_SIZE, Playa 2026-11-20: the banner beside it ends
-    # where the buttons do, make_menus2020.py).
+    # at its own size, pixel for pixel (it was drawn four fifths as big from 2026-11-20 to make room
+    # for the banner; the banner moved instead, make_menus2020.py).
     game = os.path.join(args.swos2020, "src", "game.cpp")
     tvpal = read_bmp_palette(os.path.join(args.swos2020, "developer_icons", "starwindz_256.bmp"))
     overlay = read_byte_map(game, "tv_overlay_map")
@@ -208,10 +209,15 @@ def main():
             row = []
             for o, u in zip(orow, urow):
                 v = o or u
-                row.append((255, 0, 255) if v == 0 else tvpal[v])
+                # (black is see-through in a menu picture, menu_extras.c: the housing's black
+                # outlines and the screen's edge drawn (1, 1, 1), still black on screen)
+                c = (255, 0, 255) if v == 0 else tvpal[v]
+                row.append((1, 1, 1) if c == (0, 0, 0) else c)
             pixels.append(row)
         path = os.path.join(OUT, "tv_%s.bmp" % state)
-        write_bmp(path, shrink(pixels, *TV_SIZE))
+        if (len(pixels[0]), len(pixels)) != TV_SIZE:
+            pixels = shrink(pixels, *TV_SIZE)
+        write_bmp(path, pixels)
         print("  -> %s" % os.path.relpath(path, REPO))
 
 

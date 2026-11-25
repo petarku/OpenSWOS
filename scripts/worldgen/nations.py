@@ -18,11 +18,12 @@ name them so) and their kits and tactics; the 68 nations 96/97 does not have go 
 confederation's file (Australia stays in Oceania's, Mauritius and Papua New Guinea in Asia's, as
 96/97 has them). Writes, into the world's folder (gitignored: real people's data):
   teams/EUROPE.json AFRICA.json SOUTH_AMERICA.json NORTH_AMERICA.json ASIA.json OCEANIA.json
-  national_teams.json   the national teams' records (include/national_teams.h), all 211
+  competitions/national_teams.json   the national teams' records (include/national_teams.h), all 211
 The Amiga's TEAM.080-085 are not written (its global team numbers are baked: §15).
 """
 import argparse
 import collections
+import difflib
 import json
 import math
 import os
@@ -985,6 +986,12 @@ def lineup_sixteen(lu, rows, n, nation_level, world, unmapped, ov=None):
             common = len(have & (full | short))
             if common > score and last in have and (have <= full | short or (full | short) <= have or common >= 2):
                 best, score = r, common
+        if best is None and last:               # (one man spelt two ways: Transfermarkt's Yegor / Georgiy /
+            sur = [r for r in rows               #  Matvienko, Wikipedia's Yehor / Heorhiy / Matviyenko -- the
+                   if fold(r['s']['name']).split() and  # surname, nearly the same, held by him alone)
+                   difflib.SequenceMatcher(None, fold(r['s']['name']).split()[-1], last).ratio() >= 0.85]
+            if len(sur) == 1:
+                best = sur[0]
         return best
 
     xi_rows = []
@@ -1262,9 +1269,11 @@ def main():
                 p['shirt_number'] = 0
             used.add(p['shirt_number'])
         free = [k for k in range(1, 100) if k not in used]
-        for p in players:
-            if not p['shirt_number']:
-                p['shirt_number'] = free.pop(0)
+        for p in players:                       # (the lowest free -- 1 a goalkeeper's only: an outfield
+            if not p['shirt_number']:           #  player in 1 was a free number handed out, never his)
+                k = next(k for k in free if k != 1 or p['position'] == 0)
+                free.remove(k)
+                p['shirt_number'] = k
         built[n['fifa']] = (n, players, lineup_info)
         m = sum(1 for p in sixteen if p['src'] == 'world')
         report.append('%s %-17s squad %2d  of the 16: %2d from the world, %2d estimated  points %s  coach %s  %s  %s'
@@ -1332,9 +1341,15 @@ def main():
     nt = {'about': 'World 2026-27: the 211 FIFA members (scripts/worldgen/nations.py)',
           'records': [{k: v for k, v in r.items() if not k.startswith('_')} for r in recs],
           'job_offer_pick': jobs}
-    with open(os.path.join(out_dir, 'national_teams.json'), 'w', encoding='utf-8') as f:
+    # (in competitions/: the folder the World package carries and its fingerprint covers -- beside
+    #  teams/ it never reached a player; Playa, 2026-11-25. The game reads competitions/ first.)
+    os.makedirs(os.path.join(out_dir, 'competitions'), exist_ok=True)
+    with open(os.path.join(out_dir, 'competitions', 'national_teams.json'), 'w', encoding='utf-8') as f:
         json.dump(nt, f, indent=1)
         f.write('\n')
+    old = os.path.join(out_dir, 'national_teams.json')
+    if os.path.exists(old):
+        os.remove(old)                          # (an older run's, beside teams/)
     print('national_teams.json: %d records, %d for a job' % (len(recs), jobs))
 
     os.makedirs(os.path.dirname(a.report), exist_ok=True)

@@ -68,7 +68,7 @@ typedef enum {
 enum { VIEW_STYLE_AUTO = 0, VIEW_STYLE_AMIGA = 1, VIEW_STYLE_DOS = 2 };
 
 typedef struct {
-    int                    win_scale;        /* 1, 2, 3, 4 */
+    int                    win_scale;        /* 0 auto (the most whole times the monitor takes), 1..8 */
     PlatformFullscreenMode fullscreen;       /* none / desktop / exclusive */
     PlatformRendererMode   renderer;         /* software / accelerated */
     int                    vsync;            /* 0 = off (default), 1 = on (accel only) */
@@ -269,7 +269,22 @@ void Platform_VolumeKey(int key);        /* Shift+1..6 in a match: a volume down
 
 /* Set the windowed-mode integer scale factor (1..4) at runtime. Called
  * from the +/- key handlers. No-op while fullscreen. */
-void Platform_SetWindowScale(int scale);
+void Platform_SetWindowScale(int scale);    /* 0: AUTO; a number: that, or the most that fits */
+/* WINDOW SCALE is AUTO: the most whole times the picture fits the monitor's usable area,
+ * framed, again whenever the monitor or the picture's size changes. */
+int  Platform_WindowScaleAuto(void);
+/* VIDEO OPTIONS' SMOOTH SCROLLING and SCALING, taken at once (read at every frame). */
+void Platform_SetSubpixelScroll(int on);
+void Platform_SetScalingSmooth(int on);
+/* The most whole times the picture fits the window's monitor, framed (1 at least). */
+int  Platform_WindowScaleMax(void);
+/* The monitors: how many (1 at least), the one the window is on, and one's size as "1920X1080". */
+int  Platform_DisplayCount(void);
+int  Platform_WindowDisplay(void);
+void Platform_DisplayDesc(int display, char *out, int cap);
+/* The window onto monitor `display`, centred there -- fullscreen stays fullscreen, there; AUTO's
+ * scale is that monitor's. VIDEO OPTIONS' MONITOR ([video] screen, where the game opens). */
+void Platform_MoveToDisplay(int display);
 
 /* The picture's size has changed (the DOS view is 320x200, menus are 336x272),
  * so the presenter must letterbox the new shape. The WINDOW is deliberately not
@@ -319,6 +334,12 @@ void Platform_ShowProgress(int permille);
  * (FRONTBUFFER_ROW_STRIDE_BYTES a row), and the HUD layer (8bpp, _screen_width a row, index 0
  * empty), NULL when the HUD is drawn in the frame itself ([video] subpixel_scroll off). */
 const uint8_t *Platform_FrameShown(void);
+/* A menu picture's pixels in their own colours (menu_extras.c): Begin once a menu frame, then each
+ * pixel drawn into the frame (x, y in the frame) with the palette entry it was given there and its
+ * 0xRRGGBB. Shown in that colour while the frame still holds that entry; gone when not given again
+ * within 100 ms. */
+void           Platform_TrueColourBegin(void);
+void           Platform_TrueColourPixel(int x, int y, uint8_t index, uint32_t rgb);
 uint8_t       *Platform_HudLayerBuffer(void);
 
 /* A cutscene over the whole picture (src/mod_api.c ModApi_Cutscene*, the PC cutscenes mod):

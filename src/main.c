@@ -30,6 +30,8 @@
 #define chdir(p) _chdir(p)
 #else
 #include <unistd.h>          /* readlink, chdir */
+#include <fcntl.h>           /* open: the log's lock */
+#include <sys/file.h>        /* flock: the log's lock */
 #include <strings.h>         /* strcasecmp (the program's .exe, Cygwin) */
 #include <sys/stat.h>        /* stat: the Mac bundle's Resources */
 #endif
@@ -71,7 +73,7 @@
 #include "world.h"              /* [general] world */
 #include "phone_fetch.h"        /* --phone-fetch */
 
-#define WIN_SCALE 3
+#define WIN_SCALE 0             /* AUTO: the most whole times the monitor takes */
 
 extern void startShim(void);
 
@@ -154,7 +156,7 @@ static void print_usage(const char *argv0)
         "                            'exclusive' = true fullscreen with display-\n"
         "                            mode change, always covers the taskbar (the\n"
         "                            XP fix). Slower toggle.\n"
-        "  --scale=<1|2|3|4>         Windowed scale at startup. Default: 3.\n"
+        "  --scale=<auto|1..8>        Windowed scale at startup: auto the most the monitor takes. Default: auto.\n"
         "                            Adjust at runtime with + and - keys.\n"
         "  --renderer=<accel|sdl|software>\n"
         "                            Choose the renderer. Default: accel.\n"
@@ -636,6 +638,26 @@ static void note_self(char **argv)
 
 int32_t Main_CanRelaunch(void) { return s_selfPath[0] != 0; }
 
+/* The game started again by itself (Main_Relaunch): the one that started it closes as this one
+ * starts, and saved SWOS.ini on its way out -- read too soon, this one had another moment's
+ * settings, and wrote them back (2026-11-25: MOON and KIT COLOURS ORIGINAL, chosen in no run).
+ * So it waits until that one has gone, 10 s at most, before it reads SWOS.ini. */
+static void wait_for_parent(void)
+{
+    const char *e = getenv("SWOS_RELAUNCH_PARENT");
+    const pid_t parent = e ? (pid_t)atoi(e) : 0;
+    int waited = 0;
+    unsetenv("SWOS_RELAUNCH_PARENT");   /* (its own restart sets its own) */
+    if (parent <= 0)
+        return;
+    while (kill(parent, 0) == 0 && waited < 10000) {
+        usleep(20 * 1000);
+        waited += 20;
+    }
+    fprintf(stderr, "[settings] started again: waited %d ms for the game before to close%s\n", waited,
+            waited >= 10000 ? " (it is still there)" : "");
+}
+
 int32_t Main_Relaunch(void)
 {
     pid_t pid;
@@ -643,6 +665,11 @@ int32_t Main_Relaunch(void)
         return 0;
     setenv("SWOS_SKIP_INTRO", "1", 1);
     setenv("SWOS_RELAUNCHED", "1", 1);  /* (the intro skipped, not chosen off: Main_RelaunchSkippedIntro) */
+    {   /* (the new one reads SWOS.ini once this one is gone: Main_WaitForParent) */
+        char pid[24];
+        snprintf(pid, sizeof pid, "%d", (int)getpid());
+        setenv("SWOS_RELAUNCH_PARENT", pid, 1);
+    }
     s_selfArgv[0] = s_selfPath;
     if (posix_spawn(&pid, s_selfPath, NULL, NULL, s_selfArgv, environ) != 0) {
         fprintf(stderr, "[mods] could not start %s again\n", s_selfPath);
@@ -654,9 +681,56 @@ int32_t Main_Relaunch(void)
 }
 #else
 static void note_self(char **argv) { (void)argv; }
+static void wait_for_parent(void) {}
 int32_t Main_CanRelaunch(void) { return 0; }
 int32_t Main_Relaunch(void) { return 0; }
 #endif
+
+/* SWOS.log -- or, while another copy of the game has it (two games on one machine, as for a
+ * netplay test), SWOS_2.log, SWOS_3.log ...: two games writing one file mixed their lines and
+ * cut each other's off. Which one is this game's is decided once, by a lock held until the game
+ * ends -- the system lets it go with the process, a crash included -- on a file beside it
+ * (SWOS.log.lock, SWOS_2.log.lock ...). The match report reads the same one (match_report.c). */
+const char *Main_LogPath(void)
+{
+    static char path[1100];
+    int32_t n;
+    if (path[0])
+        return path;
+    for (n = 1; n <= 8; n++) {
+        char lock[1120];
+        if (n == 1)
+            snprintf(path, sizeof path, "%s/SWOS.log", swos_user_dir());
+        else
+            snprintf(path, sizeof path, "%s/SWOS_%d.log", swos_user_dir(), (int)n);
+        snprintf(lock, sizeof lock, "%s.lock", path);
+#ifdef _WIN32
+        if (CreateFileA(lock, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL) !=
+            INVALID_HANDLE_VALUE)
+            return path;                /* (the handle stays open: no other process may open it) */
+#else
+        {
+            const int fd = open(lock, O_RDWR | O_CREAT, 0644);
+            if (fd >= 0 && flock(fd, LOCK_EX | LOCK_NB) == 0)
+                return path;            /* (the descriptor stays open, and with it the lock) */
+            if (fd >= 0)
+                close(fd);
+        }
+#endif
+    }
+    snprintf(path, sizeof path, "%s/SWOS.log", swos_user_dir());     /* (no lock to be had: as before) */
+    return path;
+}
+
+/* [startup] lines: each step of the start, the time since the game began and since the step
+ * before, in SWOS.log -- what makes a start slow on a player's machine (2026-11-25). */
+void Startup_Mark(const char *what)
+{
+    static Uint32 last;
+    const Uint32 now = SDL_GetTicks();
+    fprintf(stderr, "[startup] %-16s %5u ms (+%u)\n", what, (unsigned)now, (unsigned)(now - last));
+    last = now;
+}
 
 int main(int argc, char **argv)
 {
@@ -866,6 +940,7 @@ int main(int argc, char **argv)
      * — so an edited SWOS.ini that "does nothing" is usually the game reading a
      * different one. Print it before loading so the answer is in the log even
      * if the load then fails. */
+    wait_for_parent();
     {
         FILE *probe = fopen(ini_path, "rb");
         fprintf(stderr, "[settings] SWOS.ini: %s (%s)\n",
@@ -900,9 +975,9 @@ int main(int argc, char **argv)
                 return 1;
             }
         } else if ((v = match_kv(a, "scale")) != NULL) {
-            int n = atoi(v);
-            if (n < 1 || n > 4) {
-                fprintf(stderr, "Invalid --scale value '%s' (expected 1|2|3|4)\n", v);
+            int n = strcmp(v, "auto") == 0 ? 0 : atoi(v);
+            if (n < 0 || n > 8 || (n == 0 && strcmp(v, "auto") != 0)) {
+                fprintf(stderr, "Invalid --scale value '%s' (expected auto|1..8)\n", v);
                 return 1;
             }
             opts.win_scale = n;
@@ -1724,8 +1799,7 @@ int main(int argc, char **argv)
      * is where the output goes — start it BEFORE launching (docs/SWITCH.md). */
 #else
     if (getenv("SWOS_NO_LOG") == NULL) {
-        char log_path[1088];
-        snprintf(log_path, sizeof log_path, "%s/SWOS.log", swos_user_dir());
+        const char *log_path = Main_LogPath();
         FILE *log = freopen(log_path, "w", stderr);
         if (log) {
             setvbuf(log, NULL, _IONBF, 0);
@@ -1738,6 +1812,12 @@ int main(int argc, char **argv)
      * does not have, and the log they actually send us is the thing that has to
      * answer "which build is this?" on its own. */
     fprintf(stderr, "[build] %s\n", Build_Version());
+    {   /* (what SWOS.ini gave, in the log: the lines that say so come before it is open) */
+        static const char *const kStyle[] = { "amiga", "dos", "xbox", "amiga60", "moon" };
+        fprintf(stderr, "[settings] read: [gameplay] style %s, [graphics] kit_colours %s, [video] screen %d, "
+                "renderer %d (game %d)\n", opts.dos_gameplay >= 0 && opts.dos_gameplay <= 4 ? kStyle[opts.dos_gameplay] : "?",
+                opts.kit_colours ? "extended" : "original", opts.screen, (int)opts.renderer, (int)getpid());
+    }
 
     /* The mods (include/mods.h): --mods, else SWOS_MODS_ENABLED, else SWOS.ini's [mods] enabled.
      * Before anything reads the game's data -- translations included, which a mod may carry. */
@@ -1745,6 +1825,7 @@ int main(int argc, char **argv)
     /* The built-in mods that are on, set up (include/mod_api.h ModDef.init): their entries and
      * their menus' handlers -- before the menus are built from JSON, which name them. */
     { extern void ModHooks_Init(void); ModHooks_Init(); }
+    Startup_Mark("mods");
     if (getenv("SWOS_MOD_RELOAD_TEST")) {   /* (mods on and off without a restart: Mods_Reload) */
         extern int32_t Main_Relaunch(void);
         if (strcmp(getenv("SWOS_MOD_RELOAD_TEST"), "relaunch") == 0) {  /* (the game started again: */
@@ -2074,17 +2155,23 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    Startup_Mark("settings, input");
     if (Platform_Init(&opts) != 0) {
         fprintf(stderr, "Platform_Init failed\n");
         SDL_Quit();
         return 1;
     }
+    Startup_Mark("window");
     {   /* (launcher options, agent A) the window's: the pointer and the centring */
         extern void MouseCursors_Apply(int32_t style);
         extern void Platform_SetAutoCentering(int on);
         MouseCursors_Apply(opts.mouse_cursor);
         Platform_SetAutoCentering(opts.auto_centering);
     }
+    /* KIT COLOURS new to this SWOS.ini (Settings_Load): written now, not only when the game
+     * ends -- after the window, which the keys it may add read their values from. */
+    if (Settings_KitColoursMoved() || Settings_ScaleMoved())
+        Settings_Save(&opts, ini_path);
 
 #ifdef SWOS_MOBILE_BUILD
     /* A phone has no setup: the game's data comes from a PC's, over Wi-Fi or by hand (src/mobile.c). */

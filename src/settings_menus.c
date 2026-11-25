@@ -26,6 +26,7 @@
  */
 #ifdef SWOS_SDL_BUILD
 
+#include "menu_dialog.h"
 #include "kit_variants.h"
 #include "menu_load_json.h"
 #include "menu_symbols.h"
@@ -90,6 +91,7 @@ extern void        InputSDL_PadPressBegin(void);
 extern int         InputSDL_AnyPadButtonHeld(void);
 extern void        InputSDL_PostFrame(void);
 extern int         InputSDL_PadPressPoll(int only, int *dev, int *button);
+extern int         InputSDL_PadButtonDown(int d, int b);
 extern void        InputSDL_GivePlayerDevice(int p, int d);
 extern int         InputSDL_AutoDetect(void);
 extern void        InputSDL_SetAutoDetect(int on);
@@ -166,7 +168,8 @@ typedef struct {
 
 /* A label's background (settingsPage.json's labels are grey, 7): CONTROLS tells player 1's rows
  * from player 2's by colour as well as by name. */
-enum { kLabelGrey = 7, kLabelPlayer1 = 10, kLabelPlayer2 = 11 };
+enum { kWaitColour = 15 };      /* a row waiting for a press: yellow (the Amiga look; PC: yellow-green) */
+enum { kLabelGrey = 7, kLabelPlayer1 = 11, kLabelPlayer2 = 10 };   /* (purple -- the Amiga look's blue -- and red) */
 
 typedef struct {
     const char *title;
@@ -192,7 +195,21 @@ static void note(const char *text)
     snprintf(s_note, sizeof s_note, "%s", text);
 }
 
+/* A change that takes hold only at the next start -- here, OPTIONS' LANGUAGE (menus.c), a mod
+ * turned on or off (mods_menu.c): leaving the screen asks whether to start the game again now
+ * (Options_AskRestart), the same question wherever it was made. */
+static int32_t s_restartPending;
+void Options_RestartNeeded(void) { s_restartPending = 1; }
+
 static void later(void)
+{
+    s_restartPending = 1;
+    note("FROM THE NEXT START");
+}
+
+/* A setting only the start reads (SKIP INTRO): the next start's, and no restart asked for --
+ * starting again would only show what it is about. */
+static void next_start_only(void)
 {
     note("FROM THE NEXT START");
 }
@@ -235,15 +252,63 @@ static void settingsPage_OnInit(void)
     page_refresh();
 }
 
-static void settingsPage_OnDraw(void) { page_refresh(); }
+static int32_t s_fireHeld;              /* fire pressed on this page and held since (page_row) */
+
+static void settingsPage_OnDraw(void)
+{
+    if (!_fire)
+        s_fireHeld = 0;
+    page_refresh();
+}
+
+static int32_t s_activeRow = -1;           /* the row whose change is running (page_row) */
+
+/* As in the original game, only fire changes a value: a press one step on, held it runs on --
+ * kHoldFirstMs after the press, then every kHoldEveryMs. The stick does nothing here (its rows'
+ * mask: fire pressed, 0x20, and held, 0x01): a shaky stick changed values by itself (2026-11-25).
+ * Rows that open a screen of their own or move the window are not run on (no_repeat). */
+enum { kHoldFirstMs = 400, kHoldEveryMs = 150 };
+static Uint32 s_holdNext;
+
+static void p1_select(int32_t dir), p2_select(int32_t dir), p1_setup(int32_t dir), p2_setup(int32_t dir),
+            keys_change(int32_t dir), winmode_change(int32_t dir), scale_change(int32_t dir),
+            monitor_change(int32_t dir), res_change(int32_t dir), renderer_change(int32_t dir);
+
+static int32_t no_repeat(void (*change)(int32_t))
+{
+    static void (*const k[])(int32_t) = {
+        p1_select, p2_select, p1_setup, p2_setup, keys_change,
+        winmode_change, scale_change, monitor_change, res_change, renderer_change,
+    };
+    for (uint32_t i = 0; i < sizeof k / sizeof k[0]; i++)
+        if (k[i] == change)
+            return 1;
+    return 0;
+}
 
 static void page_row(int32_t i)
 {
-    int32_t dir = (_controlMask & 0x40) ? -1 : 1;      /* (0x40 left, 0x80 right, 0x20 fire) */
+    const int32_t fire = (_controlMask & 0x20) != 0;    /* (0x20 fire pressed, 0x01 held) */
+    const int32_t dir = 1;
+    char before[48], after[48];
     if (!s_page || i >= s_page->count)
         return;
+    if (fire) {
+        s_fireHeld = 1;
+        s_holdNext = SDL_GetTicks() + kHoldFirstMs;
+    } else {                            /* (held: on, after a while, where it may) */
+        if (!s_fireHeld || no_repeat(s_page->rows[i].change) || !SDL_TICKS_PASSED(SDL_GetTicks(), s_holdNext))
+            return;
+        s_holdNext = SDL_GetTicks() + kHoldEveryMs;
+    }
     note("");
+    s_page->rows[i].show(before, (int32_t)sizeof before);
+    s_activeRow = i;
     s_page->rows[i].change(dir);
+    s_activeRow = -1;
+    s_page->rows[i].show(after, (int32_t)sizeof after);
+    fprintf(stderr, "[settings] %s: %s %s -> %s (%s)\n", s_page->title, s_page->rows[i].label,
+            before, after, fire ? "fire" : "fire held");
     page_refresh();
 }
 
@@ -276,17 +341,22 @@ static void note_now(const char *text)
  * every button of every pad, not only what reads as fire now (a button just made BENCH no longer
  * does, but it was fire when it went down) -- then forget it, so its release is not a fire on the
  * same row that asks for a button again. At most ~3 s. */
-static void release_wait(void)
+static void release_wait(int dev, int button)
 {
     /* Real time, with SDL's input brought up to date: a menu read alone runs no frame (the
      * pads' state and the registers stay what they were), so the loop used to end at once with
-     * the button still down -- and the row asked again. The events stay queued for the menus. */
+     * the button still down -- and the row asked again. The events stay queued for the menus.
+     * `dev` / `button`: the press the row took (button -1: that pad's fire) -- only that one is
+     * waited for, so a button held all along elsewhere (another pad, a contact an adapter reads as
+     * pressed) no longer holds the row up for the full three seconds. dev -1: every pad's;
+     * -2: none (the row was left from the keyboard). */
     const Uint32 until = SDL_GetTicks() + 3000;
     for (;;) {
         const Uint8 *keys;
         SDL_PumpEvents();
         keys = SDL_GetKeyboardState(NULL);
-        if (!InputSDL_AnyPadButtonHeld() && !keys[SDL_SCANCODE_RETURN] && !keys[SDL_SCANCODE_LCTRL] &&
+        if (!(dev >= 0 ? InputSDL_PadButtonDown(dev, button) : dev == -1 && InputSDL_AnyPadButtonHeld()) &&
+            !keys[SDL_SCANCODE_RETURN] && !keys[SDL_SCANCODE_LCTRL] &&
             !keys[SDL_SCANCODE_RCTRL] && !keys[SDL_SCANCODE_SPACE])
             break;
         if (SDL_TICKS_PASSED(SDL_GetTicks(), until))
@@ -368,9 +438,20 @@ static void select_joypad(int32_t p)
     }
     snprintf(line, sizeof line, "PRESS A BUTTON ON PLAYER %d'S PAD   ESC: LEAVE IT", (int)p + 1);
     note_now(line);
+    /* The press that chose the row (a pad's fire or a key) only starts the wait -- it is held as
+     * the wait begins, so it does not count: the NEXT press picks the pad, whichever pad it is on
+     * (a row chosen with one pad can give player 1 another). */
     InputSDL_PadPressBegin();
     InputSDL_CaptureKey(1);
-    for (;;) {
+    /* Waiting: the row's value box in yellow (15) until a pad answers or ESC, so it shows that it
+     * waits for a press (its own light blue, 13, back after). */
+    MenuEntry *waitBox = !found && s_activeRow >= 0 ? entry_at(Page_label0 + 2 * s_activeRow + 1) : NULL;
+    const uint16_t waitBoxWas = waitBox ? waitBox->bgColor : 0;
+    if (waitBox) {
+        waitBox->bgColor = kWaitColour;
+        CallDrawMenuItem(waitBox);
+    }
+    for (; !found;) {
         MenuCheckControls();
         if (InputSDL_CapturedKey() == SDL_SCANCODE_ESCAPE)
             break;
@@ -383,6 +464,11 @@ static void select_joypad(int32_t p)
         CallDrawMenuItem(entry_at(Page_note));
     }
     InputSDL_CaptureKey(0);
+    if (waitBox) {
+        waitBox->bgColor = waitBoxWas;
+        CallDrawMenuItem(waitBox);
+    }
+    fprintf(stderr, "[settings] SELECT JOYPAD, player %d: %s\n", (int)p + 1, found ? "a pad chosen" : "left");
     if (found) {
         char name[64];
         InputSDL_GivePlayerDevice(p, dev);
@@ -390,9 +476,11 @@ static void select_joypad(int32_t p)
         snprintf(line, sizeof line, "%s SELECTED", name);
         upper(s_note, sizeof s_note, line);
         save();
+        page_refresh();                 /* (shown now, not once the button is let go) */
+        note_now(s_note);
     } else
         note("");
-    release_wait();
+    release_wait(found ? dev : -2, found ? button : -1);
 }
 
 static void setup_show(int32_t p, char *out, int32_t cap)
@@ -541,10 +629,20 @@ static void winmode_change(int32_t dir)
     save();
 }
 
-static void scale_show(char *o, int32_t c) { snprintf(o, (size_t)c, "%dX", Platform_GetWindowScale()); }
+/* WINDOW SCALE: AUTO (the most whole times the picture fits the monitor), then 1X up to that
+ * most -- a bigger one would not fit (Platform_WindowScaleMax). */
+static void scale_show(char *o, int32_t c)
+{
+    if (Platform_WindowScaleAuto())
+        snprintf(o, (size_t)c, "AUTO (%dX)", Platform_GetWindowScale());
+    else
+        snprintf(o, (size_t)c, "%dX", Platform_GetWindowScale());
+}
 static void scale_change(int32_t dir)
 {
-    const int s = 1 + step(Platform_GetWindowScale() - 1, dir, 4);
+    const int most = Platform_WindowScaleMax();
+    const int now = Platform_WindowScaleAuto() ? 0 : Platform_GetWindowScale();
+    const int s = (int)step(now > most ? most : now, dir, most + 1);    /* (0 AUTO, 1..most) */
     Platform_SetWindowScale(s);
     O()->win_scale = s;
     if (Platform_GetFullscreenMode() != PLATFORM_FULLSCREEN_NONE)
@@ -563,17 +661,31 @@ static void wide_show(char *o, int32_t c)
 static void wide_change(int32_t dir) { O()->widescreen = step(O()->widescreen, dir, 3); later(); save(); }
 
 static void scroll_show(char *o, int32_t c) { snprintf(o, (size_t)c, "%s", on_off(O()->subpixel_scroll)); }
-static void scroll_change(int32_t dir) { (void)dir; O()->subpixel_scroll = !O()->subpixel_scroll; later(); save(); }
+static void scroll_change(int32_t dir) { (void)dir; O()->subpixel_scroll = !O()->subpixel_scroll; Platform_SetSubpixelScroll(O()->subpixel_scroll); save(); }
 
 static void scaling_show(char *o, int32_t c) { snprintf(o, (size_t)c, "%s", O()->scaling_smooth ? "SMOOTH" : "SHARP"); }
-static void scaling_change(int32_t dir) { (void)dir; O()->scaling_smooth = !O()->scaling_smooth; later(); save(); }
+static void scaling_change(int32_t dir) { (void)dir; O()->scaling_smooth = !O()->scaling_smooth; Platform_SetScalingSmooth(O()->scaling_smooth); save(); }
 
-static void monitor_show(char *o, int32_t c) { snprintf(o, (size_t)c, "%d", O()->screen + 1); }
+/* MONITOR: the one the game is on and opens on ([video] screen), its size beside its number;
+ * a change moves the window there at once (Platform_MoveToDisplay). One monitor: nothing to pick. */
+static void monitor_show(char *o, int32_t c)
+{
+    const int n = Platform_DisplayCount();
+    const int d = O()->screen >= 0 && O()->screen < n ? O()->screen : 0;
+    char size[24];
+    Platform_DisplayDesc(d, size, (int)sizeof size);
+    snprintf(o, (size_t)c, "%d: %s", d + 1, size);
+}
 static void monitor_change(int32_t dir)
 {
-    int n = SDL_GetNumVideoDisplays();
-    O()->screen = step(O()->screen, dir, n > 0 ? n : 1);
-    later();
+    const int n = Platform_DisplayCount();
+    if (n < 2) {
+        note("ONLY ONE MONITOR");
+        return;
+    }
+    O()->screen = step(O()->screen >= 0 && O()->screen < n ? O()->screen : 0, dir, n);
+    Platform_MoveToDisplay(O()->screen);
+    note("THE GAME IS ON IT NOW, AND STARTS THERE");
     save();
 }
 
@@ -672,6 +784,8 @@ static void fps_change(int32_t dir)
     save();
 }
 
+static void filter_show(char *o, int32_t c);       /* (APPEARANCE OPTIONS' section, below) */
+static void filter_change(int32_t dir);
 static const Row k_videoRows[] = {
     { "WINDOW MODE",        winmode_show,  winmode_change },
     { "WINDOW SCALE",       scale_show,    scale_change },
@@ -679,11 +793,11 @@ static const Row k_videoRows[] = {
     { "WIDESCREEN",         wide_show,     wide_change },
     { "SMOOTH SCROLLING",   scroll_show,   scroll_change },
     { "SCALING",            scaling_show,  scaling_change },
+    { "PIXEL FILTER",       filter_show,   filter_change },     /* (beside SCALING: APPEARANCE's until 2026-11-24) */
     { "MONITOR",            monitor_show,  monitor_change },
     { "RENDERER",           renderer_show, renderer_change },
-    { "MENU CURSOR",        cursor_show,   cursor_change },
     /* (launcher options, agent A) */
-    { "RESOLUTION",         res_show,      res_change },
+    { "ASPECT RATIO",       res_show,      res_change },     /* ([video] resolution: the shape, not a size) */
     { "AUTO CENTERING",     centre_show,   centre_change },
     { "SHOW FPS",           fps_show,      fps_change },
 };
@@ -802,7 +916,14 @@ static void commentary_change(int32_t dir)
 }
 
 static void mono_show(char *o, int32_t c) { snprintf(o, (size_t)c, "%s", O()->audio_mono ? "MONO" : "STEREO"); }
-static void mono_change(int32_t dir) { (void)dir; O()->audio_mono = !O()->audio_mono; later(); save(); }
+static void mono_change(int32_t dir)
+{
+    extern void AudioSDL_SetMono(int mono);
+    (void)dir;
+    O()->audio_mono = !O()->audio_mono;
+    AudioSDL_SetMono(O()->audio_mono);
+    save();
+}
 
 static const Row k_audioRows[] = {
     { "MUSIC VOLUME",           volm_show,       volm_change },
@@ -844,9 +965,10 @@ static void autosave_show(char *o, int32_t c) { snprintf(o, (size_t)c, "%s", on_
 static void autosave_change(int32_t dir)
 {
     (void)dir;
+    extern void ReplayRec_SetAutoSave(int32_t on);
     O()->replay_auto_save = !O()->replay_auto_save;
-    note(O()->replay_auto_save ? "A DATED COPY OF EVERY MATCH, FROM THE NEXT START"
-                               : "LATEST.SRP ONLY, FROM THE NEXT START");
+    ReplayRec_SetAutoSave(O()->replay_auto_save);
+    note(O()->replay_auto_save ? "A DATED COPY OF EVERY MATCH" : "LATEST.SRP ONLY");
     save();
 }
 
@@ -876,7 +998,7 @@ static void keepers_change(int32_t dir)
 }
 #endif
 
-/* ARTWORK: [graphics] style amiga | dos | 2020 -- what the pitch, HUD and menus are drawn from
+/* GAME GRAPHICS: [graphics] style amiga | dos | 2020 -- what the pitch, HUD and menus are drawn from
  * (main.c reads it before anything is loaded: from the next start). */
 static int32_t art_index(void)
 {
@@ -896,9 +1018,10 @@ static void art_change(int32_t dir)
     O()->dos_graphics = i != 0;
     if (i)
         snprintf(O()->dos_dir, sizeof O()->dos_dir, "%s", i == 2 ? "grafs_2020" : "grafs_dos");
-    if (i == 2 && !swos_data_exists("grafs_2020/pitch1.dat"))
+    if (i == 2 && !swos_data_exists("grafs_2020/pitch1.dat")) {
+        s_restartPending = 1;
         note("NO SWOS 2020 PITCHES: THE PC GAME'S; NEXT START");
-    else
+    } else
         later();
     save();
 }
@@ -943,7 +1066,7 @@ static void tactics_change(int32_t dir)
 /* START-UP: [general] skip_intro, skip_image_reels, no_load_pause (SWOS 2020's --no-intro,
  * --no-image-reels, --no-load-pause). */
 static void intro_show(char *o, int32_t c) { snprintf(o, (size_t)c, "%s", O()->skip_intro ? "SKIP" : "PLAY"); }
-static void intro_change(int32_t dir) { (void)dir; O()->skip_intro = !O()->skip_intro; later(); save(); }
+static void intro_change(int32_t dir) { (void)dir; O()->skip_intro = !O()->skip_intro; next_start_only(); save(); }
 
 static void reels_show(char *o, int32_t c) { snprintf(o, (size_t)c, "%s", O()->skip_image_reels ? "TITLE ONLY" : "ALL"); }
 static void reels_change(int32_t dir)
@@ -965,20 +1088,6 @@ static void loadpause_change(int32_t dir)
     save();
 }
 
-static const Row k_gameplayRows[] = {
-    { "GAME STYLE",              style_show,    style_change },
-    { "AUTO SAVE REPLAYS",       autosave_show, autosave_change },
-    { "HIGHLIGHT DEFAULT SPEED", hlspeed_show,  hlspeed_change },
-    { "FRAME INFO OVERLAY",      overlay_show,  overlay_change },
-    /* (launcher options, agent A) */
-    { "ARTWORK",                 art_show,      art_change },
-    { "MENU LOOK",               look_show,     look_change },
-    { "SKIP INTRO",              intro_show,    intro_change },
-    { "INTRO PICTURES",          reels_show,    reels_change },
-    { "PRE-MATCH PAUSE",         loadpause_show, loadpause_change },
-};
-static const Page k_gameplayPage = { "GAMEPLAY OPTIONS", k_gameplayRows, (int32_t)(sizeof k_gameplayRows / sizeof k_gameplayRows[0]) };
-_Static_assert(sizeof k_gameplayRows / sizeof k_gameplayRows[0] <= kRows, "a settings page holds kRows rows at most");
 
 /* ===================================================================== DISPLAY OPTIONS
  * (launcher options, agent B; docs/RENDERING.md "DISPLAY OPTIONS") The SWOS United Launcher's look
@@ -1078,19 +1187,6 @@ static void resband_change(int32_t d)         { mod_setting_change("display2020"
 static void board_show(char *o, int32_t c)    { mod_setting_show("scoreboard", "corner", "top-left", o, c); }
 static void board_change(int32_t d)           { mod_setting_change("scoreboard", "corner", "top-left", k_corners, 4, d); }
 
-static const Row k_displayRows[] = {
-    { "MENU OPACITY",       opacity_show,  opacity_change },
-    { "PIXEL FILTER",       filter_show,   filter_change },
-    { "KIT COLOURS",        kitcols_show,  kitcols_change },
-    { "GK/REF CLASH KITS",  clashkits_show, clashkits_change },
-    { "PITCH PALETTE",      pitchpal_show, pitchpal_change },
-    { "KITS ON THE RESULT", reskits_show,  reskits_change },
-    { "RESULT BAND",        resband_show,  resband_change },
-    { "SCOREBOARD",         board_show,    board_change },
-    { "MOUSE POINTER",      pointer_show,  pointer_change },     /* (from CONTROLS: it has CALL BENCH twice) */
-};
-static const Page k_displayPage = { "DISPLAY OPTIONS", k_displayRows, (int32_t)(sizeof k_displayRows / sizeof k_displayRows[0]) };
-_Static_assert(sizeof k_displayRows / sizeof k_displayRows[0] <= kRows, "a settings page holds kRows rows at most");
 
 /* ===================================================================== RULES
  * The tweaks that change the original's rules (include/tweaks.h): the contest fix and SWOS 2020's
@@ -1160,7 +1256,15 @@ static void exact_change(int32_t dir)
                                         : "THE ORIGINAL'S: A LOADED CAREER PLAYS ON DIFFERENTLY");
 }
 
-static const Row k_rulesRows[] = {
+
+/* ===================================================================== the pages, by topic
+ * (2026-11-24: sorted by what a setting is about -- GAMEPLAY how a match plays, APPEARANCE how the
+ * game and its menus look, RULES what competitions count and which kits clash, GENERAL the
+ * replays, the start-up and the way into a match. KIT COLOURS is on both APPEARANCE and RULES, the
+ * same setting; PIXEL FILTER is VIDEO's, beside SCALING. SWOS.ini's keys are as they were.) */
+
+static const Row k_gameplayRows[] = {
+    { "GAME STYLE",              style_show,    style_change },
 #if SWOS_TWEAK_FIXES
     { "BALL CONTEST",            contest_show,  contest_change },
 #endif
@@ -1168,16 +1272,49 @@ static const Row k_rulesRows[] = {
     { "STRONGER KEEPERS",        keepers_show,  keepers_change },
 #endif
     { "CPU TACTICS",             tactics_show,  tactics_change },
+};
+static const Page k_gameplayPage = { "GAMEPLAY OPTIONS", k_gameplayRows, (int32_t)(sizeof k_gameplayRows / sizeof k_gameplayRows[0]) };
+_Static_assert(sizeof k_gameplayRows / sizeof k_gameplayRows[0] <= kRows, "a settings page holds kRows rows at most");
+
+static const Row k_displayRows[] = {
+    { "GAME GRAPHICS",      art_show,      art_change },
+    { "MENU LOOK",          look_show,     look_change },
+    { "MENU CURSOR",        cursor_show,   cursor_change },
+    { "MENU OPACITY",       opacity_show,  opacity_change },
+    { "KIT COLOURS",        kitcols_show,  kitcols_change },    /* (RULES' too: which kits clash) */
+    { "GK/REF CLASH KITS",  clashkits_show, clashkits_change },
+    { "PITCH PALETTE",      pitchpal_show, pitchpal_change },
+    { "KITS ON THE RESULT", reskits_show,  reskits_change },
+    { "RESULT BAND",        resband_show,  resband_change },
+    { "SCOREBOARD",         board_show,    board_change },
+    { "MOUSE POINTER",      pointer_show,  pointer_change },     /* (CONTROLS has no room: CALL BENCH twice) */
+};
+static const Page k_displayPage = { "APPEARANCE OPTIONS", k_displayRows, (int32_t)(sizeof k_displayRows / sizeof k_displayRows[0]) };
+_Static_assert(sizeof k_displayRows / sizeof k_displayRows[0] <= kRows, "a settings page holds kRows rows at most");
+
+static const Row k_rulesRows[] = {
+    { "KIT COLOURS",             kitcols_show,  kitcols_change },   /* (which kits clash: online, both players'; DISPLAY's too) */
 #if SWOS_TWEAK_FIXES
-    { "LEAGUE CRASH FIXES",      lfix_show,     lfix_change },
     { "LEAGUE RULES",            lrules_show,   lrules_change },
     { "POINTS FOR A WIN",        points_show,   points_change },
     { "SUBSTITUTES",             subs_show,     subs_change },
+    { "LEAGUE CRASH FIXES",      lfix_show,     lfix_change },
 #endif
     { "CAREER EXACT LOADS",      exact_show,    exact_change },
 };
 static const Page k_rulesPage = { "RULES OPTIONS", k_rulesRows, (int32_t)(sizeof k_rulesRows / sizeof k_rulesRows[0]) };
 _Static_assert(sizeof k_rulesRows / sizeof k_rulesRows[0] <= kRows, "a settings page holds kRows rows at most");
+
+static const Row k_generalRows[] = {
+    { "AUTO SAVE REPLAYS",       autosave_show, autosave_change },
+    { "HIGHLIGHT DEFAULT SPEED", hlspeed_show,  hlspeed_change },
+    { "FRAME INFO OVERLAY",      overlay_show,  overlay_change },
+    { "SKIP INTRO",              intro_show,    intro_change },
+    { "INTRO PICTURES",          reels_show,    reels_change },
+    { "PRE-MATCH PAUSE",         loadpause_show, loadpause_change },
+};
+static const Page k_generalPage = { "GENERAL OPTIONS", k_generalRows, (int32_t)(sizeof k_generalRows / sizeof k_generalRows[0]) };
+_Static_assert(sizeof k_generalRows / sizeof k_generalRows[0] <= kRows, "a settings page holds kRows rows at most");
 
 /* ===================================================================== SETTINGS (the hub) */
 
@@ -1204,7 +1341,28 @@ static void settingsMenu_audio_OnSelect(void)    { page_show(&k_audioPage); }
 static void settingsMenu_gameplay_OnSelect(void) { page_show(&k_gameplayPage); }
 static void settingsMenu_display_OnSelect(void)  { page_show(&k_displayPage); }   /* (launcher options, agent B) */
 static void settingsMenu_rules_OnSelect(void)    { page_show(&k_rulesPage); }     /* (the tweaks on by default) */
-static void settingsMenu_exit_OnSelect(void)     { SetExitMenuFlag(); }
+static void settingsMenu_general_OnSelect(void)  { page_show(&k_generalPage); }   /* (replays, start-up) */
+/* A change made that needs the game started again: RESTART NOW / LATER, once per such change. 1
+ * when the game is starting again (the caller leaves it at that), 0 to go on. */
+int32_t Options_AskRestart(void)
+{
+    extern int32_t Main_CanRelaunch(void);
+    extern int32_t Main_Relaunch(void);
+    if (!s_restartPending || !Main_CanRelaunch())
+        return 0;
+    static const char *const kButtons[2] = { "RESTART NOW", "LATER" };
+    s_restartPending = 0;               /* (asked once; a later change asks again) */
+    fprintf(stderr, "[settings] a change needs a restart: asking\n");
+    return MenuDialog_Show("RESTART", "SOME OF YOUR CHANGES TAKE EFFECT ONLY WHEN THE GAME STARTS AGAIN."
+                           "|RESTART THE GAME NOW?", kButtons, 2, 0) == 0 && Main_Relaunch();
+}
+
+static void settingsMenu_exit_OnSelect(void)
+{
+    if (Options_AskRestart())
+        return;                         /* (the game closes; the new one is starting) */
+    SetExitMenuFlag();
+}
 
 /* ===================================================================== CONTROLLER SETUP */
 
@@ -1366,6 +1524,11 @@ static void jpc_select(int bench)
     CallDrawMenuItem(h);
     InputSDL_PadPressBegin();
     InputSDL_CaptureKey(1);
+    /* Waiting: the FIRE / BENCH value box yellow until a button is pressed, as SELECT JOYPAD's. */
+    MenuEntry *waitBox = entry_at(bench ? Jpc_benchButton : Jpc_fireButton);
+    const uint16_t waitBoxWas = waitBox->bgColor;
+    waitBox->bgColor = kWaitColour;
+    CallDrawMenuItem(waitBox);
     while (!done) {
         const int32_t key = InputSDL_CapturedKey();
         MenuCheckControls();
@@ -1389,8 +1552,14 @@ static void jpc_select(int bench)
         CallDrawMenuItem(h);
     }
     InputSDL_CaptureKey(0);
+    waitBox->bgColor = waitBoxWas;
+    jpc_values();                       /* (the button just set, shown in the box now) */
+    CallDrawMenuItem(waitBox);
+    fprintf(stderr, "[settings] CONTROLLER SETUP, the %s button: %s\n", bench ? "BENCH" : "FIRE",
+            done ? (button >= 0 ? "taken" : "the default") : "left");
     s_jpcHeader[0] = '\0';
-    release_wait();
+    CallDrawMenuItem(h);                /* (the prompt gone now, not once the button is let go) */
+    release_wait(done && button >= 0 ? s_setupDev : -2, button);
     save();
 }
 
@@ -1476,6 +1645,7 @@ static const MenuSymbol k_handlers[] = {
     HANDLER(settingsMenu_gameplay_OnSelect),
     HANDLER(settingsMenu_display_OnSelect),
     HANDLER(settingsMenu_rules_OnSelect),
+    HANDLER(settingsMenu_general_OnSelect),
     HANDLER(settingsMenu_exit_OnSelect),
     HANDLER(settingsPage_OnInit),
     HANDLER(settingsPage_OnDraw),
@@ -1566,7 +1736,7 @@ static int DisplayOptions_SelfTest(void)
 int SettingsMenus_SelfTest(void)
 {
     static const Page *const pages[] = { &k_controlsPage, &k_videoPage, &k_audioPage, &k_gameplayPage,
-                                         &k_displayPage, &k_rulesPage };
+                                         &k_displayPage, &k_rulesPage, &k_generalPage };
     int fails = 0;
     SettingsMenus_Init();
     for (size_t p = 0; p < sizeof pages / sizeof pages[0]; p++) {

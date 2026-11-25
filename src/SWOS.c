@@ -273,6 +273,7 @@ void mainC(void)
             ShowLoaderIntroSequence();
             InputSDL_SetIntroClaim(0);
         }
+        { extern void Startup_Mark(const char *what); Startup_Mark("intro"); }
     }
 #else
 #ifndef PITCH_SCROLL_TEST
@@ -282,7 +283,12 @@ void mainC(void)
     AssetLoaderInitAltPathAndBanks();
     AssetPrecacheCore();
     InstallAndInitLoaderBootstrap();
+#if defined(AGA) && defined(SWOS_SDL_BUILD)
+    /* (SDL: POWERED BY stays up from the intro on, while the game loads -- loader_intro.c) */
+    { extern int32_t LoaderIntro_PoweredShown(void); if (!LoaderIntro_PoweredShown()) FadeOutToBlack(); }
+#else
     FadeOutToBlack();
+#endif
     _loaderModeFlag = 0;
 
     /* ---- Phase 5: Show title screens (skipped in arcade mode) ---- */
@@ -315,10 +321,17 @@ skip_title_screens: ;
 
     /* ---- Phase 6: Poll loader op3 with 50Hz delays ---- */
     
+#ifdef SWOS_SDL_BUILD
+    /* (the loader's wait for the disk, a second's delay_ticks before its first look: no disk here,
+     *  the service ready at once -- the second was the start's longest stop, 2026-11-25) */
+    while (AssetSvcLoaderOp3() != 0)
+        delay_ticks(FPS_50HZ);
+#else
     do
     {
         delay_ticks(FPS_50HZ);
     } while (AssetSvcLoaderOp3() != 0);
+#endif
 
     InstallAndRunLoaderBootstrap_Op3();
 #ifdef AGA
@@ -369,6 +382,9 @@ skip_title_screens: ;
     *(uint8_t * volatile *)&_menuImageStreamBaseEnd =
         *(uint8_t * volatile *)&_imageStreamCursor;
     AssetPrecacheMenuPack();
+#ifdef SWOS_SDL_BUILD
+    { extern void Startup_Mark(const char *what); Startup_Mark("loader"); }
+#endif
     _assetLoaderAltPathReady = 1;
     _hilNumGoals = 0;
 

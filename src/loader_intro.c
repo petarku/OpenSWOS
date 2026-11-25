@@ -17,6 +17,7 @@
 #include <strings.h>           /* strcasecmp: the intro's own pictures */
 #include "platform_sdl.h"      /* MENU_BACKDROP_KEY, Platform_SetIntroBackdrop */
 #include "mod_hooks.h"         /* ModHooks_MenuBackdrop: the menus' picture behind the intro */
+#include "swos_settings.h"     /* Settings_Save: the pad fire was pressed on at the logo, kept */
 #endif
 #endif
 extern uint8_t _rawAssetLoadBuffer[];   /* overlay/frame staging — both builds */
@@ -101,6 +102,31 @@ extern int16_t LoadRNCToBufferNoBlit(uint8_t *name, uint8_t *dest);     /* asset
  * with the sprites the game loads meanwhile (intro_chip_ram.h). */
 static int32_t s_titleStream;
 
+/* The title music's fade-in run by the next wait's frames (loaderIntroWaitForFireOrTimeout), not
+ * by its own: SDL's POWERED BY, so the picture is up at once -- the 32-frame ramp before it was
+ * 0.64 s of black at every start (2026-11-25). -1: none running. */
+static int32_t s_rampDeferred, s_rampVol = -1;
+
+static void ramp_step(void)
+{
+    if (s_rampVol < 0)
+        return;
+    s_rampVol += 2;
+    if (s_rampVol >= 0x40) {
+        AudioSetChannelVolume(0xFFFF, 0x40);
+        s_rampVol = -1;
+    } else {
+        AudioSetChannelVolume(0xFFFF, (uint16_t)s_rampVol);
+    }
+}
+
+static void ramp_finish(void)
+{
+    if (s_rampVol >= 0)
+        AudioSetChannelVolume(0xFFFF, 0x40);
+    s_rampVol = -1;
+}
+
 static void loaderIntroEnsureMenuMusicPlaying(void)
 {
 #ifdef SWOS_SDL_BUILD
@@ -144,6 +170,11 @@ static void loaderIntroEnsureMenuMusicPlaying(void)
 
     AudioSetChannelVolume(0xFFFF, 0);
     _audioActive = 1;
+    if (s_rampDeferred) {               /* (the wait after it ramps it: ramp_step) */
+        s_rampDeferred = 0;
+        s_rampVol = 0;
+        return;
+    }
     /* Ramp the master volume from 0 to 0x40 (full) over a few vblanks so the
      * song fades in instead of starting mid-note. SDL plays music at full
      * volume: at 0x40 there is no digital attenuation, so the 8-bit output keeps
@@ -444,7 +475,7 @@ static int16_t loaderIntroWaitForFireOrTimeout(int16_t timeout)
 {
     int16_t remaining = timeout;
 #ifdef AGA
-    uint32_t glowFrame = 0;
+    static uint32_t glowFrame;          /* (on across calls: the logo's wait asks a frame at a time) */
 #endif
 
     while (remaining >= 0)
@@ -453,10 +484,11 @@ static int16_t loaderIntroWaitForFireOrTimeout(int16_t timeout)
 
         Player1StatusProc();
 
-        if (_pl1Fire != 0 || intro_clicked())
+        if (_pl1Fire != 0 || intro_clicked() || _quitToDos != 0) {
+            ramp_finish();
             return 1;
-        if (_quitToDos != 0)
-            return 1;
+        }
+        ramp_step();
 
 #ifdef AGA
         if (s_titleGlow)
@@ -553,7 +585,8 @@ static int16_t loaderIntroShowFrameWithMusic(const uint8_t *filename, int16_t ti
  * LoaderIntro_ShowPowered), so the load is not a black screen -- then the main menu. Faded in and
  * out on SDL builds (the AGA Amiga cuts, as its frames always did).
  * ================================================================ */
-static int32_t s_introShown;            /* the logo was shown: POWERED BY follows it */
+static int32_t s_introShown;            /* the logo was shown: POWERED BY follows it (SDL: the intro runs) */
+static int32_t s_poweredShown;          /* POWERED BY is up (SDL: from the start; Amiga: phase 5) */
 
 __attribute__((used, externally_visible))
 void ShowLoaderIntroSequence(void)
@@ -569,13 +602,33 @@ void ShowLoaderIntroSequence(void)
     UpdatePlanePtrsAndBlitParams();
 
     Player1StatusProc();
+#ifdef SWOS_SDL_BUILD
+    /* SDL: the other way round (2026-11-24) -- POWERED BY first, up while the game loads, the
+     * title track starting with it; the logo and PRESS FIRE TO START last, the main menu straight
+     * after its fire (LoaderIntro_EndPowered). The Amiga keeps the logo first: its tune's samples
+     * share memory with the sprites the load brings in (intro_chip_ram.h). */
+    loaderIntroLoadHeroAudioBank();
+    s_rampDeferred = 1;                 /* (faded in while POWERED BY is up, not before it) */
+    loaderIntroEnsureMenuMusicPlaying();
+    if (_quitToDos == 0) {              /* (always, as before the swap: INTRO PICTURES is SWOS 2020's reels) */
+        enum { kPoweredFrames = 75 };               /* 1.5 s at the game's 50 Hz, at least */
+        s_poweredShown = 1;
+        loaderIntroLoadFrameToFrontbufferAlt((const uint8_t *)GRAFS "powered.raw");
+        FadeIn();
+        (void)loaderIntroWaitForFireOrTimeout(kPoweredFrames);   /* (fire: on to the loading) */
+    }
+    ramp_finish();
+    if (!s_titleStream)                 /* (no MP3: the Amiga tune, whose samples the load reuses) */
+        loaderIntroStopMusicAndResetAudio();
+    _fireResetFlag = 1;
+    _keyCount = 0;
+    _currentKey = 0;
+    return;
+#endif
     if (_pl1Fire == 0 && !intro_clicked()) {   /* (fire held at the start: straight to POWERED BY) */
         loaderIntroLoadHeroAudioBank();
         loaderIntroLoadFrameToFrontbufferAlt((const uint8_t *)TITLE_PICTURE);
         loaderIntroEnsureMenuMusicPlaying();
-#ifdef SWOS_SDL_BUILD
-        FadeIn();
-#endif
         s_titleGlow = 1;                /* (the caption glows: title_glow) */
         while (loaderIntroWaitForFireOrTimeout(0x7FFF) == 0)
             ;                           /* the logo until fire (or the window closed) */
@@ -593,7 +646,6 @@ void ShowLoaderIntroSequence(void)
 /* POWERED BY OpenSWOS, after the logo (SWOS.c phase 5, in the disk pictures' place): faded in and
  * held two seconds; it stays up while the game goes on loading, until the boot fades it out. */
 extern volatile uint16_t _fadeState, _fadeCommand;   /* (fade.c) */
-static int32_t s_poweredShown;
 
 int32_t LoaderIntro_PoweredShown(void) { return s_poweredShown; }
 
@@ -604,6 +656,67 @@ void LoaderIntro_EndPowered(void)
 #ifdef SWOS_SDL_BUILD
     if (s_poweredShown && _fadeState != 0 && _fadeCommand == FADE_SENTINEL)
         _fadeCommand = 0xFFFFu;         /* (the picture's fade started: it runs each vblank) */
+    if (s_introShown && _quitToDos == 0) {
+        /* The logo and PRESS FIRE TO START, last: POWERED BY faded out (the title track playing
+         * on), the logo faded in and glowing until fire -- then, with the track, out to the main
+         * menu. In the intro's palette, as at the start; a pad's fire claims player 1 here as it
+         * did there (InputSDL_SetIntroClaim). */
+        extern void InputSDL_SetIntroClaim(int on);
+        const uint16_t paletteWas = _paletteIndex;
+        if (s_poweredShown)
+            FadeOutToBlack();
+        _paletteIndex = 0;
+        SetCameraCoordinates(0, 0);
+        loaderIntroLoadFrameToFrontbufferAlt((const uint8_t *)TITLE_PICTURE);
+        FadeIn();
+        s_poweredShown = 1;             /* (the picture up: faded out below) */
+        InputSDL_SetIntroClaim(1);
+        _fireResetFlag = 1;             /* (a fire held from POWERED BY is not this one) */
+        Player1StatusProc();
+        while (_pl1Fire != 0 && _quitToDos == 0) {
+            WaitForVSync();
+            Player1StatusProc();
+        }
+        s_titleGlow = 1;
+        {   /* The logo until fire -- player 1's, or a new press on any pad: PRESS FIRE TO START is
+             * anyone's, also where player 1 is a pad chosen on CONTROLS (the claim above is only
+             * for AUTO) -- or the window closed. */
+            extern void InputSDL_PadPressBegin(void);
+            extern int  InputSDL_PadPressPoll(int only, int *dev, int *button);
+            extern int  InputSDL_PlayerDevice(int p);
+            extern void InputSDL_GivePlayerDevice(int p, int d);
+            extern void InputSDL_DeviceLabel(int d, char *out, int cap);
+            extern void InputSDL_StoreConfig(PlatformInitOptions *o);
+            extern PlatformInitOptions *g_arcadeOpts;
+            extern const char *g_arcadeIniPath;
+            int dev = -1, button = -1;
+            InputSDL_PadPressBegin();
+            while (loaderIntroWaitForFireOrTimeout(0) == 0 && !InputSDL_PadPressPoll(-1, &dev, &button))
+                dev = -1;
+            /* The pad pressed on is player 1's from now on -- also where CONTROLS had chosen
+             * another (a pad, or the keyboard): the one fire is pressed on is the one played
+             * with. Kept (SWOS.ini), as a choice on CONTROLS is. */
+            extern const char *InputSDL_PlayerPref(int p);
+            /* (AUTO: the intro's claim has made it player 1's already, and nothing is kept) */
+            if (dev >= 0 && InputSDL_PlayerPref(0)[0] && InputSDL_PlayerDevice(0) != dev && _quitToDos == 0) {
+                char name[64];
+                InputSDL_GivePlayerDevice(0, dev);
+                InputSDL_DeviceLabel(dev, name, sizeof name);
+                fprintf(stderr, "[intro] fire on \"%s\": player 1's pad now\n", name);
+                if (g_arcadeOpts && g_arcadeIniPath) {
+                    InputSDL_StoreConfig(g_arcadeOpts);
+                    Settings_Save(g_arcadeOpts, g_arcadeIniPath);
+                }
+            }
+        }
+        s_titleGlow = 0;
+        InputSDL_SetIntroClaim(0);
+        _fireResetFlag = 1;             /* (the fire that left the logo is not the main menu's) */
+        _keyCount = 0;
+        _currentKey = 0;
+        FadeOutToBlack();
+        _paletteIndex = paletteWas;
+    }
     if (s_titleStream) {
         for (int16_t vol = 0x40; vol >= 0 && _quitToDos == 0; vol--) {
             AudioSetChannelVolume(0xFFFF, (uint16_t)vol);
@@ -622,7 +735,10 @@ void LoaderIntro_EndPowered(void)
 
 void LoaderIntro_ShowPowered(void)
 {
-    enum { kPoweredFrames = 100 };      /* 2 s at the game's 50 Hz */
+    enum { kPoweredFrames = 75 };       /* 1.5 s at the game's 50 Hz */
+#ifdef SWOS_SDL_BUILD
+    return;                             /* (SDL: up since the start, ShowLoaderIntroSequence) */
+#endif
     if (!s_introShown || _quitToDos != 0)
         return;
     s_poweredShown = 1;

@@ -1103,11 +1103,36 @@ int InputSDL_AnyPadButtonHeld(void)
     return 0;
 }
 
+/* What each pad's buttons read at the last poll of a wait, for its log lines: a press missed
+ * there shows as no line at all, one seen but not taken as a line without "taken". */
+static uint64_t s_pressSeen[INPUTSDL_MAX_DEVICES];
+
 void InputSDL_PadPressBegin(void)
 {
     SDL_JoystickUpdate();
-    for (int d = 0; d < INPUTSDL_MAX_DEVICES; d++)
+    for (int d = 0; d < INPUTSDL_MAX_DEVICES; d++) {
         s_pressBase[d] = dev_buttons_now(d);
+        s_pressSeen[d] = s_pressBase[d];
+        if (dev_open(d))
+            fprintf(stderr, "[input] waiting for a button: pad %d \"%s\" (%s, %d buttons) held %llx\n", d,
+                    dev_name(d), s_dev_gc[d] ? "mapped" : "raw", dev_button_count(d),
+                    (unsigned long long)s_pressBase[d]);
+    }
+}
+
+/* Button `b` of pad `d` down now (-1: what reads as its fire -- a mapped pad's A or B, a plain
+ * joystick's configured FIRE, its first button by default). */
+int InputSDL_PadButtonDown(int d, int b)
+{
+    SDL_JoystickUpdate();
+    if (!dev_open(d))
+        return 0;
+    if (b >= 0)
+        return dev_button(d, b);
+    if (s_dev_gc[d] && dev_cfg(d) == NULL)
+        return dev_button(d, SDL_CONTROLLER_BUTTON_A) || dev_button(d, SDL_CONTROLLER_BUTTON_B);
+    b = cfg_button(d, dev_cfg(d), 0);
+    return b >= 0 ? dev_button(d, b) : (dev_button(d, SDL_CONTROLLER_BUTTON_A) || dev_button(d, SDL_CONTROLLER_BUTTON_B));
 }
 
 /* A button pressed since InputSDL_PadPressBegin, on device `only` (or any, -1): 1 and the
@@ -1120,6 +1145,11 @@ int InputSDL_PadPressPoll(int only, int *dev, int *button)
         if (!dev_open(d) || (only >= 0 && d != only))
             continue;
         now = dev_buttons_now(d);
+        if (now != s_pressSeen[d]) {
+            fprintf(stderr, "[input] pad %d buttons %llx -> %llx%s\n", d, (unsigned long long)s_pressSeen[d],
+                    (unsigned long long)now, (now & ~s_pressBase[d]) ? " (a new press: taken)" : "");
+            s_pressSeen[d] = now;
+        }
         fresh = now & ~s_pressBase[d];
         s_pressBase[d] &= now;
         for (int b = 0; b < 64; b++) {
@@ -1654,8 +1684,11 @@ void InputSDL_HandleEvent(const SDL_Event *e)
              * and the Amiga ISR uses its own keyDelay/repeat logic that
              * we don't currently emulate; ignoring repeats prevents
              * runaway double-inserts in InputText). Drop the event when
-             * the buffer is full. */
-            if (e->key.repeat == 0 && _keyCount < (sizeof(_keyBuffer) - 3)) {
+             * the buffer is full. BACKSPACE and DELETE in a text field are the
+             * exception: held, they go on deleting, as anywhere else -- a name
+             * or a password was cleared one press per character. */
+            const int repeats = _gTextInputActive && (a == AKEY_BSPACE || a == AKEY_DEL);
+            if ((e->key.repeat == 0 || repeats) && _keyCount < (sizeof(_keyBuffer) - 3)) {
                 _keyBuffer[_keyCount] = (uint8_t)a;
                 _keyCount++;
             }
