@@ -1302,6 +1302,16 @@ static void extrasInit(void)
     show(Extras_tips, 0);
     show(Extras_streams, 0);
     show(Extras_manual, 0);
+    {   /* the two left in the right-hand column: centred under the header, in the three rows'
+         * space (the left column's places: set, not moved, so a redraw keeps them) */
+        const MenuEntry *h = entry(Extras_header), *n = entry(Extras_news), *t = entry(Extras_tips);
+        const int32_t pitch = (int32_t)t->y - (int32_t)n->y;
+        for (int32_t k = 0; k < 2; k++) {
+            MenuEntry *e = entry(k ? Extras_editTactics : Extras_editTeams);
+            e->x = (uint16_t)(h->x + ((int32_t)h->dwWidth - (int32_t)e->dwWidth) / 2);
+            e->y = (uint16_t)(n->y + pitch / 2 + k * pitch);
+        }
+    }
     nav(Extras_editTeams, -1, -1, -1, Extras_editTactics);
     nav(Extras_editTactics, -1, -1, Extras_editTeams, Extras_exit);
     entry(Extras_exit)->upEntry = Extras_editTactics;
