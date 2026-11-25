@@ -289,6 +289,10 @@ static void main_refresh(void)
      * dark yellow after (world_career_paint), which the Amiga has not; its bright yellow did not look
      * good there (the user, 2026-11-24). */
     entry(Main_worldCareer)->bgColor = 6;
+    /* One career, the drawer's world's, and WORLD beside it to choose that world (the user,
+     * 2026-11-25): CLASSIC CAREER's place is CAREER, WORLD 26/27 CAREER's is WORLD: <the world>. */
+    ModApi_MenuText(Main_classicCareer, "CAREER");
+    ModApi_MenuText(Main_worldCareer, World_Current() == WORLD_2627 ? "WORLD: 26/27" : "WORLD: 96/97");
 #endif
     s_liveShown = -2;                   /* (unpacked again: the JSON's idle picture) */
     {   /* The ticker under SAVE and LOAD, as SWOS 2020's -- or across the top (where it was) on a
@@ -990,24 +994,80 @@ static int32_t world_mod_set(int32_t on)
     return swos_io_save((const uint8_t *)"data/MODS", (const uint8_t *)out, used) == 0 ? 0 : -1;
 }
 
-static void amiga_career(WorldId world, const char *notHere)
+/* CAREER: the game's career screen, in the world the drawer plays. */
+static void classicCareer(void)
 {
-    const int32_t both = Resload_FileSize("mods/" WORLD_MOD "/data/WORLD") > 0 &&
-                         (World_Current() == WORLD_9697 || world_mod_on());
-    if (World_Current() == world) {
-        CareerMenu();                   /* (ends in CommonMenuExit, as every game handler) */
-    } else {
-        if (both && world_mod_set(world == WORLD_2627) == 0)
-            ModApi_ShowError("CLOSE THE GAME AND START IT AGAIN");
-        else
-            ModApi_ShowError(notHere);
-        CommonMenuExit();               /* (the main menu unpacked again behind the box: CONTINUE / SAVE
-                                         *  shown, empty, until this hides them without a contest) */
-    }
+    CareerMenu();                       /* (ends in CommonMenuExit, as every game handler) */
     main_refresh();
 }
-static void classicCareer(void) { amiga_career(WORLD_9697, "96/97 IS OFF HERE: CHOOSE IT IN SETUP"); }
-static void worldCareer(void)   { amiga_career(WORLD_2627, "NO WORLD 2026-27 HERE: TICK IT IN SETUP"); }
+
+/* WORLD (worldMenu.json, the user's design 2026-11-25): the worlds the drawer has -- WORLD 96/97
+ * always, WORLD 26/27 when World 2026-27 is there as mods/world2627/ -- the one played lit. The
+ * same one again: back, nothing changes. The other: data/MODS gets it, a box says the game closes,
+ * and it closes -- the Amiga plays the drawer's world from the start, and a program cannot start
+ * itself again: the player does. (A drawer with World 2026-27 copied over data/ by an older setup
+ * plays it and has no 96/97 to offer: WORLD 26/27 alone.) */
+enum { World_header, World_9697, World_2627, World_exit };
+static int32_t s_worldQuit;
+
+static int32_t world_have(WorldId w)
+{
+    const int32_t modThere = Resload_FileSize("mods/" WORLD_MOD "/data/WORLD") > 0;
+    if (w == WORLD_2627)
+        return World_Current() == WORLD_2627 || modThere;
+    return World_Current() == WORLD_9697 || (modThere && world_mod_on());
+}
+
+static void worldInit(void)
+{
+    enum { kGreen = 14, kLightBlue = 13 };
+    const int32_t cur = World_Current() == WORLD_2627 ? World_2627 : World_9697;
+    show(World_9697, world_have(WORLD_9697));
+    show(World_2627, world_have(WORLD_2627));
+    ModApi_MenuColour(World_9697, cur == World_9697 ? kLightBlue : kGreen);
+    ModApi_MenuColour(World_2627, cur == World_2627 ? kLightBlue : kGreen);
+    nav(World_9697, -1, -1, -1, world_have(WORLD_2627) ? World_2627 : World_exit);
+    nav(World_2627, -1, -1, world_have(WORLD_9697) ? World_9697 : -1, World_exit);
+    entry(World_exit)->upEntry = (int8_t)(world_have(WORLD_2627) ? World_2627 : World_9697);
+    SetCurrentEntry(cur);
+}
+
+static void world_pick(WorldId w)
+{
+    static uint8_t header[] = "WORLD";
+    /* (the box's text: its number of lines, then each ending in 0 -- SWOS2.s
+     *  aCustomTeamsChanged: dc.b 1,'CUSTOM TEAMS HAVE BEEN CHANGED',0) */
+    static uint8_t to9697[] = "\x02" "PLAY WORLD 96/97?\0THE GAME CLOSES: START IT AGAIN";
+    static uint8_t to2627[] = "\x02" "PLAY WORLD 26/27?\0THE GAME CLOSES: START IT AGAIN";
+    static uint8_t yes[] = "YES", no[] = "NO";
+    if (w == World_Current()) {         /* (the one played: nothing to do) */
+        SetExitMenuFlag();
+        return;
+    }
+    /* the other: asked first (NO, the default: back on this screen, nothing changed) */
+    if (DoContinueAbortMenu(header, w == WORLD_2627 ? to2627 : to9697, yes, no, 1) != 0)
+        return;
+    if (world_mod_set(w == WORLD_2627) != 0) {
+        ModApi_ShowError("THE WORLD COULD NOT BE SAVED");
+        return;
+    }
+    s_worldQuit = 1;
+    SetExitMenuFlag();
+}
+static void world9697(void) { world_pick(WORLD_9697); }
+static void world2627(void) { world_pick(WORLD_2627); }
+
+static void worldCareer(void)
+{
+    s_worldQuit = 0;
+    ModApi_ShowMenu(SLUG "/worldMenu");
+    if (s_worldQuit) {
+        Platform_RequestQuit();
+        return;
+    }
+    CommonMenuExit();
+    main_refresh();
+}
 #endif
 #undef GAME_BUTTON
 
@@ -1664,6 +1724,9 @@ static void init(void)
 
         { "multiplayer", multiplayer },
         { "classicCareer", classicCareer }, { "worldCareer", worldCareer },
+#ifndef SWOS_SDL_BUILD
+        { "worldInit", worldInit }, { "world9697", world9697 }, { "world2627", world2627 },
+#endif
         { "competitionInit", competitionInit }, { "competitionDraw", competitionDraw },
         { "quitInit", quitInit }, { "quitGame", quitGame }, { "returnToGame", returnToGame },
         { "online", online }, { "diy", diy }, { "preset", preset }, { "career", career },

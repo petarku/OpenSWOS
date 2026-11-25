@@ -1,0 +1,139 @@
+{
+  "name": "worldMenu",
+  "source": {
+    "project": "swos-united-amiga",
+    "file": "(by hand: the Amiga's WORLD screen, src/mod_menus2020.c worldInit)",
+    "commit": ""
+  },
+  "menu_flags": {
+    "dos_redraw": true
+  },
+  "onInit": "menus2020.worldInit",
+  "onReturn": null,
+  "onDraw": null,
+  "defaultEntry": 1,
+  "exports": {},
+  "items": [
+    {
+      "kind": "entry",
+      "name": "header",
+      "coords": {
+        "x": 102,
+        "y": 0,
+        "w": 100,
+        "h": 16
+      },
+      "commands": [
+        {
+          "op": "text",
+          "flags": "0x0",
+          "literal": "WORLD"
+        },
+        {
+          "op": "colors",
+          "frame_color": 1,
+          "background_color": 7
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "name": "world9697",
+      "coords": {
+        "x": 90,
+        "y": 53,
+        "w": 124,
+        "h": 18
+      },
+      "commands": [
+        {
+          "op": "text",
+          "flags": "0x0",
+          "literal": "WORLD 96/97"
+        },
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 14
+        },
+        {
+          "op": "onselect_fire",
+          "func": "menus2020.world9697"
+        },
+        {
+          "op": "nav",
+          "left": -1,
+          "right": -1,
+          "up": -1,
+          "down": 2
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "name": "world2627",
+      "coords": {
+        "x": 90,
+        "y": 85,
+        "w": 124,
+        "h": 18
+      },
+      "commands": [
+        {
+          "op": "text",
+          "flags": "0x0",
+          "literal": "WORLD 26/27"
+        },
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 14
+        },
+        {
+          "op": "onselect_fire",
+          "func": "menus2020.world2627"
+        },
+        {
+          "op": "nav",
+          "left": -1,
+          "right": -1,
+          "up": 1,
+          "down": 3
+        }
+      ]
+    },
+    {
+      "kind": "entry",
+      "name": "exit",
+      "coords": {
+        "x": 122,
+        "y": 185,
+        "w": 60,
+        "h": 15
+      },
+      "commands": [
+        {
+          "op": "text",
+          "flags": "0x0",
+          "str": "_aExit"
+        },
+        {
+          "op": "colors",
+          "frame_color": 0,
+          "background_color": 12
+        },
+        {
+          "op": "onselect_fire",
+          "func": "SetExitMenuFlag"
+        },
+        {
+          "op": "nav",
+          "left": -1,
+          "right": -1,
+          "up": 2,
+          "down": -1
+        }
+      ]
+    }
+  ]
+}
