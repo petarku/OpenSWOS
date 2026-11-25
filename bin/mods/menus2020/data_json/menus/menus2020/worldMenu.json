@@ -9,7 +9,7 @@
     "dos_redraw": true
   },
   "onInit": "menus2020.worldInit",
-  "onReturn": null,
+  "onReturn": "menus2020.worldInit",
   "onDraw": null,
   "defaultEntry": 1,
   "exports": {},
@@ -40,9 +40,9 @@
       "kind": "entry",
       "name": "world9697",
       "coords": {
-        "x": 90,
+        "x": 70,
         "y": 53,
-        "w": 124,
+        "w": 164,
         "h": 18
       },
       "commands": [
@@ -73,9 +73,9 @@
       "kind": "entry",
       "name": "world2627",
       "coords": {
-        "x": 90,
+        "x": 70,
         "y": 85,
-        "w": 124,
+        "w": 164,
         "h": 18
       },
       "commands": [

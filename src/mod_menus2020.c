@@ -1018,18 +1018,27 @@ static int32_t world_have(WorldId w)
     return World_Current() == WORLD_9697 || (modThere && world_mod_on());
 }
 
+/* The world played: grey, "- SELECTED" on it, out of the cursor's way (disabled, no nav reaches it);
+ * the other green, the cursor on it -- the loaded one lit light blue looked like the cursor (the
+ * user, 2026-11-25). Only one world in the drawer: it alone, grey, and the cursor on EXIT. */
 static void worldInit(void)
 {
-    enum { kGreen = 14, kLightBlue = 13 };
+    enum { kGreen = 14, kGrey = 7 };
     const int32_t cur = World_Current() == WORLD_2627 ? World_2627 : World_9697;
-    show(World_9697, world_have(WORLD_9697));
-    show(World_2627, world_have(WORLD_2627));
-    ModApi_MenuColour(World_9697, cur == World_9697 ? kLightBlue : kGreen);
-    ModApi_MenuColour(World_2627, cur == World_2627 ? kLightBlue : kGreen);
-    nav(World_9697, -1, -1, -1, world_have(WORLD_2627) ? World_2627 : World_exit);
-    nav(World_2627, -1, -1, world_have(WORLD_9697) ? World_9697 : -1, World_exit);
-    entry(World_exit)->upEntry = (int8_t)(world_have(WORLD_2627) ? World_2627 : World_9697);
-    SetCurrentEntry(cur);
+    const int32_t other = cur == World_2627 ? World_9697 : World_2627;
+    const int32_t otherThere = world_have(cur == World_2627 ? WORLD_9697 : WORLD_2627);
+    show(cur, 1);
+    show(other, otherThere);
+    ModApi_MenuText(World_9697, cur == World_9697 ? "WORLD 96/97 - SELECTED" : "WORLD 96/97");
+    ModApi_MenuText(World_2627, cur == World_2627 ? "WORLD 26/27 - SELECTED" : "WORLD 26/27");
+    ModApi_MenuColour(cur, kGrey);
+    ModApi_MenuColour(other, kGreen);
+    ModApi_MenuDisabled(cur, 1);
+    ModApi_MenuDisabled(other, 0);
+    nav(cur, -1, -1, -1, -1);
+    nav(other, -1, -1, -1, otherThere ? World_exit : -1);
+    entry(World_exit)->upEntry = (int8_t)(otherThere ? other : -1);
+    SetCurrentEntry(otherThere ? other : World_exit);
 }
 
 static void world_pick(WorldId w)
