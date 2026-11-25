@@ -106,6 +106,36 @@ static void show(int32_t ordinal, int32_t visible) { entry(ordinal)->isInvisible
  * a bit each) the logo alone took most of an A1200's frame (measured 2026-11-24). */
 enum { kPicPlanes = 4, kPicMax = sizeof k_pictures / sizeof k_pictures[0] };
 static struct { int16_t shift, bpr; uint8_t *bytes; } s_planar[kPicMax];   /* bytes: h rows of (1 + kPicPlanes) * bpr */
+static int16_t s_picX[kPicMax];         /* a picture's x in its box when a renamed button's word moved
+                                         * (0: the table's) -- set_word_picture */
+
+/* A button of the right-hand column given another word (EXTRAS -> EDIT): its picture after the new
+ * word, as far from it as OPTIONS' is from "OPTIONS" -- each measured in the button's font, the
+ * word centred with the same three spaces after it as the JSON's ("OPTIONS   "). */
+static uint16_t text_width(const char *s, uint8_t *ct)
+{
+    extern uint16_t GetTextWidth(uint8_t *text, uint8_t *charsTable);
+    return GetTextWidth((uint8_t *)s, ct);
+}
+static void set_word_picture(int32_t ordinal, const char *word, const char *padded,
+                             int32_t refOrdinal, const char *refWord, const char *refPadded)
+{
+    extern void *_charTables[];
+    MenuEntry *e = entry(ordinal), *r = entry(refOrdinal);
+    uint8_t *ct = (uint8_t *)_charTables[((e->stringFlags & STR_FLAGS_MASK) >> 2) / 4];
+    int32_t pic = -1, refPic = -1;
+    for (uint32_t i = 0; i < kPicMax; i++) {
+        if (k_pictures[i].entry == ordinal)
+            pic = (int32_t)i;
+        if (k_pictures[i].entry == refOrdinal)
+            refPic = (int32_t)i;
+    }
+    if (!ct || pic < 0 || refPic < 0)
+        return;
+    const int32_t refEnd = ((int32_t)r->dwWidth - text_width(refPadded, ct)) / 2 + text_width(refWord, ct);
+    const int32_t end = ((int32_t)e->dwWidth - text_width(padded, ct)) / 2 + text_width(word, ct);
+    s_picX[pic] = (int16_t)(end + (k_pictures[refPic].x - refEnd));
+}
 
 static const uint8_t *planar_of(uint32_t i, int32_t shift)
 {
@@ -143,7 +173,8 @@ static void picture_AfterDraw(MenuEntry *e)
         if (e->ordinal != k_pictures[i].entry)
             continue;
         const int32_t w = k_pictures[i].w, h = k_pictures[i].h;
-        const int32_t x0 = e->x + (k_pictures[i].x >= 0 ? k_pictures[i].x : ((int32_t)e->dwWidth - w) / 2);
+        const int32_t x0 = e->x + (s_picX[i] > 0 ? s_picX[i] :
+                                   k_pictures[i].x >= 0 ? k_pictures[i].x : ((int32_t)e->dwWidth - w) / 2);
         const int32_t y0 = e->y + (k_pictures[i].y >= 0 ? k_pictures[i].y : ((int32_t)e->dwHeight - h) / 2);
         if (x0 < 0 || y0 < 0 || x0 + w > SCREEN_WIDTH || y0 + h > SCREEN_HEIGHT)
             return;                     /* (all of them are on the screen; never past it) */
@@ -289,6 +320,9 @@ static void main_refresh(void)
     show(Main_multi, 1);
     show(Main_liveCast, 0);
     ModApi_MenuText(Main_multi, "  FRIENDLY");
+    /* EXTRAS holds only the two editors here: EDIT (extrasInit names its screen so too) */
+    ModApi_MenuText(Main_extras, "EDIT   ");
+    set_word_picture(Main_extras, "EDIT", "EDIT   ", Main_options, "OPTIONS", "OPTIONS   ");
     nav(Main_multi, -1, Main_options, -1, Main_compete);
     nav(Main_compete, -1, Main_extras, Main_multi, Main_practice);
     nav(Main_options, Main_multi, -1, -1, Main_extras);
@@ -1302,6 +1336,7 @@ static void extrasInit(void)
     show(Extras_tips, 0);
     show(Extras_streams, 0);
     show(Extras_manual, 0);
+    set_text(Extras_header, "EDIT");    /* (the main menu's button is EDIT here: main_refresh) */
     {   /* the two left in the right-hand column: centred under the header, in the three rows'
          * space (the left column's places: set, not moved, so a redraw keeps them) */
         const MenuEntry *h = entry(Extras_header), *n = entry(Extras_news), *t = entry(Extras_tips);
