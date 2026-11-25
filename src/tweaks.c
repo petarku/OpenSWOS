@@ -44,6 +44,11 @@ static int32_t built(uint32_t bit)
 {
     if (SWOS_TWEAKS)
         return 1;
+#ifndef SWOS_SDL_BUILD
+    /* (the Amiga's OPTIONS rows CPU CARDS and CPU INJURIES: menus.c, swos-united-amiga 2026-11-25) */
+    if (bit == TWEAK_CPU_CARDS || bit == TWEAK_AI_INJURY_SUBS)
+        return 1;
+#endif
     if (SWOS_TWEAK_FIXES && (bit & TWEAKS_DEFAULT_ON))
         return 1;
     return SWOS_TWEAK_STRONGER_GK && bit == TWEAK_STRONGER_GOALKEEPER_AI;

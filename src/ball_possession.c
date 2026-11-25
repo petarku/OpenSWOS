@@ -722,8 +722,10 @@ UpdatePlayerSpeed(Sprite *player, TeamGeneralInfo *team)
         player->speed = curSpeed;
     }
 
-    /* Injury speed handicap (only for human or coached teams) */
-    if (team->playerNumber != 0 || team->playerCoachNumber != 0) {
+    /* Injury speed handicap (only for human or coached teams -- and the computer's with the
+     * ai_injury_subs tweak, the Amiga's CPU INJURIES: an injured computer player runs slowed as a
+     * player's does, until it takes him off; the user's complete-work AI IMPROVEMENTS) */
+    if (team->playerNumber != 0 || team->playerCoachNumber != 0 || Tweaks_On(TWEAK_AI_INJURY_SUBS)) {
         uint8_t injuries = (uint8_t)pi->injuriesBitfield;
         if (injuries != 0) {
             int16_t handicapIdx = (injuries & 0xE0) >> 4;

@@ -263,6 +263,8 @@ void SetDefaultOptions(void)
     _allPlayerTeamsEqual = 0;
 #ifdef SWOS_SDL_BUILD
     options_apply_saved();
+#else
+    { extern void AmigaOptions_Load(void); AmigaOptions_Load(); }   /* (save/OPTIONS.INI, below) */
 #endif
 }
 
@@ -2268,16 +2270,39 @@ void OptionsMenuBeforeDraw(void)
     /* P1 and P2 CALL BENCH (29..32) gone (swos-united-amiga, the user 2026-11-25): their default,
      * BUTTON OR TAPS, stays in force for both players -- the original's three taps and the second
      * fire button (bench_subs.c Bench_SecondButton) -- so only the choice to switch one off goes.
-     * P1's row (29/30) is CPU TACTICS instead (src/tactics_expert.c, the PC's GAMEPLAY OPTIONS row). */
+     * P1's row (29/30) is CPU TACTICS instead (src/tactics_expert.c, the PC's GAMEPLAY OPTIONS row),
+     * P2's (31/32) STRONGER KEEPERS (the stronger_goalkeeper_ai tweak, dos_gameplay.c). */
     {
-        extern void ChangeCpuTactics(MenuEntry *entry);
-        extern uint8_t *const _cpuTacticsStrTablePtr;
+        extern void ChangeCpuTactics(MenuEntry *entry), ChangeStrongerKeepers(MenuEntry *entry);
+        extern uint8_t *const _cpuTacticsStrTablePtr, *const _strongerKeepersStrTablePtr;
         _menuEntries[29].fg = (uintptr_t)"CPU TACTICS";
         _menuEntries[30].fg = (uintptr_t)_cpuTacticsStrTablePtr;
         _menuEntries[30].onSelect = ChangeCpuTactics;
+        _menuEntries[31].fg = (uintptr_t)"STRONGER KEEPERS";
+        _menuEntries[32].fg = (uintptr_t)_strongerKeepersStrTablePtr;
+        _menuEntries[32].onSelect = ChangeStrongerKeepers;
     }
-    _menuEntries[31].isInvisible = 1;
-    _menuEntries[32].isInvisible = 1;
+    /* ... and WORLD's (21/22) and LANGUAGE's (25/26) rows, below them, CPU CARDS and CPU INJURIES
+     * (the cpu_cards and ai_injury_subs tweaks: the user's complete-work AI IMPROVEMENTS' cards
+     * and injuries, as switches) */
+    {
+        extern void ChangeCpuCards(MenuEntry *entry), ChangeCpuInjuries(MenuEntry *entry);
+        extern uint8_t *const _cpuCardsStrTablePtr, *const _cpuInjuriesStrTablePtr;
+        _menuEntries[21].isInvisible = _menuEntries[22].isInvisible = 0;
+        _menuEntries[25].isInvisible = _menuEntries[26].isInvisible = 0;
+        _menuEntries[21].fg = (uintptr_t)"CPU CARDS";
+        _menuEntries[22].fg = (uintptr_t)_cpuCardsStrTablePtr;
+        _menuEntries[22].onSelect = ChangeCpuCards;
+        _menuEntries[25].fg = (uintptr_t)"CPU INJURIES";
+        _menuEntries[26].fg = (uintptr_t)_cpuInjuriesStrTablePtr;
+        _menuEntries[26].onSelect = ChangeCpuInjuries;
+        /* (12 and 24 below STRONGER KEEPERS: the rows' y here are the screen's, the menu's own
+         *  offset already added -- not the menu data's 128 / 140) */
+        _menuEntries[21].y = _menuEntries[22].y = (uint16_t)(_menuEntries[31].y + 12);
+        _menuEntries[25].y = _menuEntries[26].y = (uint16_t)(_menuEntries[31].y + 24);
+        _menuEntries[22].leftEntry = _menuEntries[22].rightEntry = -1;
+        _menuEntries[26].leftEntry = _menuEntries[26].rightEntry = -1;
+    }
 #ifdef AGA
     _menuEntries[14].downEntry = 18;
     _menuEntries[18].downEntry = 30;
@@ -2288,8 +2313,14 @@ void OptionsMenuBeforeDraw(void)
     _menuEntries[14].downEntry = 30;
     _menuEntries[30].upEntry = 14;
 #endif
-    _menuEntries[30].downEntry = 19;
-    _menuEntries[19].upEntry = 30;
+    _menuEntries[30].downEntry = 32;
+    _menuEntries[32].upEntry = 30;
+    _menuEntries[32].downEntry = 22;
+    _menuEntries[22].upEntry = 32;
+    _menuEntries[22].downEntry = 26;
+    _menuEntries[26].upEntry = 22;
+    _menuEntries[26].downEntry = 19;
+    _menuEntries[19].upEntry = 26;
 #endif
 }
 
@@ -2330,6 +2361,174 @@ void ChangeCpuTactics(MenuEntry *entry)
     s_cpuTacticsOption ^= 1;
     TacticsExpert_Set(s_cpuTacticsOption);
     CallDrawMenuItem(entry);
+}
+
+/* OPTIONS -> STRONGER KEEPERS (the Amiga's, in P2 CALL BENCH's row): ORIGINAL or STRONGER -- the
+ * stronger_goalkeeper_ai tweak (SWOS 2020's --stronger-goalkeeper-ai): in the styles with the
+ * Amiga's keepers their dive-reach table one step lower (dos_gameplay.c ApplyGameStyle, before every
+ * match). The PC's is GAMEPLAY OPTIONS' row and SWOS.ini; the Amiga reads no SWOS.ini, so the
+ * tweaks' mask is this row's alone. Kept until the game is switched off. */
+#include "tweaks.h"
+static uint16_t s_strongerKeepersOption;
+static char s_aOriginal[] = "ORIGINAL", s_aStronger[] = "STRONGER";
+struct __attribute__((packed)) {
+    void *indexPtr; uint16_t base; void *entries[2];
+} s_strongerKeepersTable = { &s_strongerKeepersOption, 0, { s_aOriginal, s_aStronger } };
+uint8_t *const _strongerKeepersStrTablePtr = (uint8_t *)&s_strongerKeepersTable;
+__attribute__((used, externally_visible))
+void ChangeStrongerKeepers(MenuEntry *entry)
+{
+    s_strongerKeepersOption ^= 1;
+    Tweaks_Set(s_strongerKeepersOption ? Tweaks_Mask() | TWEAK_STRONGER_GOALKEEPER_AI
+                                       : Tweaks_Mask() & ~(uint32_t)TWEAK_STRONGER_GOALKEEPER_AI);
+    CallDrawMenuItem(entry);
+}
+
+/* OPTIONS -> CPU CARDS / CPU INJURIES (the Amiga's, in WORLD's and LANGUAGE's rows): OFF, the
+ * original -- the computer is never booked or sent off; its injured players run at full speed and
+ * stay on -- or ON: the cpu_cards tweak (tackle_foul.c: every side by the same rolls) and the
+ * ai_injury_subs one (bench_subs.c aiCheckInjuredSubs: the computer takes its injured off at a
+ * stoppage; ball_possession.c: slowed until then). Kept until the game is switched off. */
+static uint16_t s_cpuCardsOption, s_cpuInjuriesOption;
+static char s_aOff[] = "OFF", s_aOn[] = "ON";
+struct __attribute__((packed)) {
+    void *indexPtr; uint16_t base; void *entries[2];
+} s_cpuCardsTable = { &s_cpuCardsOption, 0, { s_aOff, s_aOn } },
+  s_cpuInjuriesTable = { &s_cpuInjuriesOption, 0, { s_aOff, s_aOn } };
+uint8_t *const _cpuCardsStrTablePtr = (uint8_t *)&s_cpuCardsTable;
+uint8_t *const _cpuInjuriesStrTablePtr = (uint8_t *)&s_cpuInjuriesTable;
+static void toggle_tweak(uint16_t *option, uint32_t bit, MenuEntry *entry)
+{
+    *option ^= 1;
+    Tweaks_Set(*option ? Tweaks_Mask() | bit : Tweaks_Mask() & ~bit);
+    CallDrawMenuItem(entry);
+}
+__attribute__((used, externally_visible))
+void ChangeCpuCards(MenuEntry *entry) { toggle_tweak(&s_cpuCardsOption, TWEAK_CPU_CARDS, entry); }
+__attribute__((used, externally_visible))
+void ChangeCpuInjuries(MenuEntry *entry) { toggle_tweak(&s_cpuInjuriesOption, TWEAK_AI_INJURY_SUBS, entry); }
+
+/* ---- The Amiga's OPTIONS kept between starts (the user, 2026-11-25: "automatic on EXIT") ----
+ * The Amiga reads no SWOS.ini, so every OPTIONS row lives in save/OPTIONS.INI in the drawer, one
+ * `key = number` line each: written when OPTIONS is left with anything changed (ExitOptions), read
+ * at start-up where the original sets its defaults (SetDefaultOptions -- before the menu music
+ * starts, so MENU MUSIC OFF is silent from the start). A key the file lacks, or a value out of its
+ * range, keeps the default. */
+#include <string.h>
+#include <stdio.h>
+#define AMIGA_OPTIONS_FILE "save/OPTIONS.INI"
+extern int  swos_io_load_alloc(const uint8_t *name, uint8_t **out_buf, uint32_t *out_size);
+extern int  swos_io_save(const uint8_t *name, const uint8_t *buf, uint32_t size);
+extern void swos_io_free(void *p);
+enum { kOptGameLength, kOptPitchType, kOptAutoReplays, kOptTeamsEqual, kOptAutoSaveHl, kOptMenuMusic,
+       kOptGameplay, kOptPitches, kOptCpuTactics, kOptStrongerKeepers, kOptCpuCards, kOptCpuInjuries,
+       kOptCount };
+static const struct { const char *key; int16_t lo, hi; } kAmigaOptions[kOptCount] = {
+    { "game_length", 0, 3 },          { "pitch_type", -2, 6 },        { "auto_replays", 0, 1 },
+    { "all_teams_equal", 0, 1 },      { "auto_save_highlights", 0, 1 }, { "menu_music", 0, 1 },
+    { "gameplay", 0, GAMEPLAY_STYLES - 1 }, { "pitches", 0, 1 },     { "cpu_tactics", 0, 1 },
+    { "stronger_keepers", 0, 1 },     { "cpu_cards", 0, 1 },          { "cpu_injuries", 0, 1 },
+};
+static int16_t s_optionsSaved[kOptCount];
+static int32_t s_optionsKnown;          /* s_optionsSaved is what the file holds (or the defaults) */
+
+static void amiga_options_now(int16_t *v)
+{
+    extern uint16_t _pitchStyleOption;
+    v[kOptGameLength] = (int16_t)_gameLength;
+    v[kOptPitchType] = (int16_t)_pitchType;
+    v[kOptAutoReplays] = (int16_t)_autoReplays;
+    v[kOptTeamsEqual] = (int16_t)_allPlayerTeamsEqual;
+    v[kOptAutoSaveHl] = (int16_t)_autoSaveHighlights;
+    v[kOptMenuMusic] = (int16_t)_menuMusic;
+    v[kOptGameplay] = (int16_t)_gGameplayStyle;
+    v[kOptPitches] = (int16_t)_pitchStyleOption;
+    v[kOptCpuTactics] = (int16_t)s_cpuTacticsOption;
+    v[kOptStrongerKeepers] = (int16_t)s_strongerKeepersOption;
+    v[kOptCpuCards] = (int16_t)s_cpuCardsOption;
+    v[kOptCpuInjuries] = (int16_t)s_cpuInjuriesOption;
+}
+
+void AmigaOptions_Load(void)
+{
+    extern uint16_t _pitchStyleOption;
+    extern void TacticsExpert_Set(int32_t expert);
+    extern void ApplyGameStyle(void);
+    int16_t v[kOptCount];
+    uint8_t *buf = NULL;
+    uint32_t size = 0;
+    amiga_options_now(v);                       /* (the defaults, for what the file lacks) */
+    if (swos_io_load_alloc((const uint8_t *)AMIGA_OPTIONS_FILE, &buf, &size) == 0 && buf) {
+        for (uint32_t i = 0; i < size;) {
+            const uint32_t start = i;
+            while (i < size && buf[i] != '\n')
+                i++;
+            for (int32_t k = 0; k < kOptCount; k++) {
+                const uint32_t n = (uint32_t)strlen(kAmigaOptions[k].key);
+                if (i - start <= n || memcmp(buf + start, kAmigaOptions[k].key, n) != 0)
+                    continue;
+                uint32_t j = start + n;
+                while (j < i && (buf[j] == ' ' || buf[j] == '='))
+                    j++;
+                int32_t neg = 0, val = 0, digits = 0;
+                if (j < i && buf[j] == '-')
+                    neg = 1, j++;
+                while (j < i && buf[j] >= '0' && buf[j] <= '9')
+                    val = val * 10 + (buf[j++] - '0'), digits++;
+                if (neg)
+                    val = -val;
+                if (digits && val >= kAmigaOptions[k].lo && val <= kAmigaOptions[k].hi)
+                    v[k] = (int16_t)val;
+            }
+            i++;
+        }
+        swos_io_free(buf);
+    }
+    /* (the Amiga's styles: AMIGA, DOS, MOON -- no 60 Hz tick for XBOX or AMIGA 60) */
+    if (v[kOptGameplay] != GAMEPLAY_AMIGA && v[kOptGameplay] != GAMEPLAY_DOS && v[kOptGameplay] != GAMEPLAY_MOON)
+        v[kOptGameplay] = GAMEPLAY_AMIGA;
+    _gameLength = (uint16_t)v[kOptGameLength];
+    _pitchType = (uint16_t)v[kOptPitchType];
+    _autoReplays = (uint16_t)v[kOptAutoReplays];
+    _allPlayerTeamsEqual = (uint16_t)v[kOptTeamsEqual];
+    _autoSaveHighlights = (uint16_t)v[kOptAutoSaveHl];
+    _menuMusic = (uint16_t)v[kOptMenuMusic];
+    if (v[kOptGameplay] != _gGameplayStyle) {
+        Gameplay_SetStyle(v[kOptGameplay]);
+        ApplyGameStyle();
+    }
+    _pitchStyleOption = (uint16_t)v[kOptPitches];
+    s_cpuTacticsOption = (uint16_t)v[kOptCpuTactics];
+    TacticsExpert_Set(s_cpuTacticsOption);
+    s_strongerKeepersOption = (uint16_t)v[kOptStrongerKeepers];
+    s_cpuCardsOption = (uint16_t)v[kOptCpuCards];
+    s_cpuInjuriesOption = (uint16_t)v[kOptCpuInjuries];
+    {
+        uint32_t m = Tweaks_Mask() & ~(uint32_t)(TWEAK_STRONGER_GOALKEEPER_AI | TWEAK_CPU_CARDS | TWEAK_AI_INJURY_SUBS);
+        if (s_strongerKeepersOption) m |= TWEAK_STRONGER_GOALKEEPER_AI;
+        if (s_cpuCardsOption)        m |= TWEAK_CPU_CARDS;
+        if (s_cpuInjuriesOption)     m |= TWEAK_AI_INJURY_SUBS;
+        Tweaks_Set(m);
+    }
+    memcpy(s_optionsSaved, v, sizeof s_optionsSaved);
+    s_optionsKnown = 1;
+}
+
+/* Leaving OPTIONS (ExitOptions): the file written again when a row differs from what it holds. */
+void AmigaOptions_Save(void)
+{
+    static char text[kOptCount * 32];
+    int16_t v[kOptCount];
+    uint32_t n = 0;
+    amiga_options_now(v);
+    if (s_optionsKnown && memcmp(v, s_optionsSaved, sizeof v) == 0)
+        return;
+    for (int32_t k = 0; k < kOptCount; k++)
+        n += (uint32_t)snprintf(text + n, sizeof text - n, "%s = %d\n", kAmigaOptions[k].key, (int)v[k]);
+    if (n < sizeof text && swos_io_save((const uint8_t *)AMIGA_OPTIONS_FILE, (const uint8_t *)text, n) == 0) {
+        memcpy(s_optionsSaved, v, sizeof s_optionsSaved);
+        s_optionsKnown = 1;
+    }
 }
 #endif
 
@@ -6165,6 +6364,9 @@ void ExitOptions(void)
         extern int32_t Options_AskRestart(void);
         if (Options_AskRestart())
             return;                     /* (the game closes; the new one is starting) */
+#else
+        extern void AmigaOptions_Save(void);
+        AmigaOptions_Save();            /* (save/OPTIONS.INI when a row changed) */
 #endif
         SetExitMenuFlag();
         return;
