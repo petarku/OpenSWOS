@@ -6681,6 +6681,9 @@ void FriendlyMenuReinit(void)
 
     DisableEntries();
     _menuEntries[8].isInvisible = 1;       /* 0x1C0/56=8 */
+#ifndef SWOS_SDL_BUILD
+    { extern void Menus2020_FriendlyRandom(void); Menus2020_FriendlyRandom(); }  /* (OK's button: RANDOM TEAMS) */
+#endif
     SetCurrentEntry(7);
 }
 

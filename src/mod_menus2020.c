@@ -1066,6 +1066,87 @@ static void world_pick(WorldId w)
 static void world9697(void) { world_pick(WORLD_9697); }
 static void world2627(void) { world_pick(WORLD_2627); }
 
+/* FRIENDLY -> RANDOM TEAMS (the Amiga's; the user, 2026-11-25): beside CHOOSE TEAMS, two random
+ * teams of every team file the drawer has -- clubs and nations, the world's own -- player 1's and
+ * the computer's, played as CHOOSE TEAMS plays its pair (InitTeams, PlayFriendly: the screen's
+ * substitutes and pitch, PLAY MATCH first, the replay menu after). Its button is OK's: hidden once
+ * OK is pressed, so free for it (FriendlyMenuReinit calls Menus2020_FriendlyRandom then, and again
+ * whenever the menu is unpacked afresh -- Reinit is its onReturn too). */
+#include "game_types.h"             /* TeamFileEx */
+extern void InitTeams(void), PlayFriendly(void);
+extern TeamFileEx _selectedTeams[];
+extern uint16_t _numSelectedTeams;
+
+static uint32_t random_below(uint32_t n)
+{
+    static uint32_t state;
+    if (!state)
+        state = ModApi_Ticks() * 2654435761u | 1u;
+    state = state * 1664525u + 1013904223u;
+    return n ? (state >> 16) % n : 0;
+}
+
+/* The team files there are (data/TEAM.nnn, the world's mod's over the drawer's: resload), once --
+ * the world is the drawer's from the start. 100, the custom teams, left out. */
+/* A random team file the drawer has (not 100, the custom teams'): numbers tried at random, each
+ * asked for its size first -- LoadTeamFile halts on a missing one (panic 0x8008). Not a scan of all
+ * 256 up front: that took ~9 s on the first press (the user: "quite slow"); a try is one lookup. */
+static int32_t random_file(void)
+{
+    char name[20];
+    for (int32_t tries = 0; tries < 400; tries++) {
+        const int32_t f = (int32_t)random_below(256);
+        if (f == 100)
+            continue;
+        snprintf(name, sizeof name, "data/TEAM.%03d", (int)f);
+        if (Resload_FileSize(name) > 0)
+            return f;
+    }
+    return -1;
+}
+
+static void friendlyRandom(MenuEntry *e)
+{
+    (void)e;
+    for (int32_t tries = 0; tries < 64; tries++) {
+        const int32_t f0 = random_file(), f1 = random_file();
+        if (f0 < 0 || f1 < 0)
+            break;
+        if (!ModApi_RandomTeamData(f0, &_selectedTeams[0]) || !ModApi_RandomTeamData(f1, &_selectedTeams[1]))
+            continue;
+        if (_selectedTeams[0].team.countryNumber == _selectedTeams[1].team.countryNumber &&
+            _selectedTeams[0].team.teamOrdinal == _selectedTeams[1].team.teamOrdinal)
+            continue;                           /* (two different teams) */
+        _selectedTeams[0].team.teamControls = 2;    /* TEAM_PLAYER_COACH: player 1 */
+        _selectedTeams[1].team.teamControls = 1;    /* TEAM_COMPUTER */
+        _numSelectedTeams = 2;
+        InitTeams();
+        PlayFriendly();
+        SetExitMenuFlag();
+        return;
+    }
+    ModApi_ShowError("NO TEAMS FOUND");
+}
+
+void Menus2020_FriendlyRandom(void)
+{
+    enum { Fr_choose = 7, Fr_ok = 8, Fr_exit = 9 };
+    MenuEntry *ok = entry(Fr_ok), *choose = entry(Fr_choose), *exitE = entry(Fr_exit);
+    ok->isInvisible = 0;
+    ok->isDisabled = 0;
+    ok->fg = (uintptr_t)"RANDOM";               /* (RANDOM TEAMS is wider than EXIT) */
+    ok->x = exitE->x;                           /* (above EXIT, 20 lines up, EXIT's width -- the user) */
+    ok->y = (uint16_t)(choose->y - 20);
+    ok->dwWidth = exitE->dwWidth;
+    ok->onSelect = friendlyRandom;
+    ok->leftEntry = Fr_choose;
+    ok->rightEntry = -1;
+    ok->upEntry = -1;
+    ok->downEntry = Fr_exit;
+    choose->upEntry = -1;
+    exitE->upEntry = Fr_ok;
+}
+
 static void worldCareer(void)
 {
     s_worldQuit = 0;
