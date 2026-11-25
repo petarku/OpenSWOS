@@ -1061,10 +1061,8 @@ static void worldCareer(void)
 {
     s_worldQuit = 0;
     ModApi_ShowMenu(SLUG "/worldMenu");
-    if (s_worldQuit) {
-        Platform_RequestQuit();
-        return;
-    }
+    if (s_worldQuit)
+        Platform_RequestQuit();         /* (a flag: the menus unwind after, as QUIT's -- quit()) */
     CommonMenuExit();
     main_refresh();
 }
