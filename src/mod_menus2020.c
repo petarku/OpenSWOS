@@ -1263,8 +1263,18 @@ static void practiceInit(void)
     nav(Prac_demo, -1, -1, Prac_shootout, Prac_exit);
     nav(Prac_exit, -1, -1, last, -1);
 #ifndef SWOS_SDL_BUILD
-    /* the Amiga: FRIENDLY is the main menu's own button (main_refresh), not here */
+    /* the Amiga: FRIENDLY is the main menu's own button (main_refresh), not here -- the three rows
+     * left move up half a row into the four's space, centred, no gap at the top (again on a
+     * redraw: then nothing left to move) */
     show(Prac_friendly, 0);
+    {
+        const int32_t pitch = (int32_t)entry(Prac_shootout)->y - (int32_t)entry(Prac_training)->y;
+        const int32_t target = (int32_t)entry(Prac_friendly)->y + pitch / 2;
+        const int32_t dy = (int32_t)entry(Prac_training)->y - target;
+        if (dy > 0)
+            for (int32_t k = Prac_training; k <= Prac_demo; k++)
+                entry(k)->y = (uint16_t)(entry(k)->y - dy);
+    }
     nav(Prac_training, -1, -1, -1, Prac_shootout);
     nav(Prac_exit, -1, -1, practice ? Prac_demo : -1, -1);
     SetCurrentEntry(practice ? Prac_training : Prac_exit);
