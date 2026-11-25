@@ -1,7 +1,12 @@
 /*
  * tactics_expert.c -- SWOS 2020's IMPROVED CPU TACTICS (--improved-cpu-tactics; the SWOS United
  * Launcher's "Expert"): [gameplay] cpu_tactics = normal | expert, GAMEPLAY OPTIONS' CPU TACTICS.
- * SDL builds; off by default.
+ * Off by default. Both targets. On the Amiga (OPTIONS' CPU TACTICS, menus.c; swos-united-amiga
+ * 2026-11-25) it is what its name says: the COMPUTER's teams play the set, the player's keep the
+ * game's own -- the table is never swapped there; player_positioning.c asks TacticsExpert_Cpu for
+ * a team nobody controls (the user: "strange that it is called CPU tactics and it changes yours").
+ * Kept until the game is switched off, as its other options. No match there is online or a rig's,
+ * so MatchBegin / MatchEnd and the self-test are the SDL build's.
  *
  * WHAT SWOS 2020 DOES (options.cpp setTacticsVariables): at start-up, with the option on, it copies
  * its "mozq v3" set over the game's twelve built-in formations -- 4-4-2 to DEFEND, every team's,
@@ -18,18 +23,20 @@
  * The data is SWOS 2020's released src/tactics.h (mozq_v3_*), the first 370 bytes of each --
  * the TeamTactics layout (include/game_types.h); its last 6 are zero padding.
  */
-#ifdef SWOS_SDL_BUILD
-
 #include "tactics_data.h"
+#ifdef SWOS_SDL_BUILD
 #include "replay_test.h"    /* ReplayTest_Running */
 #include "srp_resim.h"      /* SrpResim_Armed */
 #include "rollback_rig.h"   /* Rollback_Enabled */
+#endif
 
 #include <stdio.h>
 #include <string.h>
 
+#ifdef SWOS_SDL_BUILD
 extern int32_t NetplayMatch_Enabled(void);
 extern int32_t CareerAutopilot_Active(void);
+#endif
 extern void    InitializeTacticsPositions(void);          /* menus.c */
 extern uint16_t _tacticsPositionDefensiveness[11];
 
@@ -340,6 +347,9 @@ static uint16_t        s_defensiveness[11];
 
 static void apply(void)
 {
+#ifndef SWOS_SDL_BUILD
+    return;                                     /* (the Amiga: the computer's teams only, never the table) */
+#endif
     if (s_applied || !s_on || s_suspended || s_held)
         return;
     for (int32_t i = 0; i < kExpert; i++) {
@@ -391,6 +401,15 @@ void TacticsExpert_Set(int32_t expert)
 
 int32_t TacticsExpert_On(void) { return s_on; }
 
+#ifndef SWOS_SDL_BUILD
+/* The Amiga: the set's formation `idx` for a team the computer plays, NULL when the set is off or
+ * `idx` is not one of the twelve (USER A-F are the player's own). */
+TeamTactics *TacticsExpert_Cpu(int32_t idx)
+{
+    return s_on && idx >= 0 && idx < kExpert ? &s_set[idx] : NULL;
+}
+#endif
+
 /* The game's own code that writes through the table -- InitUserTactics (the 5-3-2 rows, the USER
  * A-F copies of the 4-4-2) and TacticsData_SelectRelease (a style's four) -- works on the game's
  * own formations, as it always has: the set comes off around it and goes back after. */
@@ -406,6 +425,7 @@ void TacticsExpert_Release(void)
         apply();
 }
 
+#ifdef SWOS_SDL_BUILD
 /* Kick-off (game_loop.c StartMatchSequence): online or in a rig, the game's own for this match. */
 void TacticsExpert_MatchBegin(void)
 {
@@ -457,4 +477,4 @@ int32_t TacticsExpert_SelfTest(void)
     return fails ? 1 : 0;
 }
 
-#endif /* SWOS_SDL_BUILD */
+#endif /* SWOS_SDL_BUILD: MatchBegin / MatchEnd / the self-test */

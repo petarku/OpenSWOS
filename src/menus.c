@@ -379,11 +379,9 @@ __attribute__((used, externally_visible, optimize("no-tree-loop-distribute-patte
 void InitUserTactics(void)
 {
     int16_t i;
-#ifdef SWOS_SDL_BUILD
-    /* (the game's own formations, under [gameplay] cpu_tactics = expert: src/tactics_expert.c) */
+    /* (the game's own formations, under CPU TACTICS = EXPERT: src/tactics_expert.c) */
     extern void TacticsExpert_Hold(void), TacticsExpert_Release(void);
     TacticsExpert_Hold();
-#endif
 
     /* Copy positions[8..9] (70 bytes) from 532 formation to both 442 and Sweep.
      *
@@ -434,9 +432,7 @@ void InitUserTactics(void)
     StringCopy(_aUSER_F, (uint8_t *)_teamTacticsUSERF.name);
 
     InitializeTacticsPositions();
-#ifdef SWOS_SDL_BUILD
     TacticsExpert_Release();
-#endif
 }
 
 /* ================================================================
@@ -2269,7 +2265,19 @@ void OptionsMenuBeforeDraw(void)
     _menuEntries[2].upEntry = -1;            /* (FRIENDLY/DIY GAME LENGTH is the top row there) */
     _menuEntries[15].isInvisible = 1;
     _menuEntries[16].isInvisible = 1;
-    /* ... then P1 and P2 CALL BENCH (29..32, in WORLD's and MODS' places) above EXIT. */
+    /* P1 and P2 CALL BENCH (29..32) gone (swos-united-amiga, the user 2026-11-25): their default,
+     * BUTTON OR TAPS, stays in force for both players -- the original's three taps and the second
+     * fire button (bench_subs.c Bench_SecondButton) -- so only the choice to switch one off goes.
+     * P1's row (29/30) is CPU TACTICS instead (src/tactics_expert.c, the PC's GAMEPLAY OPTIONS row). */
+    {
+        extern void ChangeCpuTactics(MenuEntry *entry);
+        extern uint8_t *const _cpuTacticsStrTablePtr;
+        _menuEntries[29].fg = (uintptr_t)"CPU TACTICS";
+        _menuEntries[30].fg = (uintptr_t)_cpuTacticsStrTablePtr;
+        _menuEntries[30].onSelect = ChangeCpuTactics;
+    }
+    _menuEntries[31].isInvisible = 1;
+    _menuEntries[32].isInvisible = 1;
 #ifdef AGA
     _menuEntries[14].downEntry = 18;
     _menuEntries[18].downEntry = 30;
@@ -2280,10 +2288,8 @@ void OptionsMenuBeforeDraw(void)
     _menuEntries[14].downEntry = 30;
     _menuEntries[30].upEntry = 14;
 #endif
-    _menuEntries[30].downEntry = 32;
-    _menuEntries[32].upEntry = 30;
-    _menuEntries[32].downEntry = 19;
-    _menuEntries[19].upEntry = 32;
+    _menuEntries[30].downEntry = 19;
+    _menuEntries[19].upEntry = 30;
 #endif
 }
 
@@ -2305,6 +2311,27 @@ __attribute__((used, externally_visible))
 void ChangeCallBench1(MenuEntry *entry) { change_call_bench(1, entry); }
 __attribute__((used, externally_visible))
 void ChangeCallBench2(MenuEntry *entry) { change_call_bench(2, entry); }
+
+#ifndef SWOS_SDL_BUILD
+/* OPTIONS -> CPU TACTICS (the Amiga's, in P1 CALL BENCH's row: OptionsMenuBeforeDraw): NORMAL, the
+ * game's own formations, or EXPERT, SWOS 2020's improved set (src/tactics_expert.c). Kept until the
+ * game is switched off, like the other options. Its value as the menu's string tables are: the
+ * index's address, a base, then the strings (swos_amiga_ptr_imports.c). */
+static uint16_t s_cpuTacticsOption;
+static char s_aNormal[] = "NORMAL", s_aExpert[] = "EXPERT";
+struct __attribute__((packed)) {
+    void *indexPtr; uint16_t base; void *entries[2];
+} s_cpuTacticsTable = { &s_cpuTacticsOption, 0, { s_aNormal, s_aExpert } };
+uint8_t *const _cpuTacticsStrTablePtr = (uint8_t *)&s_cpuTacticsTable;
+__attribute__((used, externally_visible))
+void ChangeCpuTactics(MenuEntry *entry)
+{
+    extern void TacticsExpert_Set(int32_t expert);
+    s_cpuTacticsOption ^= 1;
+    TacticsExpert_Set(s_cpuTacticsOption);
+    CallDrawMenuItem(entry);
+}
+#endif
 
 /* OPTIONS -> PITCHES: DOS / 2020 (pitch.c, _pitchStyleOption). The next match loads
  * the set; nothing else depends on it. */

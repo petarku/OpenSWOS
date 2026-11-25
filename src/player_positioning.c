@@ -41,19 +41,34 @@ extern int16_t  _playerYQuadrantCoordinates[];
  * playerYQuadrantCoordinates tables.
  * Goalkeeper uses separate proportional positioning (mulu/divu).
  * ================================================================== */
+/* A team's formation `idx`: the game's table -- on the Amiga, for a team nobody controls (the
+ * computer's, or one AUTOPLAY handed it) with CPU TACTICS = EXPERT, SWOS 2020's (tactics_expert.c). */
+static TeamTactics *team_tactics(const TeamGeneralInfo *team, int16_t idx)
+{
+#ifndef SWOS_SDL_BUILD
+    if (team->playerNumber == 0 && team->playerCoachNumber == 0) {
+        extern TeamTactics *TacticsExpert_Cpu(int32_t idx);
+        TeamTactics *t = TacticsExpert_Cpu(idx);
+        if (t)
+            return t;
+    }
+#endif
+    return (TeamTactics *)_teamTacticsTable[idx];
+}
+
 void __attribute__((used, externally_visible))
 SetPlayerWithNoBallDestination(Sprite *player, TeamGeneralInfo *team,
                                 int16_t ballX, int16_t ballY)
 {
     /* Look up tactics structure */
-    TeamTactics *tactics = (TeamTactics *)(_teamTacticsTable[team->tactics]);
+    TeamTactics *tactics = team_tactics(team, team->tactics);
 
     /* If ball out of play: use redirect tactics */
     if (_gameState == ST_KEEPER_HOLDS_BALL ||
         _gameState == ST_GOAL_OUT_LEFT ||
         _gameState == ST_GOAL_OUT_RIGHT) {
         int16_t idx = (int16_t)(int8_t)tactics->ballOutOfPlayTactics;
-        tactics = (TeamTactics *)(_teamTacticsTable[idx]);
+        tactics = team_tactics(team, idx);
     }
 
     /* Advance to positions array */
