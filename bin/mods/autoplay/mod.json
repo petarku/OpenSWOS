@@ -6,7 +6,8 @@
  "author": "OpenSWOS (SWOS 2020's AUTOPLAY)",
  "about": "F1 in a match against the computer: the computer plays your team until F1 again. Offline only.",
  "targets": [
-  "sdl"
+  "sdl",
+  "amiga"
  ],
  "changes": "modes",
  "default": true

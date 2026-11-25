@@ -62,7 +62,17 @@ int32_t ModApi_SpriteKind(const struct Sprite *sprite)
     return MODSPRITE_OTHER;
 }
 
-/* ---- a team's control (SWOS 2020's setAutoPlayMode / closeAutoPlayMode) ----
+#else   /* the Amiga: no online match and no rigs -- a match is offline */
+#include "game_types.h"
+extern int32_t ModMatch_Active(void);
+extern TeamGeneralInfo _topTeamData, _bottomTeamData;
+
+int32_t ModApi_OfflineMatch(void) { return ModApi_InMatch(); }
+int32_t ModApi_AnyModMatch(void) { return ModMatch_Active(); }
+#endif
+
+/* ---- a team's control (SWOS 2020's setAutoPlayMode / closeAutoPlayMode; both targets since the
+ * Amiga's autoplay, 2026-11-25) ----
  * The computer plays a team while its playerNumber is 0 (as SWOS 2020 sets it each frame);
  * the number it had is kept here and given back. */
 static struct { uint8_t taken; int16_t playerNumber; } s_control[2];
@@ -115,6 +125,8 @@ int32_t ModApi_TeamControl(int32_t team)
     const int32_t n = t->playerNumber ? t->playerNumber : t->playerCoachNumber;
     return n == 1 ? MODSIDE_PLAYER1 : n == 2 ? MODSIDE_PLAYER2 : MODSIDE_CPU;
 }
+
+#ifdef SWOS_SDL_BUILD
 
 /* ---- the next match's pitch ---- */
 static int8_t s_nextPitch;
@@ -199,20 +211,14 @@ int32_t ModApi_NetStats(ModNetStats *out)
 
 #else   /* the Amiga: none of the mods that use these is built there */
 
-int32_t ModApi_OfflineMatch(void) { return 0; }
-int32_t ModApi_AnyModMatch(void) { return 0; }
 int32_t ModApi_Ball(ModBall *out) { (void)out; return 0; }
 int32_t ModApi_SpriteKind(const struct Sprite *sprite) { (void)sprite; return MODSPRITE_OTHER; }
-int32_t ModApi_SetTeamControl(int32_t team, int32_t cpu) { (void)team; (void)cpu; return 1; }
-int32_t ModApi_TeamControl(int32_t team) { (void)team; return MODSIDE_CPU; }
 int32_t ModApi_SetMatchPitch(int32_t number) { (void)number; return 1; }
 int32_t ModApi_PitchNumber(void) { return 0; }
 int32_t ModApi_OnPlayMatch(const char *slug, void (*fn)(void)) { (void)slug; (void)fn; return 1; }
 void ModExtras_ResetForReload(void) { }
 int32_t ModApi_NetStats(ModNetStats *out) { (void)out; return 0; }
-void ModExtras_RestoreControl(void) { }
-void ModExtras_KickOff(void) { }
-void ModExtras_MatchEnded(void) { }
+void ModExtras_MatchEnded(void) { ModExtras_RestoreControl(); }
 int16_t ModExtras_PitchNumber(void) { return 0; }
 
 #endif

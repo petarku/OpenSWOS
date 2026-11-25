@@ -24,7 +24,7 @@ extern const ModDef ModDef_backgrounds; /* src/mod_backgrounds.c (SDL: the menus
 extern const ModDef ModDef_dosmenus;    /* src/mod_dosmenus.c (SDL: the PC game's menu shading) */
 extern const ModDef ModDef_retrotv;     /* src/mod_retrotv.c (SDL: the picture through a slang preset) */
 extern const ModDef ModDef_paletteq;    /* src/mod_paletteq.c (SDL: the picture in an old machine's colours) */
-extern const ModDef ModDef_autoplay;    /* src/mod_autoplay.c (SDL: SWOS 2020's F1 AUTOPLAY) */
+extern const ModDef ModDef_autoplay;    /* src/mod_autoplay.c (SWOS 2020's F1 AUTOPLAY; the Amiga since 2026-11-25) */
 extern const ModDef ModDef_balltrails;  /* src/mod_balltrails.c (SDL: SWOS 2020's ball trails) */
 extern const ModDef ModDef_scoreboard;  /* src/mod_scoreboard.c (SDL: SWOS 2020's new scoreboard) */
 extern const ModDef ModDef_netstats;    /* src/mod_netstats.c (SDL: SWOS 2020's network quality strip, F7) */
@@ -66,7 +66,7 @@ const ModDef *const g_builtinMods[] = {
     MOD_SDL(ModDef_dosmenus)
     MOD_SDL(ModDef_retrotv)
     MOD_SDL(ModDef_paletteq)
-    MOD_SDL(ModDef_autoplay)
+    MOD_AMIGA(ModDef_autoplay)
     MOD_SDL(ModDef_balltrails)
     MOD_SDL(ModDef_scoreboard)
     MOD_SDL(ModDef_netstats)
