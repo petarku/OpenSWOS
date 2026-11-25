@@ -1217,7 +1217,24 @@ static void tr_exit(void) { s_trChoice = -1; SetExitMenuFlag(); }
 static void tr_init(void) { }
 static void tr_draw(void);
 static void tr_controls_draw(void);
+#ifdef SWOS_SDL_BUILD
 static void tr_controls_init(void) { }
+#else
+/* The Amiga's keys for F11 / F12 (the A1200 has neither): SHIFT+F1, SHIFT+F2, in their rows of
+ * the key column, widened to the right (toward the screen's edge) for the longer text. */
+#include "menu_system.h"
+static void tr_controls_init(void)
+{
+    enum { Tc_kInfo03_ = 29, Tc_kInfo04_ = 30 };   /* (the menu's entries: header, desc00-07, kInfo00-07,
+                                                    *  desc00_-08_, kInfo00_-08_) */
+    static const char *const kText[2] = { "SHIFT F1", "SHIFT F2" };
+    for (int32_t i = 0; i < 2; i++) {
+        MenuEntry *e = CalcMenuEntryAddress((uint16_t)(Tc_kInfo03_ + i));
+        e->dwWidth = 50;                            /* (x 266 as the column; 316 its right edge) */
+        ModApi_MenuText(Tc_kInfo03_ + i, kText[i]);
+    }
+}
+#endif
 
 /* practiceSetting_OnDraw: the values, and what can be reached -- CPU GHOSTED only with a CPU line
  * on, the team buttons only with a line of the player's on. */
@@ -1320,6 +1337,14 @@ static int32_t drill_apply(int8_t d);
 
 static void training_frame(void)
 {
+#ifndef SWOS_SDL_BUILD
+    /* ALT on the Amiga: the keyboard interrupt marks a press (the game's key table drops ALT) */
+    extern volatile uint8_t _gAmigaAltPressed;
+    if (_gAmigaAltPressed) {
+        _gAmigaAltPressed = 0;
+        training_key("Left Alt");
+    }
+#endif
     if (!s_training || !ModApi_ModMatch("practice"))
         return;
     if (s_trTest == 2) {                /* (the test: every drill in turn, 400 frames apart; one the
@@ -1598,6 +1623,9 @@ static void practice_training(void)
                                              *  CPU's, whose keeper -- its only man seen -- walked up
                                              *  to the centre spot to take it; Playa, 2026-11-24) */
         s_drill = DR_NONE;
+#ifndef SWOS_SDL_BUILD
+        { extern volatile uint8_t _gAmigaAltPressed; _gAmigaAltPressed = 0; }  /* (an ALT from before) */
+#endif
         s_training = 1;
         if (ModApi_PlayMatch("practice", &setup, &r) == 0)
             fprintf(stderr, "[practice] team training: %d-%d in %u frames\n", (int)r.goals[0], (int)r.goals[1],
@@ -1674,6 +1702,7 @@ const ModDef ModDef_practice = {
     .menuDrawn = shootout_menu_drawn,   /* (PLAY MATCH's kick order; the tests are the SDL build's) */
     .playerRowDrawn = shootout_row,
     .spritesEnd = shootout_sprites_end, /* (the shoot-out's board and the keeper's arrow, as sprites) */
+    .matchKey = training_key,           /* (game_loop.c MainKeysCheck; SHIFT+F1/F2 for F11/F12) */
 #endif
 };
 

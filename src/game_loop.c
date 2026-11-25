@@ -282,6 +282,28 @@ MainKeysCheck(uint16_t key)
     if (key == 0)
         return;
 
+#ifndef SWOS_SDL_BUILD
+    /* A key for a mod during a match (ModDef.matchKey: TEAM TRAINING's drills), before the game's
+     * own, as platform_sdl.c gives it on the PC. The A1200 has no F11/F12: SHIFT+F1 and SHIFT+F2
+     * stand for them (the user's choice, 2026-11-25); ALT reaches the mods in their match frame. */
+    {
+        extern int32_t ModHooks_MatchKey(const char *key);
+        extern volatile uint8_t _gAmigaShiftHeld;
+        static const char *const kF[10] = { "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10" };
+        const char *name = NULL;
+        if (_gAmigaShiftHeld && (key == 0x80 || key == 0x81))
+            name = key == 0x80 ? "F11" : "F12";
+        else if (key >= 0x80 && key <= 0x89)
+            name = kF[key - 0x80];
+        else if (key == 0x39) name = "9";
+        else if (key == 0x30) name = "0";
+        else if (key == 0x2D) name = "-";
+        else if (key == 0x3D) name = "=";
+        if (name && ModHooks_MatchKey(name))
+            return;
+    }
+#endif
+
     /* If paused, only 'P' can unpause */
     if (_paused != 0)
         goto key_p_toggle_pause;
